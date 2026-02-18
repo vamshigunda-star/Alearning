@@ -1,0 +1,292 @@
+{
+  "categories": [
+    {
+      "id": "cat_cardio",
+      "name": "Cardiorespiratory Endurance",
+      "sortOrder": 1
+    },
+    {
+      "id": "cat_muscular_strength",
+      "name": "Muscular Strength",
+      "sortOrder": 2
+    },
+    {
+      "id": "cat_muscular_endurance",
+      "name": "Muscular Endurance",
+      "sortOrder": 3
+    },
+    {
+      "id": "cat_flexibility",
+      "name": "Flexibility",
+      "sortOrder": 4
+    },
+    {
+      "id": "cat_body_comp",
+      "name": "Body Composition",
+      "sortOrder": 5
+    },
+    {
+      "id": "cat_agility",
+      "name": "Speed & Agility",
+      "sortOrder": 6
+    }
+  ],
+  "tests": [
+    {
+      "id": "test_pacer",
+      "categoryId": "cat_cardio",
+      "name": "PACER (20m Shuttle Run)",
+      "unit": "laps",
+      "isHigherBetter": true,
+      "description": "Run back and forth across a 20-meter space at an increasing pace set by audio cues."
+    },
+    {
+      "id": "test_mile_run",
+      "categoryId": "cat_cardio",
+      "name": "One-Mile Run",
+      "unit": "min:sec",
+      "isHigherBetter": false,
+      "description": "Run one mile (1609m) as fast as possible on a flat measured course."
+    },
+    {
+      "id": "test_walk",
+      "categoryId": "cat_cardio",
+      "name": "One-Mile Walk",
+      "unit": "min:sec",
+      "isHigherBetter": false,
+      "description": "Walk one mile as briskly as possible. Heart rate recorded at finish."
+    },
+    {
+      "id": "test_curlup",
+      "categoryId": "cat_muscular_endurance",
+      "name": "Curl-Up",
+      "unit": "reps",
+      "isHigherBetter": true,
+      "description": "Lie face up with knees bent. Curl up slowly sliding fingers across the measuring strip, then return. Complete as many as possible at the set cadence."
+    },
+    {
+      "id": "test_pushup",
+      "categoryId": "cat_muscular_endurance",
+      "name": "Push-Up",
+      "unit": "reps",
+      "isHigherBetter": true,
+      "description": "From a front-leaning rest position, lower body until elbows are at 90 degrees, then push back up. Complete as many as possible at a steady cadence."
+    },
+    {
+      "id": "test_trunk_lift",
+      "categoryId": "cat_muscular_strength",
+      "name": "Trunk Lift",
+      "unit": "inches",
+      "isHigherBetter": true,
+      "description": "Lie face down, lift upper body off the floor using back muscles. Measure distance chin lifts from the floor (max 12 inches)."
+    },
+    {
+      "id": "test_flexed_arm_hang",
+      "categoryId": "cat_muscular_strength",
+      "name": "Flexed-Arm Hang",
+      "unit": "seconds",
+      "isHigherBetter": true,
+      "description": "Using an overhand grip, hang with chin above the bar as long as possible."
+    },
+    {
+      "id": "test_pullup",
+      "categoryId": "cat_muscular_strength",
+      "name": "Pull-Up",
+      "unit": "reps",
+      "isHigherBetter": true,
+      "description": "From a dead hang with overhand grip, pull body up until chin clears the bar, then lower back to dead hang."
+    },
+    {
+      "id": "test_sit_reach",
+      "categoryId": "cat_flexibility",
+      "name": "Sit and Reach (Back-Saver)",
+      "unit": "inches",
+      "isHigherBetter": true,
+      "description": "Sit on floor with one leg extended, other knee bent. Reach forward along a measuring line as far as possible. Test each side."
+    },
+    {
+      "id": "test_shoulder_stretch",
+      "categoryId": "cat_flexibility",
+      "name": "Shoulder Stretch",
+      "unit": "pass/fail",
+      "isHigherBetter": true,
+      "description": "Reach one hand over the shoulder and the other behind the back. Attempt to touch or overlap fingers. Record pass or fail for each side."
+    },
+    {
+      "id": "test_bmi",
+      "categoryId": "cat_body_comp",
+      "name": "Body Mass Index (BMI)",
+      "unit": "kg/m²",
+      "isHigherBetter": false,
+      "description": "Calculate BMI from height and weight: weight(kg) / height(m)²."
+    },
+    {
+      "id": "test_skinfold",
+      "categoryId": "cat_body_comp",
+      "name": "Skinfold Measurements",
+      "unit": "mm",
+      "isHigherBetter": false,
+      "description": "Measure triceps and calf skinfold thickness using calipers. Sum of two sites."
+    },
+    {
+      "id": "test_50yard",
+      "categoryId": "cat_agility",
+      "name": "50-Yard Dash",
+      "unit": "seconds",
+      "isHigherBetter": false,
+      "description": "Sprint 50 yards (45.7m) as fast as possible from a standing start."
+    },
+    {
+      "id": "test_shuttle_run",
+      "categoryId": "cat_agility",
+      "name": "Shuttle Run (4x10m)",
+      "unit": "seconds",
+      "isHigherBetter": false,
+      "description": "Sprint 10 meters, pick up a block, return it, sprint back, pick up second block and sprint to finish."
+    },
+    {
+      "id": "test_standing_long_jump",
+      "categoryId": "cat_agility",
+      "name": "Standing Long Jump",
+      "unit": "inches",
+      "isHigherBetter": true,
+      "description": "From a standing position behind a line, jump forward as far as possible landing on both feet."
+    },
+    {
+      "id": "test_vball_toss",
+      "categoryId": "cat_muscular_strength",
+      "name": "Softball/Volleyball Throw",
+      "unit": "feet",
+      "isHigherBetter": true,
+      "description": "Overhand throw for maximum distance from behind a line."
+    },
+    {
+      "id": "test_sit_ups_60",
+      "categoryId": "cat_muscular_endurance",
+      "name": "Sit-Ups (60 seconds)",
+      "unit": "reps",
+      "isHigherBetter": true,
+      "description": "Perform as many correct sit-ups as possible in 60 seconds."
+    },
+    {
+      "id": "test_plank",
+      "categoryId": "cat_muscular_endurance",
+      "name": "Plank Hold",
+      "unit": "seconds",
+      "isHigherBetter": true,
+      "description": "Hold a forearm plank position with proper form for as long as possible."
+    },
+    {
+      "id": "test_400m",
+      "categoryId": "cat_cardio",
+      "name": "400-Meter Run",
+      "unit": "min:sec",
+      "isHigherBetter": false,
+      "description": "Run 400 meters (one lap of standard track) as fast as possible."
+    },
+    {
+      "id": "test_wall_sit",
+      "categoryId": "cat_muscular_endurance",
+      "name": "Wall Sit",
+      "unit": "seconds",
+      "isHigherBetter": true,
+      "description": "Lean against wall with knees at 90 degrees and hold the position as long as possible."
+    }
+  ],
+  "norms": [
+    { "testId": "test_pacer", "sex": "MALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 1.0, "maxScore": 14.0, "percentile": 10, "classification": "Needs Improvement" },
+    { "testId": "test_pacer", "sex": "MALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 15.0, "maxScore": 22.0, "percentile": 25, "classification": "Needs Improvement" },
+    { "testId": "test_pacer", "sex": "MALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 23.0, "maxScore": 40.0, "percentile": 50, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_pacer", "sex": "MALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 41.0, "maxScore": 60.0, "percentile": 75, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_pacer", "sex": "MALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 61.0, "maxScore": 100.0, "percentile": 90, "classification": "Superior" },
+    { "testId": "test_pacer", "sex": "FEMALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 1.0, "maxScore": 9.0, "percentile": 10, "classification": "Needs Improvement" },
+    { "testId": "test_pacer", "sex": "FEMALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 10.0, "maxScore": 14.0, "percentile": 25, "classification": "Needs Improvement" },
+    { "testId": "test_pacer", "sex": "FEMALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 15.0, "maxScore": 31.0, "percentile": 50, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_pacer", "sex": "FEMALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 32.0, "maxScore": 50.0, "percentile": 75, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_pacer", "sex": "FEMALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 51.0, "maxScore": 85.0, "percentile": 90, "classification": "Superior" },
+
+    { "testId": "test_pacer", "sex": "MALE", "ageMin": 13.0, "ageMax": 13.99, "minScore": 1.0, "maxScore": 20.0, "percentile": 10, "classification": "Needs Improvement" },
+    { "testId": "test_pacer", "sex": "MALE", "ageMin": 13.0, "ageMax": 13.99, "minScore": 21.0, "maxScore": 35.0, "percentile": 25, "classification": "Needs Improvement" },
+    { "testId": "test_pacer", "sex": "MALE", "ageMin": 13.0, "ageMax": 13.99, "minScore": 36.0, "maxScore": 55.0, "percentile": 50, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_pacer", "sex": "MALE", "ageMin": 13.0, "ageMax": 13.99, "minScore": 56.0, "maxScore": 80.0, "percentile": 75, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_pacer", "sex": "MALE", "ageMin": 13.0, "ageMax": 13.99, "minScore": 81.0, "maxScore": 140.0, "percentile": 90, "classification": "Superior" },
+    { "testId": "test_pacer", "sex": "FEMALE", "ageMin": 13.0, "ageMax": 13.99, "minScore": 1.0, "maxScore": 12.0, "percentile": 10, "classification": "Needs Improvement" },
+    { "testId": "test_pacer", "sex": "FEMALE", "ageMin": 13.0, "ageMax": 13.99, "minScore": 13.0, "maxScore": 19.0, "percentile": 25, "classification": "Needs Improvement" },
+    { "testId": "test_pacer", "sex": "FEMALE", "ageMin": 13.0, "ageMax": 13.99, "minScore": 20.0, "maxScore": 35.0, "percentile": 50, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_pacer", "sex": "FEMALE", "ageMin": 13.0, "ageMax": 13.99, "minScore": 36.0, "maxScore": 55.0, "percentile": 75, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_pacer", "sex": "FEMALE", "ageMin": 13.0, "ageMax": 13.99, "minScore": 56.0, "maxScore": 85.0, "percentile": 90, "classification": "Superior" },
+
+    { "testId": "test_pacer", "sex": "MALE", "ageMin": 15.0, "ageMax": 15.99, "minScore": 1.0, "maxScore": 27.0, "percentile": 10, "classification": "Needs Improvement" },
+    { "testId": "test_pacer", "sex": "MALE", "ageMin": 15.0, "ageMax": 15.99, "minScore": 28.0, "maxScore": 44.0, "percentile": 25, "classification": "Needs Improvement" },
+    { "testId": "test_pacer", "sex": "MALE", "ageMin": 15.0, "ageMax": 15.99, "minScore": 45.0, "maxScore": 71.0, "percentile": 50, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_pacer", "sex": "MALE", "ageMin": 15.0, "ageMax": 15.99, "minScore": 72.0, "maxScore": 100.0, "percentile": 75, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_pacer", "sex": "MALE", "ageMin": 15.0, "ageMax": 15.99, "minScore": 101.0, "maxScore": 160.0, "percentile": 90, "classification": "Superior" },
+    { "testId": "test_pacer", "sex": "FEMALE", "ageMin": 15.0, "ageMax": 15.99, "minScore": 1.0, "maxScore": 14.0, "percentile": 10, "classification": "Needs Improvement" },
+    { "testId": "test_pacer", "sex": "FEMALE", "ageMin": 15.0, "ageMax": 15.99, "minScore": 15.0, "maxScore": 22.0, "percentile": 25, "classification": "Needs Improvement" },
+    { "testId": "test_pacer", "sex": "FEMALE", "ageMin": 15.0, "ageMax": 15.99, "minScore": 23.0, "maxScore": 40.0, "percentile": 50, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_pacer", "sex": "FEMALE", "ageMin": 15.0, "ageMax": 15.99, "minScore": 41.0, "maxScore": 58.0, "percentile": 75, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_pacer", "sex": "FEMALE", "ageMin": 15.0, "ageMax": 15.99, "minScore": 59.0, "maxScore": 85.0, "percentile": 90, "classification": "Superior" },
+
+    { "testId": "test_pushup", "sex": "MALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 0.0, "maxScore": 6.0, "percentile": 10, "classification": "Needs Improvement" },
+    { "testId": "test_pushup", "sex": "MALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 7.0, "maxScore": 13.0, "percentile": 30, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_pushup", "sex": "MALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 14.0, "maxScore": 19.0, "percentile": 55, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_pushup", "sex": "MALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 20.0, "maxScore": 30.0, "percentile": 75, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_pushup", "sex": "MALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 31.0, "maxScore": 60.0, "percentile": 90, "classification": "Superior" },
+    { "testId": "test_pushup", "sex": "FEMALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 0.0, "maxScore": 6.0, "percentile": 10, "classification": "Needs Improvement" },
+    { "testId": "test_pushup", "sex": "FEMALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 7.0, "maxScore": 12.0, "percentile": 30, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_pushup", "sex": "FEMALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 13.0, "maxScore": 17.0, "percentile": 55, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_pushup", "sex": "FEMALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 18.0, "maxScore": 25.0, "percentile": 75, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_pushup", "sex": "FEMALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 26.0, "maxScore": 50.0, "percentile": 90, "classification": "Superior" },
+
+    { "testId": "test_pushup", "sex": "MALE", "ageMin": 13.0, "ageMax": 13.99, "minScore": 0.0, "maxScore": 9.0, "percentile": 10, "classification": "Needs Improvement" },
+    { "testId": "test_pushup", "sex": "MALE", "ageMin": 13.0, "ageMax": 13.99, "minScore": 10.0, "maxScore": 17.0, "percentile": 30, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_pushup", "sex": "MALE", "ageMin": 13.0, "ageMax": 13.99, "minScore": 18.0, "maxScore": 24.0, "percentile": 55, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_pushup", "sex": "MALE", "ageMin": 13.0, "ageMax": 13.99, "minScore": 25.0, "maxScore": 38.0, "percentile": 75, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_pushup", "sex": "MALE", "ageMin": 13.0, "ageMax": 13.99, "minScore": 39.0, "maxScore": 70.0, "percentile": 90, "classification": "Superior" },
+    { "testId": "test_pushup", "sex": "FEMALE", "ageMin": 13.0, "ageMax": 13.99, "minScore": 0.0, "maxScore": 6.0, "percentile": 10, "classification": "Needs Improvement" },
+    { "testId": "test_pushup", "sex": "FEMALE", "ageMin": 13.0, "ageMax": 13.99, "minScore": 7.0, "maxScore": 12.0, "percentile": 30, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_pushup", "sex": "FEMALE", "ageMin": 13.0, "ageMax": 13.99, "minScore": 13.0, "maxScore": 17.0, "percentile": 55, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_pushup", "sex": "FEMALE", "ageMin": 13.0, "ageMax": 13.99, "minScore": 18.0, "maxScore": 26.0, "percentile": 75, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_pushup", "sex": "FEMALE", "ageMin": 13.0, "ageMax": 13.99, "minScore": 27.0, "maxScore": 50.0, "percentile": 90, "classification": "Superior" },
+
+    { "testId": "test_curlup", "sex": "MALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 0.0, "maxScore": 11.0, "percentile": 10, "classification": "Needs Improvement" },
+    { "testId": "test_curlup", "sex": "MALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 12.0, "maxScore": 17.0, "percentile": 25, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_curlup", "sex": "MALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 18.0, "maxScore": 30.0, "percentile": 50, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_curlup", "sex": "MALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 31.0, "maxScore": 50.0, "percentile": 75, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_curlup", "sex": "MALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 51.0, "maxScore": 75.0, "percentile": 90, "classification": "Superior" },
+    { "testId": "test_curlup", "sex": "FEMALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 0.0, "maxScore": 11.0, "percentile": 10, "classification": "Needs Improvement" },
+    { "testId": "test_curlup", "sex": "FEMALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 12.0, "maxScore": 17.0, "percentile": 25, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_curlup", "sex": "FEMALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 18.0, "maxScore": 26.0, "percentile": 50, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_curlup", "sex": "FEMALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 27.0, "maxScore": 42.0, "percentile": 75, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_curlup", "sex": "FEMALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 43.0, "maxScore": 75.0, "percentile": 90, "classification": "Superior" },
+
+    { "testId": "test_sit_reach", "sex": "MALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 0.0, "maxScore": 7.0, "percentile": 10, "classification": "Needs Improvement" },
+    { "testId": "test_sit_reach", "sex": "MALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 7.1, "maxScore": 8.0, "percentile": 30, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_sit_reach", "sex": "MALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 8.1, "maxScore": 10.0, "percentile": 55, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_sit_reach", "sex": "MALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 10.1, "maxScore": 12.0, "percentile": 75, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_sit_reach", "sex": "MALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 12.1, "maxScore": 16.0, "percentile": 90, "classification": "Superior" },
+    { "testId": "test_sit_reach", "sex": "FEMALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 0.0, "maxScore": 8.0, "percentile": 10, "classification": "Needs Improvement" },
+    { "testId": "test_sit_reach", "sex": "FEMALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 8.1, "maxScore": 9.0, "percentile": 30, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_sit_reach", "sex": "FEMALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 9.1, "maxScore": 11.0, "percentile": 55, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_sit_reach", "sex": "FEMALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 11.1, "maxScore": 13.0, "percentile": 75, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_sit_reach", "sex": "FEMALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 13.1, "maxScore": 17.0, "percentile": 90, "classification": "Superior" },
+
+    { "testId": "test_trunk_lift", "sex": "MALE", "ageMin": 10.0, "ageMax": 17.99, "minScore": 0.0, "maxScore": 5.0, "percentile": 10, "classification": "Needs Improvement" },
+    { "testId": "test_trunk_lift", "sex": "MALE", "ageMin": 10.0, "ageMax": 17.99, "minScore": 6.0, "maxScore": 8.0, "percentile": 30, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_trunk_lift", "sex": "MALE", "ageMin": 10.0, "ageMax": 17.99, "minScore": 9.0, "maxScore": 10.0, "percentile": 60, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_trunk_lift", "sex": "MALE", "ageMin": 10.0, "ageMax": 17.99, "minScore": 11.0, "maxScore": 12.0, "percentile": 85, "classification": "Superior" },
+    { "testId": "test_trunk_lift", "sex": "FEMALE", "ageMin": 10.0, "ageMax": 17.99, "minScore": 0.0, "maxScore": 5.0, "percentile": 10, "classification": "Needs Improvement" },
+    { "testId": "test_trunk_lift", "sex": "FEMALE", "ageMin": 10.0, "ageMax": 17.99, "minScore": 6.0, "maxScore": 8.0, "percentile": 30, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_trunk_lift", "sex": "FEMALE", "ageMin": 10.0, "ageMax": 17.99, "minScore": 9.0, "maxScore": 10.0, "percentile": 60, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_trunk_lift", "sex": "FEMALE", "ageMin": 10.0, "ageMax": 17.99, "minScore": 11.0, "maxScore": 12.0, "percentile": 85, "classification": "Superior" },
+
+    { "testId": "test_bmi", "sex": "MALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 28.1, "maxScore": 50.0, "percentile": 5, "classification": "Needs Improvement - High Risk" },
+    { "testId": "test_bmi", "sex": "MALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 21.1, "maxScore": 28.0, "percentile": 20, "classification": "Needs Improvement" },
+    { "testId": "test_bmi", "sex": "MALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 14.0, "maxScore": 21.0, "percentile": 50, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_bmi", "sex": "MALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 0.1, "maxScore": 13.9, "percentile": 10, "classification": "Needs Improvement - Very Lean" },
+    { "testId": "test_bmi", "sex": "FEMALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 27.1, "maxScore": 50.0, "percentile": 5, "classification": "Needs Improvement - High Risk" },
+    { "testId": "test_bmi", "sex": "FEMALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 21.1, "maxScore": 27.0, "percentile": 20, "classification": "Needs Improvement" },
+    { "testId": "test_bmi", "sex": "FEMALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 14.0, "maxScore": 21.0, "percentile": 50, "classification": "Healthy Fitness Zone" },
+    { "testId": "test_bmi", "sex": "FEMALE", "ageMin": 10.0, "ageMax": 10.99, "minScore": 0.1, "maxScore": 13.9, "percentile": 10, "classification": "Needs Improvement - Very Lean" }
+  ]
+}
