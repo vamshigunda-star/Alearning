@@ -14,147 +14,236 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.alearning.data.local.entities.people.BiologicalSex
+import com.example.alearning.domain.model.people.BiologicalSex
+import com.example.alearning.domain.model.people.Individual
+import java.text.SimpleDateFormat
+import java.util.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RosterScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToStudentReport: (String) -> Unit,
+    onNavigateToAthleteReport: (String) -> Unit,
     viewModel: RosterViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
+    RosterContent(
+        uiState = uiState,
+        onAction = { action ->
+            when (action) {
+                is RosterAction.OnNavigateBack -> onNavigateBack()
+                is RosterAction.OnNavigateToAthleteReport -> onNavigateToAthleteReport(action.individualId)
+                else -> viewModel.onAction(action)
+            }
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RosterContent(
+    uiState: RosterUiState,
+    onAction: (RosterAction) -> Unit
+) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Roster Manager") },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = { onAction(RosterAction.OnNavigateBack) }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
-                    IconButton(onClick = { viewModel.showAddStudentDialog() }) {
-                        Icon(Icons.Default.PersonAdd, contentDescription = "Add Student")
+                    IconButton(onClick = { onAction(RosterAction.OnShowRegisterAthleteDialog) }) {
+                        Icon(Icons.Default.PersonAdd, contentDescription = "Register Athlete")
                     }
-                    IconButton(onClick = { viewModel.showAddGroupDialog() }) {
-                        Icon(Icons.Default.GroupAdd, contentDescription = "Add Group")
+                    IconButton(onClick = { onAction(RosterAction.OnShowAddGroupDialog) }) {
+                        Icon(Icons.Default.GroupAdd, contentDescription = "Create Group")
                     }
                 }
             )
         }
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            // Group chips
-            if (uiState.groups.isNotEmpty()) {
-                ScrollableTabRow(
-                    selectedTabIndex = uiState.groups.indexOf(uiState.selectedGroup).coerceAtLeast(0),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    uiState.groups.forEachIndexed { index, group ->
-                        Tab(
-                            selected = group == uiState.selectedGroup,
-                            onClick = { viewModel.selectGroup(group) },
-                            text = { Text(group.name) }
-                        )
-                    }
-                }
-            }
-
-            // Student list for selected group
-            if (uiState.selectedGroup != null) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        "${uiState.studentsInGroup.size} students",
-                        style = MaterialTheme.typography.titleSmall
-                    )
-                    TextButton(onClick = { viewModel.showAddToGroupDialog() }) {
-                        Icon(Icons.Default.PersonAdd, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Add to Group")
-                    }
-                }
-
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(uiState.studentsInGroup) { student ->
-                        ListItem(
-                            headlineContent = {
-                                Text("${student.firstName} ${student.lastName}")
-                            },
-                            supportingContent = {
-                                student.medicalAlert?.let {
-                                    Text(it, color = MaterialTheme.colorScheme.error)
-                                }
-                            },
-                            leadingContent = {
-                                Icon(Icons.Default.Person, contentDescription = null)
-                            },
-                            trailingContent = {
-                                Row {
-                                    IconButton(onClick = { onNavigateToStudentReport(student.id) }) {
-                                        Icon(Icons.Default.Assessment, contentDescription = "Report")
-                                    }
-                                    IconButton(onClick = { viewModel.removeStudentFromGroup(student.id) }) {
-                                        Icon(Icons.Default.RemoveCircleOutline, contentDescription = "Remove")
-                                    }
-                                }
-                            },
-                            modifier = Modifier.clickable { onNavigateToStudentReport(student.id) }
-                        )
-                        HorizontalDivider()
-                    }
-                }
-            } else {
+        when {
+            uiState.isLoading -> {
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize().padding(padding),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Create a group to get started")
+                    CircularProgressIndicator()
+                }
+            }
+            uiState.errorMessage != null -> {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(padding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = uiState.errorMessage,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        TextButton(onClick = { onAction(RosterAction.OnDismissError) }) {
+                            Text("Dismiss")
+                        }
+                    }
+                }
+            }
+            else -> {
+                RosterBody(uiState = uiState, onAction = onAction, padding = padding)
+            }
+        }
+    }
+
+    if (uiState.showAddGroupDialog) {
+        AddGroupDialog(
+            onDismiss = { onAction(RosterAction.OnDismissAddGroupDialog) },
+            onConfirm = { name, location, cycle ->
+                onAction(RosterAction.OnCreateGroup(name, location, cycle))
+            }
+        )
+    }
+
+    if (uiState.showRegisterAthleteDialog) {
+        RegisterAthleteDialog(
+            onDismiss = { onAction(RosterAction.OnDismissRegisterAthleteDialog) },
+            onConfirm = { firstName, lastName, dob, sex, email, medicalAlert ->
+                onAction(RosterAction.OnRegisterAthlete(firstName, lastName, dob, sex, email, medicalAlert))
+            }
+        )
+    }
+
+    if (uiState.showAddToGroupDialog) {
+        AddToGroupDialog(
+            allAthletes = uiState.allAthletes,
+            currentAthleteIds = uiState.athletesInGroup.map { it.id }.toSet(),
+            onDismiss = { onAction(RosterAction.OnDismissAddToGroupDialog) },
+            onAddAthlete = { id -> onAction(RosterAction.OnAddAthleteToGroup(id)) }
+        )
+    }
+}
+
+@Composable
+private fun RosterBody(
+    uiState: RosterUiState,
+    onAction: (RosterAction) -> Unit,
+    padding: PaddingValues
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(padding)
+    ) {
+        if (uiState.groups.isNotEmpty()) {
+            ScrollableTabRow(
+                selectedTabIndex = uiState.groups.indexOf(uiState.selectedGroup).coerceAtLeast(0),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                uiState.groups.forEachIndexed { _, group ->
+                    Tab(
+                        selected = group == uiState.selectedGroup,
+                        onClick = { onAction(RosterAction.OnSelectGroup(group)) },
+                        text = { Text(group.name) }
+                    )
                 }
             }
         }
 
-        // Add Group Dialog
-        if (uiState.showAddGroupDialog) {
-            AddGroupDialog(
-                onDismiss = { viewModel.dismissAddGroupDialog() },
-                onConfirm = { name, location, cycle ->
-                    viewModel.addGroup(name, location, cycle)
+        if (uiState.selectedGroup != null) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "${uiState.athletesInGroup.size} athletes",
+                    style = MaterialTheme.typography.titleSmall
+                )
+                TextButton(onClick = { onAction(RosterAction.OnShowAddToGroupDialog) }) {
+                    Icon(Icons.Default.PersonAdd, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Add to Group")
                 }
-            )
-        }
+            }
 
-        // Add Student Dialog
-        if (uiState.showAddStudentDialog) {
-            AddStudentDialog(
-                onDismiss = { viewModel.dismissAddStudentDialog() },
-                onConfirm = { firstName, lastName, dob, sex ->
-                    viewModel.addStudent(firstName, lastName, dob, sex)
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                items(uiState.athletesInGroup) { athlete ->
+                    AthleteListItem(
+                        athlete = athlete,
+                        onTap = { onAction(RosterAction.OnNavigateToAthleteReport(athlete.id)) },
+                        onRemove = { onAction(RosterAction.OnRemoveAthleteFromGroup(athlete.id)) }
+                    )
+                    HorizontalDivider()
                 }
-            )
-        }
-
-        // Add Student to Group Dialog
-        if (uiState.showAddToGroupDialog) {
-            AddToGroupDialog(
-                allStudents = uiState.allStudents,
-                currentStudentIds = uiState.studentsInGroup.map { it.id }.toSet(),
-                onDismiss = { viewModel.dismissAddToGroupDialog() },
-                onAddStudent = { studentId -> viewModel.addStudentToGroup(studentId) }
-            )
+            }
+        } else {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Create a group to get started")
+            }
         }
     }
+}
+
+@Composable
+private fun AthleteListItem(
+    athlete: Individual,
+    onTap: () -> Unit,
+    onRemove: () -> Unit
+) {
+    ListItem(
+        headlineContent = {
+            Text("${athlete.firstName} ${athlete.lastName}")
+        },
+        supportingContent = {
+            Column {
+                if (athlete.medicalAlert != null) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.Warning,
+                            contentDescription = "Medical alert",
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            athlete.medicalAlert,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+                if (athlete.email != null) {
+                    Text(
+                        athlete.email,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        },
+        leadingContent = {
+            Icon(
+                if (athlete.isRestricted) Icons.Default.Warning else Icons.Default.Person,
+                contentDescription = null,
+                tint = if (athlete.isRestricted) MaterialTheme.colorScheme.error
+                       else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        },
+        trailingContent = {
+            IconButton(onClick = onRemove) {
+                Icon(Icons.Default.RemoveCircleOutline, contentDescription = "Remove from group")
+            }
+        },
+        modifier = Modifier.clickable(onClick = onTap)
+    )
 }
 
 @Composable
@@ -189,38 +278,97 @@ private fun AddGroupDialog(
 }
 
 @Composable
-private fun AddStudentDialog(
+private fun RegisterAthleteDialog(
     onDismiss: () -> Unit,
-    onConfirm: (String, String, Long, BiologicalSex) -> Unit
+    onConfirm: (String, String, Long, BiologicalSex, String?, String?) -> Unit
 ) {
     var firstName by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
     var selectedSex by remember { mutableStateOf(BiologicalSex.UNSPECIFIED) }
+    var dobDay by remember { mutableStateOf("") }
+    var dobMonth by remember { mutableStateOf("") }
+    var dobYear by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var medicalAlert by remember { mutableStateOf("") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Register Student") },
+        title = { Text("Register Athlete") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(value = firstName, onValueChange = { firstName = it }, label = { Text("First Name *") })
-                OutlinedTextField(value = lastName, onValueChange = { lastName = it }, label = { Text("Last Name *") })
+                OutlinedTextField(
+                    value = firstName,
+                    onValueChange = { firstName = it },
+                    label = { Text("First Name *") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = lastName,
+                    onValueChange = { lastName = it },
+                    label = { Text("Last Name *") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Text("Date of Birth *", style = MaterialTheme.typography.labelMedium)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = dobDay,
+                        onValueChange = { if (it.length <= 2) dobDay = it.filter { c -> c.isDigit() } },
+                        label = { Text("DD") },
+                        modifier = Modifier.weight(1f)
+                    )
+                    OutlinedTextField(
+                        value = dobMonth,
+                        onValueChange = { if (it.length <= 2) dobMonth = it.filter { c -> c.isDigit() } },
+                        label = { Text("MM") },
+                        modifier = Modifier.weight(1f)
+                    )
+                    OutlinedTextField(
+                        value = dobYear,
+                        onValueChange = { if (it.length <= 4) dobYear = it.filter { c -> c.isDigit() } },
+                        label = { Text("YYYY") },
+                        modifier = Modifier.weight(1.5f)
+                    )
+                }
+                Text("Biological Sex", style = MaterialTheme.typography.labelMedium)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     BiologicalSex.entries.forEach { sex ->
                         FilterChip(
                             selected = selectedSex == sex,
                             onClick = { selectedSex = sex },
-                            label = { Text(sex.name) }
+                            label = { Text(sex.name.lowercase().replaceFirstChar { it.uppercase() }) }
                         )
                     }
                 }
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text("Email") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = medicalAlert,
+                    onValueChange = { medicalAlert = it },
+                    label = { Text("Medical Alert") },
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         },
         confirmButton = {
+            val dobValid = dobDay.toIntOrNull() in 1..31 &&
+                    dobMonth.toIntOrNull() in 1..12 &&
+                    dobYear.toIntOrNull() in 1900..2025
             TextButton(
                 onClick = {
-                    onConfirm(firstName, lastName, System.currentTimeMillis() - 410_000_000_000L, selectedSex)
+                    val cal = Calendar.getInstance().apply {
+                        set(dobYear.toInt(), dobMonth.toInt() - 1, dobDay.toInt(), 0, 0, 0)
+                        set(Calendar.MILLISECOND, 0)
+                    }
+                    onConfirm(
+                        firstName, lastName, cal.timeInMillis, selectedSex,
+                        email.ifBlank { null }, medicalAlert.ifBlank { null }
+                    )
                 },
-                enabled = firstName.isNotBlank() && lastName.isNotBlank()
+                enabled = firstName.isNotBlank() && lastName.isNotBlank() && dobValid
             ) { Text("Register") }
         },
         dismissButton = {
@@ -231,26 +379,26 @@ private fun AddStudentDialog(
 
 @Composable
 private fun AddToGroupDialog(
-    allStudents: List<com.example.alearning.data.local.entities.people.IndividualEntity>,
-    currentStudentIds: Set<String>,
+    allAthletes: List<Individual>,
+    currentAthleteIds: Set<String>,
     onDismiss: () -> Unit,
-    onAddStudent: (String) -> Unit
+    onAddAthlete: (String) -> Unit
 ) {
-    val availableStudents = allStudents.filter { it.id !in currentStudentIds }
+    val availableAthletes = allAthletes.filter { it.id !in currentAthleteIds }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add Student to Group") },
+        title = { Text("Add Athlete to Group") },
         text = {
-            if (availableStudents.isEmpty()) {
-                Text("No available students. Register new students first.")
+            if (availableAthletes.isEmpty()) {
+                Text("No available athletes. Register new athletes first.")
             } else {
                 LazyColumn(modifier = Modifier.heightIn(max = 300.dp)) {
-                    items(availableStudents) { student ->
+                    items(availableAthletes) { athlete ->
                         ListItem(
-                            headlineContent = { Text("${student.firstName} ${student.lastName}") },
+                            headlineContent = { Text("${athlete.firstName} ${athlete.lastName}") },
                             trailingContent = {
-                                IconButton(onClick = { onAddStudent(student.id) }) {
+                                IconButton(onClick = { onAddAthlete(athlete.id) }) {
                                     Icon(Icons.Default.Add, contentDescription = "Add")
                                 }
                             }

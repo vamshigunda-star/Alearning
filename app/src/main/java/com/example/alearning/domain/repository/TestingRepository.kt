@@ -30,4 +30,6 @@ interface TestingRepository {
     fun getHistoryForTest(individualId: String, testId: String): Flow<List<TestResult>>
 
     fun getEventResults(eventId: String): Flow<List<TestResult>>
+
+    fun getAllResultsForIndividual(individualId: String): Flow<List<TestResult>>
 }

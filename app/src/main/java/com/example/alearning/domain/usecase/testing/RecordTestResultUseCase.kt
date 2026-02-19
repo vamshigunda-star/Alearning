@@ -29,7 +29,8 @@ class RecordTestResultUseCase @Inject constructor(
             rawScore = rawScore,
             ageAtTime = ageAtTime,
             percentile = percentileResult?.percentile,
-            classification = percentileResult?.classification
+            classification = percentileResult?.classification,
+            createdAt = System.currentTimeMillis()
         )
         repository.saveResult(result)
         return result
