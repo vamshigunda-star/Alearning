@@ -1,8 +1,8 @@
 package com.example.alearning.domain.usecase.testing
 
-import com.example.alearning.data.local.entities.people.IndividualEntity
-import com.example.alearning.data.local.entities.standards.FitnessTestEntity
-import com.example.alearning.data.local.entities.testing.TestResultEntity
+import com.example.alearning.domain.model.people.Individual
+import com.example.alearning.domain.model.standards.FitnessTest
+import com.example.alearning.domain.model.testing.TestResult
 import com.example.alearning.domain.repository.PeopleRepository
 import com.example.alearning.domain.repository.TestingRepository
 import kotlinx.coroutines.flow.Flow
@@ -10,9 +10,9 @@ import kotlinx.coroutines.flow.combine
 import javax.inject.Inject
 
 data class TestingGridData(
-    val students: List<IndividualEntity>,
-    val tests: List<FitnessTestEntity>,
-    val results: List<TestResultEntity>
+    val students: List<Individual>,
+    val tests: List<FitnessTest>,
+    val results: List<TestResult>
 )
 
 class GetTestingGridDataUseCase @Inject constructor(

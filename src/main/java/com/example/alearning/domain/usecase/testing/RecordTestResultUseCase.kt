@@ -1,8 +1,10 @@
 package com.example.alearning.domain.usecase.testing
 
-import com.example.alearning.data.local.entities.testing.TestResultEntity
+import com.example.alearning.domain.model.people.BiologicalSex
+import com.example.alearning.domain.model.testing.TestResult
 import com.example.alearning.domain.repository.TestingRepository
 import com.example.alearning.domain.usecase.standards.CalculatePercentileUseCase
+import java.util.UUID
 import javax.inject.Inject
 
 class RecordTestResultUseCase @Inject constructor(
@@ -15,11 +17,12 @@ class RecordTestResultUseCase @Inject constructor(
         testId: String,
         rawScore: Double,
         ageAtTime: Float,
-        sex: String
-    ): TestResultEntity {
+        sex: BiologicalSex
+    ): TestResult {
         val percentileResult = calculatePercentile(testId, rawScore, ageAtTime.toDouble(), sex)
 
-        val result = TestResultEntity(
+        val result = TestResult(
+            id = UUID.randomUUID().toString(),
             eventId = eventId,
             individualId = individualId,
             testId = testId,

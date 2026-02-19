@@ -1,5 +1,6 @@
 package com.example.alearning.domain.usecase.standards
 
+import com.example.alearning.domain.model.people.BiologicalSex
 import com.example.alearning.domain.repository.StandardsRepository
 import javax.inject.Inject
 
@@ -15,7 +16,7 @@ class CalculatePercentileUseCase @Inject constructor(
         testId: String,
         rawScore: Double,
         age: Double,
-        sex: String
+        sex: BiologicalSex
     ): PercentileResult? {
         val norm = repository.getNormResult(testId, sex, age, rawScore)
         return norm?.let {

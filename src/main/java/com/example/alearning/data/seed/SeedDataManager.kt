@@ -1,13 +1,13 @@
 package com.example.alearning.data.seed
 
 import android.content.Context
-import com.example.alearning.data.local.entities.people.BiologicalSex
 import com.example.alearning.data.local.entities.standards.FitnessTestEntity
 import com.example.alearning.data.local.entities.standards.NormReferenceEntity
 import com.example.alearning.data.local.entities.standards.TestCategoryEntity
+import com.example.alearning.data.mapper.standards.toDomain
+import com.example.alearning.domain.model.people.BiologicalSex
 import com.example.alearning.domain.usecase.standards.ImportStandardsUseCase
 import com.google.gson.Gson
-import com.google.gson.annotations.SerializedName
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -63,7 +63,12 @@ class SeedDataManager @Inject constructor(
             )
         }
 
-        importStandardsUseCase(categories, tests, norms)
+        importStandardsUseCase(
+            categories.map { it.toDomain() },
+            tests.map { it.toDomain() },
+            norms.map { it.toDomain() }
+        )
+
         prefs.edit().putBoolean(KEY_DATA_SEEDED, true).apply()
     }
 }

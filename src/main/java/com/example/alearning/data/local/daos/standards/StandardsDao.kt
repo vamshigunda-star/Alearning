@@ -14,6 +14,12 @@ import kotlinx.coroutines.flow.Flow
 interface StandardsDao {
 
     // --- BROWSING TESTS ---
+    @Query("SELECT * FROM fitness_tests ORDER BY name ASC")
+    fun getAllTests(): Flow<List<FitnessTestEntity>>
+
+    // Also useful as a suspend version for one-time fetches:
+    @Query("SELECT * FROM fitness_tests ORDER BY name ASC")
+    suspend fun getAllTestsOnce(): List<FitnessTestEntity>
 
     @Query("SELECT * FROM test_categories ORDER BY sortOrder ASC")
     fun getAllCategories(): Flow<List<TestCategoryEntity>>

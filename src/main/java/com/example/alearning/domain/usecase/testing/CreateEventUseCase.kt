@@ -1,7 +1,8 @@
 package com.example.alearning.domain.usecase.testing
 
-import com.example.alearning.data.local.entities.testing.TestingEventEntity
+import com.example.alearning.domain.model.testing.TestingEvent
 import com.example.alearning.domain.repository.TestingRepository
+import java.util.UUID
 import javax.inject.Inject
 
 class CreateEventUseCase @Inject constructor(
@@ -14,11 +15,12 @@ class CreateEventUseCase @Inject constructor(
         testIds: List<String>,
         location: String? = null,
         notes: String? = null
-    ): Result<TestingEventEntity> {
+    ): Result<TestingEvent> {
         if (name.isBlank()) return Result.failure(IllegalArgumentException("Event name is required"))
         if (testIds.isEmpty()) return Result.failure(IllegalArgumentException("At least one test must be selected"))
 
-        val event = TestingEventEntity(
+        val event = TestingEvent(
+            id = UUID.randomUUID().toString(),
             name = name.trim(),
             date = date,
             groupId = groupId,
