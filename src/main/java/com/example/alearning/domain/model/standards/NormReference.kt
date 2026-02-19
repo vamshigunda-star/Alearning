@@ -1,0 +1,16 @@
+package com.example.alearning.domain.model.standards
+
+import com.example.alearning.domain.model.people.BiologicalSex
+
+data class NormReference(
+    val id: String,
+    val testId: String,
+    val variant: String? = null,
+    val sex: BiologicalSex,
+    val ageMin: Float,
+    val ageMax: Float,
+    val minScore: Double,
+    val maxScore: Double,
+    val percentile: Int,
+    val classification: String? = null
+)
