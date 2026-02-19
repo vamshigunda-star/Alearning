@@ -1,38 +1,39 @@
 package com.example.alearning.domain.repository
 
-import com.example.alearning.data.local.entities.people.GroupEntity
-import com.example.alearning.data.local.entities.people.IndividualEntity
+import com.example.alearning.domain.model.people.Group
+import com.example.alearning.domain.model.people.Individual
+
 import kotlinx.coroutines.flow.Flow
 
 interface PeopleRepository {
 
     // --- Individuals ---
-    fun getAllIndividuals(): Flow<List<IndividualEntity>>
+    fun getAllIndividuals(): Flow<List<Individual>>
 
-    fun searchIndividuals(query: String): Flow<List<IndividualEntity>>
+    fun searchIndividuals(query: String): Flow<List<Individual>>
 
-    suspend fun getIndividualById(id: String): IndividualEntity?
+    suspend fun getIndividualById(id: String): Individual?
 
-    suspend fun insertIndividual(individual: IndividualEntity)
+    suspend fun insertIndividual(individual: Individual)
 
-    suspend fun deleteIndividual(individual: IndividualEntity)
+    suspend fun deleteIndividual(individual: Individual)
 
     // --- Groups ---
-    fun getAllGroups(): Flow<List<GroupEntity>>
+    fun getAllGroups(): Flow<List<Group>>
 
-    suspend fun getGroupById(id: String): GroupEntity?
+    suspend fun getGroupById(id: String): Group?
 
-    suspend fun insertGroup(group: GroupEntity)
+    suspend fun insertGroup(group: Group)
 
-    suspend fun deleteGroup(group: GroupEntity)
+    suspend fun deleteGroup(group: Group)
 
     // --- Rostering (The "Junction" Logic) ---
-    // Note: In the domain layer, we prefer to talk about "adding a student to a group"
+    // Note: In the domain layer, we prefer to talk about "adding a student to a Group"
     // rather than "inserting a cross-ref entity."
 
-    fun getIndividualsInGroup(groupId: String): Flow<List<IndividualEntity>>
+    fun getIndividualsInGroup(groupId: String): Flow<List<Individual>>
 
-    fun getGroupsForIndividual(studentId: String): Flow<List<GroupEntity>>
+    fun getGroupsForIndividual(individualId: String): Flow<List<Group>>
 
     suspend fun addMemberToGroup(groupId: String, individualId: String)
 

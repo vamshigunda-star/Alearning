@@ -1,11 +1,15 @@
 package com.example.alearning.data.repository
 
 import com.example.alearning.data.local.daos.standards.StandardsDao
-import com.example.alearning.data.local.entities.standards.FitnessTestEntity
-import com.example.alearning.data.local.entities.standards.NormReferenceEntity
-import com.example.alearning.data.local.entities.standards.TestCategoryEntity
+import com.example.alearning.data.mapper.standards.toDomain
+import com.example.alearning.data.mapper.standards.toEntity
+import com.example.alearning.domain.model.people.BiologicalSex
+import com.example.alearning.domain.model.standards.FitnessTest
+import com.example.alearning.domain.model.standards.NormReference
+import com.example.alearning.domain.model.standards.TestCategory
 import com.example.alearning.domain.repository.StandardsRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class StandardsRepositoryImpl @Inject constructor(
@@ -13,38 +17,38 @@ class StandardsRepositoryImpl @Inject constructor(
 ) : StandardsRepository {
 
     // --- BROWSING ---
-    override fun getAllCategories(): Flow<List<TestCategoryEntity>> {
-        return dao.getAllCategories()
+    override fun getAllCategories(): Flow<List<TestCategory>> {
+        return dao.getAllCategories().map { list -> list.map { it.toDomain() } }
     }
 
-    override fun getTestsByCategory(categoryId: String): Flow<List<FitnessTestEntity>> {
-        return dao.getTestsByCategory(categoryId)
+    override fun getTestsByCategory(categoryId: String): Flow<List<FitnessTest>> {
+        return dao.getTestsByCategory(categoryId).map { list -> list.map { it.toDomain() } }
     }
 
-    override suspend fun getTestById(testId: String): FitnessTestEntity? {
-        return dao.getTestById(testId)
+    override suspend fun getTestById(testId: String): FitnessTest? {
+        return dao.getTestById(testId)?.toDomain()
     }
 
     // --- INTERPRETATION ---
     override suspend fun getNormResult(
         testId: String,
-        sex: String,
+        sex: BiologicalSex,
         age: Double,
         score: Double
-    ): NormReferenceEntity? {
-        // Connects to the specific query in your StandardsDao
-        return dao.findNormResult(testId, sex, age, score)
+    ): NormReference? {
+        return dao.findNormResult(testId, sex.name, age, score)?.toDomain()
     }
 
     // --- SETUP / IMPORT ---
     override suspend fun importStandards(
-        categories: List<TestCategoryEntity>,
-        tests: List<FitnessTestEntity>,
-        norms: List<NormReferenceEntity>
+        categories: List<TestCategory>,
+        tests: List<FitnessTest>
     ) {
-        // Executes bulk inserts
-        categories.forEach { dao.insertCategory(it) }
-        tests.forEach { dao.insertTest(it) }
-        dao.insertNorms(norms)
+        categories.forEach { dao.insertCategory(it.toEntity()) }
+        tests.forEach { dao.insertTest(it.toEntity()) }
+    }
+
+    override suspend fun insertNorms(norms: List<NormReference>) {
+        dao.insertNorms(norms.map { it.toEntity() })
     }
 }

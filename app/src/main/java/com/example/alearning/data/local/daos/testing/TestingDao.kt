@@ -59,6 +59,36 @@ interface TestingDao {
     fun getHistoryForTest(individualId: String, testId: String): Flow<List<TestResultEntity>>
 
     // Feature: Leaderboard (All results for a specific event)
-    @Query("SELECT * FROM test_results WHERE eventId = :eventId ORDER BY rawScore DESC")
+    @Query("SELECT * FROM test_results WHERE eventId = :eventId")
     fun getEventResults(eventId: String): Flow<List<TestResultEntity>>
+
+    @Query("""
+    SELECT * FROM test_results 
+    WHERE individualId = :individualId 
+    ORDER BY createdAt DESC
+""")
+    fun getAllResultsForIndividual(individualId: String): Flow<List<TestResultEntity>>
+
+
+    @Query("""
+    SELECT * FROM test_results
+    WHERE individualId = :individualId
+    AND createdAt = (
+        SELECT MAX(createdAt) 
+        FROM test_results AS inner_results
+        WHERE inner_results.individualId = :individualId
+        AND inner_results.testId = test_results.testId)""")
+    suspend fun getLatestResultPerTestForIndividual(individualId: String): List<TestResultEntity>
+
+    @Query("""
+    SELECT test_results.* FROM test_results
+    INNER JOIN group_members ON test_results.individualId = group_members.individualId
+    WHERE group_members.groupId = :groupId 
+    AND test_results.testId = :testId
+    ORDER BY test_results.createdAt DESC
+""")
+    fun getGroupResultsForTest(groupId: String, testId: String): Flow<List<TestResultEntity>>
+
+
+
 }

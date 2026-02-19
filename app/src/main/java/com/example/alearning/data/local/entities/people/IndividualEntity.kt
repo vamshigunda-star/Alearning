@@ -4,8 +4,8 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.Index
 import java.util.UUID
+import com.example.alearning.domain.model.people.BiologicalSex
 
-enum class BiologicalSex { MALE, FEMALE, UNSPECIFIED }
 
 @Entity(
     tableName = "individuals",

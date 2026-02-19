@@ -1,7 +1,9 @@
 package com.example.alearning.domain.usecase.people
 
-import com.example.alearning.data.local.entities.people.GroupEntity
+import com.example.alearning.domain.model.people.Group
+import com.example.alearning.domain.model.people.GroupCategory
 import com.example.alearning.domain.repository.PeopleRepository
+import java.util.UUID
 import javax.inject.Inject
 
 class CreateGroupUseCase @Inject constructor(
@@ -11,15 +13,16 @@ class CreateGroupUseCase @Inject constructor(
         name: String,
         location: String? = null,
         cycle: String? = null,
-        category: String? = null
-    ): Result<GroupEntity> {
+        category: GroupCategory? = null
+    ): Result<Group> {
         if (name.isBlank()) return Result.failure(IllegalArgumentException("Group name is required"))
 
-        val group = GroupEntity(
+        val group = Group(
+            id = UUID.randomUUID().toString(),
             name = name.trim(),
             location = location?.trim(),
             cycle = cycle?.trim(),
-            category = category?.trim()
+            category = category
         )
         repository.insertGroup(group)
         return Result.success(group)

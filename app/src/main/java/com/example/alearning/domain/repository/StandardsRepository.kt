@@ -1,31 +1,33 @@
 package com.example.alearning.domain.repository
 
-import com.example.alearning.data.local.entities.standards.FitnessTestEntity
-import com.example.alearning.data.local.entities.standards.NormReferenceEntity
-import com.example.alearning.data.local.entities.standards.TestCategoryEntity
+import com.example.alearning.domain.model.people.BiologicalSex
+import com.example.alearning.domain.model.standards.FitnessTest
+import com.example.alearning.domain.model.standards.NormReference
+import com.example.alearning.domain.model.standards.TestCategory
 import kotlinx.coroutines.flow.Flow
 
 interface StandardsRepository {
 
     // --- Browsing ---
-    fun getAllCategories(): Flow<List<TestCategoryEntity>>
+    fun getAllCategories(): Flow<List<TestCategory>>
 
-    fun getTestsByCategory(categoryId: String): Flow<List<FitnessTestEntity>>
+    fun getTestsByCategory(categoryId: String): Flow<List<FitnessTest>>
 
-    suspend fun getTestById(testId: String): FitnessTestEntity?
+    suspend fun getTestById(testId: String): FitnessTest?
 
     // --- The "Magic" Lookup ---
     suspend fun getNormResult(
         testId: String,
-        sex: String,
+        sex: BiologicalSex,
         age: Double,
         score: Double
-    ): NormReferenceEntity?
+    ): NormReference?
 
     // --- Admin / Setup ---
     suspend fun importStandards(
-        categories: List<TestCategoryEntity>,
-        tests: List<FitnessTestEntity>,
-        norms: List<NormReferenceEntity>
+        categories: List<TestCategory>,
+        tests: List<FitnessTest>
     )
+
+    suspend fun insertNorms(norms: List<NormReference>)
 }

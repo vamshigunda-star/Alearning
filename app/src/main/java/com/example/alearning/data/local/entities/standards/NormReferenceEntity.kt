@@ -4,7 +4,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.example.alearning.data.local.entities.people.BiologicalSex
+import com.example.alearning.domain.model.people.BiologicalSex
 import java.util.UUID
 
 @Entity(

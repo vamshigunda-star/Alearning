@@ -1,12 +1,16 @@
 package com.example.alearning.data.repository
 
 import com.example.alearning.data.local.daos.testing.TestingDao
-import com.example.alearning.data.local.entities.standards.FitnessTestEntity
 import com.example.alearning.data.local.entities.testing.EventTestCrossRef
-import com.example.alearning.data.local.entities.testing.TestResultEntity
-import com.example.alearning.data.local.entities.testing.TestingEventEntity
+import com.example.alearning.data.mapper.standards.toDomain
+import com.example.alearning.data.mapper.testing.toDomain
+import com.example.alearning.data.mapper.testing.toEntity
+import com.example.alearning.domain.model.standards.FitnessTest
+import com.example.alearning.domain.model.testing.TestResult
+import com.example.alearning.domain.model.testing.TestingEvent
 import com.example.alearning.domain.repository.TestingRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class TestingRepositoryImpl @Inject constructor(
@@ -14,24 +18,23 @@ class TestingRepositoryImpl @Inject constructor(
 ) : TestingRepository {
 
     // --- EVENTS ---
-    override fun getAllEvents(): Flow<List<TestingEventEntity>> {
-        return dao.getAllEvents()
+    override fun getAllEvents(): Flow<List<TestingEvent>> {
+        return dao.getAllEvents().map { list -> list.map { it.toDomain() } }
     }
 
-    override fun getEventsForGroup(groupId: String): Flow<List<TestingEventEntity>> {
-        return dao.getEventsForGroup(groupId)
+    override fun getEventsForGroup(groupId: String): Flow<List<TestingEvent>> {
+        return dao.getEventsForGroup(groupId).map { list -> list.map { it.toDomain() } }
     }
 
-    override suspend fun getEventById(eventId: String): TestingEventEntity? {
-        return dao.getEventById(eventId)
+    override suspend fun getEventById(eventId: String): TestingEvent? {
+        return dao.getEventById(eventId)?.toDomain()
     }
 
-    override suspend fun createEvent(event: TestingEventEntity, testIds: List<String>) {
+    override suspend fun createEvent(event: TestingEvent, testIds: List<String>) {
         // 1. Save the event details
-        dao.insertEvent(event)
+        dao.insertEvent(event.toEntity())
 
         // 2. Loop through the test IDs and link them to this event
-        // We use the index (0, 1, 2) as the sort order
         testIds.forEachIndexed { index, testId ->
             val crossRef = EventTestCrossRef(
                 eventId = event.id,
@@ -43,20 +46,20 @@ class TestingRepositoryImpl @Inject constructor(
     }
 
     // --- MENU ---
-    override fun getTestsForEvent(eventId: String): Flow<List<FitnessTestEntity>> {
-        return dao.getTestsForEvent(eventId)
+    override fun getTestsForEvent(eventId: String): Flow<List<FitnessTest>> {
+        return dao.getTestsForEvent(eventId).map { list -> list.map { it.toDomain() } }
     }
 
     // --- RESULTS ---
-    override suspend fun saveResult(result: TestResultEntity) {
-        dao.insertResult(result)
+    override suspend fun saveResult(result: TestResult) {
+        dao.insertResult(result.toEntity())
     }
 
-    override fun getHistoryForTest(individualId: String, testId: String): Flow<List<TestResultEntity>> {
-        return dao.getHistoryForTest(individualId, testId)
+    override fun getHistoryForTest(individualId: String, testId: String): Flow<List<TestResult>> {
+        return dao.getHistoryForTest(individualId, testId).map { list -> list.map { it.toDomain() } }
     }
 
-    override fun getEventResults(eventId: String): Flow<List<TestResultEntity>> {
-        return dao.getEventResults(eventId)
+    override fun getEventResults(eventId: String): Flow<List<TestResult>> {
+        return dao.getEventResults(eventId).map { list -> list.map { it.toDomain() } }
     }
 }
