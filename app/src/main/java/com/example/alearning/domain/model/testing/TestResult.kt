@@ -15,5 +15,6 @@ data class TestResult(
     // Interpretation
     val percentile: Int? = null,
     val classification: String? = null,
-    val normVariantUsed: String? = null
+    val normVariantUsed: String? = null,
+    val createdAt: Long
 )

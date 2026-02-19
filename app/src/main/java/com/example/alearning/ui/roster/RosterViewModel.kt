@@ -2,12 +2,12 @@ package com.example.alearning.ui.roster
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.alearning.data.local.entities.people.BiologicalSex
-import com.example.alearning.data.local.entities.people.GroupEntity
-import com.example.alearning.data.local.entities.people.IndividualEntity
+import com.example.alearning.domain.model.people.BiologicalSex
+import com.example.alearning.domain.model.people.Group
+import com.example.alearning.domain.model.people.Individual
 import com.example.alearning.domain.usecase.people.CreateGroupUseCase
 import com.example.alearning.domain.usecase.people.ManageRosterUseCase
-import com.example.alearning.domain.usecase.people.RegisterStudentUseCase
+import com.example.alearning.domain.usecase.people.RegisterAthleteUseCase
 import com.example.alearning.domain.repository.PeopleRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -15,10 +15,10 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class RosterUiState(
-    val groups: List<GroupEntity> = emptyList(),
-    val selectedGroup: GroupEntity? = null,
-    val studentsInGroup: List<IndividualEntity> = emptyList(),
-    val allStudents: List<IndividualEntity> = emptyList(),
+    val groups: List<Group> = emptyList(),
+    val selectedGroup: Group? = null,
+    val studentsInGroup: List<Individual> = emptyList(),
+    val allStudents: List<Individual> = emptyList(),
     val showAddGroupDialog: Boolean = false,
     val showAddStudentDialog: Boolean = false,
     val showAddToGroupDialog: Boolean = false
@@ -27,7 +27,7 @@ data class RosterUiState(
 @HiltViewModel
 class RosterViewModel @Inject constructor(
     private val peopleRepository: PeopleRepository,
-    private val registerStudent: RegisterStudentUseCase,
+    private val registerStudent: RegisterAthleteUseCase,
     private val createGroup: CreateGroupUseCase,
     private val manageRoster: ManageRosterUseCase
 ) : ViewModel() {
@@ -51,7 +51,7 @@ class RosterViewModel @Inject constructor(
         }
     }
 
-    fun selectGroup(group: GroupEntity) {
+    fun selectGroup(group: Group) {
         _uiState.value = _uiState.value.copy(selectedGroup = group)
         viewModelScope.launch {
             manageRoster.getStudentsInGroup(group.id).collect { students ->

@@ -3,8 +3,7 @@ package com.example.alearning.ui.report
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.alearning.data.local.entities.people.IndividualEntity
-import com.example.alearning.data.local.entities.testing.TestResultEntity
+import com.example.alearning.domain.model.people.Individual
 import com.example.alearning.domain.repository.PeopleRepository
 import com.example.alearning.domain.repository.TestingRepository
 import com.example.alearning.domain.repository.StandardsRepository
@@ -25,7 +24,7 @@ data class TestSummary(
 )
 
 data class StudentReportUiState(
-    val student: IndividualEntity? = null,
+    val student: Individual? = null,
     val testSummaries: List<TestSummary> = emptyList(),
     val isLoading: Boolean = true
 )
@@ -59,7 +58,7 @@ class StudentReportViewModel @Inject constructor(
         }
     }
 
-    private suspend fun loadTestResults(student: IndividualEntity) {
+    private suspend fun loadTestResults(student: Individual) {
         // Get all categories and tests to build summaries
         val categories = standardsRepository.getAllCategories().first()
         val summaries = mutableListOf<TestSummary>()

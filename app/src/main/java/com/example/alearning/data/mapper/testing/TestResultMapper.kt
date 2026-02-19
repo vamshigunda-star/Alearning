@@ -15,7 +15,8 @@ fun TestResultEntity.toDomain(): TestResult {
         bodyWeightKg = this.bodyWeightKg,
         percentile = this.percentile,
         classification = this.classification,
-        normVariantUsed = this.normVariantUsed
+        normVariantUsed = this.normVariantUsed,
+        createdAt = this.createdAt
     )
 }
 

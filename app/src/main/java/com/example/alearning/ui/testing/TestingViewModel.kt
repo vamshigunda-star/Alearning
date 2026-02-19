@@ -3,12 +3,11 @@ package com.example.alearning.ui.testing
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.alearning.data.local.entities.people.BiologicalSex
-import com.example.alearning.data.local.entities.people.GroupEntity
-import com.example.alearning.data.local.entities.people.IndividualEntity
-import com.example.alearning.data.local.entities.standards.FitnessTestEntity
-import com.example.alearning.data.local.entities.standards.TestCategoryEntity
-import com.example.alearning.data.local.entities.testing.TestResultEntity
+import com.example.alearning.domain.model.people.Group
+import com.example.alearning.domain.model.people.Individual
+import com.example.alearning.domain.model.standards.FitnessTest
+import com.example.alearning.domain.model.standards.TestCategory
+import com.example.alearning.domain.model.testing.TestResult
 import com.example.alearning.domain.repository.PeopleRepository
 import com.example.alearning.domain.usecase.standards.GetTestLibraryUseCase
 import com.example.alearning.domain.usecase.testing.CreateEventUseCase
@@ -31,9 +30,9 @@ data class TestingGridUiState(
 )
 
 data class EditingCell(
-    val student: IndividualEntity,
-    val test: FitnessTestEntity,
-    val currentResult: TestResultEntity?
+    val student: Individual,
+    val test: FitnessTest,
+    val currentResult: TestResult?
 )
 
 @HiltViewModel
@@ -59,7 +58,7 @@ class TestingGridViewModel @Inject constructor(
         }
     }
 
-    fun startEditing(student: IndividualEntity, test: FitnessTestEntity) {
+    fun startEditing(student: Individual, test: FitnessTest) {
         val currentResult = _uiState.value.gridData?.results?.find {
             it.individualId == student.id && it.testId == test.id
         }
@@ -85,7 +84,7 @@ class TestingGridViewModel @Inject constructor(
                 testId = cell.test.id,
                 rawScore = rawScore,
                 ageAtTime = ageYears,
-                sex = student.sex.name
+                sex = student.sex
             )
             _uiState.value = _uiState.value.copy(editingCell = null)
         }
@@ -95,9 +94,9 @@ class TestingGridViewModel @Inject constructor(
 // --- Create Event State ---
 
 data class CreateEventUiState(
-    val groups: List<GroupEntity> = emptyList(),
-    val categories: List<TestCategoryEntity> = emptyList(),
-    val availableTests: List<FitnessTestEntity> = emptyList(),
+    val groups: List<Group> = emptyList(),
+    val categories: List<TestCategory> = emptyList(),
+    val availableTests: List<FitnessTest> = emptyList(),
     val selectedGroupId: String? = null,
     val selectedTestIds: Set<String> = emptySet(),
     val eventName: String = "",

@@ -8,12 +8,12 @@ import javax.inject.Inject
 class ManageRosterUseCase @Inject constructor(
     private val repository: PeopleRepository
 ) {
-    suspend fun addStudentToGroup(groupId: String, studentId: String) {
-        repository.addMemberToGroup(groupId, studentId)
+    suspend fun addStudentToGroup(groupId: String, individualId: String) {
+        repository.addMemberToGroup(groupId, individualId)
     }
 
-    suspend fun removeStudentFromGroup(groupId: String, studentId: String) {
-        repository.removeMemberFromGroup(groupId, studentId)
+    suspend fun removeStudentFromGroup(groupId: String, individualId: String) {
+        repository.removeMemberFromGroup(groupId, individualId)
     }
 
     fun getStudentsInGroup(groupId: String): Flow<List<Individual>> {

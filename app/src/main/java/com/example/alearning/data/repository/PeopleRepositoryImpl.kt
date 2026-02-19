@@ -58,8 +58,8 @@ class PeopleRepositoryImpl @Inject constructor(
         return dao.getIndividualsInGroup(groupId).map { list -> list.map { it.toDomain() } }
     }
 
-    override fun getGroupsForIndividual(studentId: String): Flow<List<Group>> {
-        return dao.getGroupsForIndividual(studentId).map { list -> list.map { it.toDomain() } }
+    override fun getGroupsForIndividual(individualId: String): Flow<List<Group>> {
+        return dao.getGroupsForIndividual(individualId).map { list -> list.map { it.toDomain() } }
     }
 
     override suspend fun addMemberToGroup(groupId: String, individualId: String) {

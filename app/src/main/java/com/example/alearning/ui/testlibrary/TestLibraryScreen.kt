@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.alearning.data.local.entities.standards.FitnessTestEntity
+import com.example.alearning.domain.model.standards.FitnessTest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,7 +71,7 @@ fun TestLibraryScreen(
 }
 
 @Composable
-private fun TestCard(test: FitnessTestEntity) {
+private fun TestCard(test: FitnessTest) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(

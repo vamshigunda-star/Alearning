@@ -22,9 +22,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.alearning.data.local.entities.people.IndividualEntity
-import com.example.alearning.data.local.entities.standards.FitnessTestEntity
-import com.example.alearning.data.local.entities.testing.TestResultEntity
+import com.example.alearning.domain.model.people.Individual
+import com.example.alearning.domain.model.standards.FitnessTest
+import com.example.alearning.domain.model.testing.TestResult
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -152,11 +152,11 @@ fun TestingGridScreen(
 
 @Composable
 private fun StudentRow(
-    student: IndividualEntity,
-    tests: List<FitnessTestEntity>,
-    results: List<TestResultEntity>,
+    student: Individual,
+    tests: List<FitnessTest>,
+    results: List<TestResult>,
     horizontalScroll: androidx.compose.foundation.ScrollState,
-    onCellClick: (FitnessTestEntity) -> Unit,
+    onCellClick: (FitnessTest) -> Unit,
     onStudentClick: () -> Unit
 ) {
     Row(modifier = Modifier.fillMaxWidth()) {
@@ -197,7 +197,7 @@ private fun StudentRow(
 
 @Composable
 private fun ScoreCell(
-    result: TestResultEntity?,
+    result: TestResult?,
     onClick: () -> Unit
 ) {
     val bgColor = when {
