@@ -6,7 +6,7 @@ import com.example.alearning.domain.repository.PeopleRepository
 import java.util.UUID
 import javax.inject.Inject
 
-class RegisterStudentUseCase @Inject constructor(
+class RegisterAthleteUseCase @Inject constructor(
     private val repository: PeopleRepository
 ) {
     suspend operator fun invoke(

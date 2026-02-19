@@ -62,4 +62,8 @@ class TestingRepositoryImpl @Inject constructor(
     override fun getEventResults(eventId: String): Flow<List<TestResult>> {
         return dao.getEventResults(eventId).map { list -> list.map { it.toDomain() } }
     }
+
+    override fun getAllResultsForIndividual(individualId: String): Flow<List<TestResult>> {
+        return dao.getAllResultsForIndividual(individualId).map { list -> list.map { it.toDomain() } }
+    }
 }

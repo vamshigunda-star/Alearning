@@ -14,7 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.alearning.data.local.entities.people.BiologicalSex
+import com.example.alearning.domain.model.people.BiologicalSex
+import com.example.alearning.domain.model.people.Individual
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -231,7 +232,7 @@ private fun AddStudentDialog(
 
 @Composable
 private fun AddToGroupDialog(
-    allStudents: List<com.example.alearning.data.local.entities.people.IndividualEntity>,
+    allStudents: List<Individual>,
     currentStudentIds: Set<String>,
     onDismiss: () -> Unit,
     onAddStudent: (String) -> Unit

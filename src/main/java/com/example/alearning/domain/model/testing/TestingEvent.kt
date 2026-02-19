@@ -6,5 +6,6 @@ data class TestingEvent(
     val name: String,
     val date: Long,
     val location: String? = null,
-    val notes: String? = null
+    val notes: String? = null,
+
 )

@@ -2,8 +2,8 @@ package com.example.alearning.ui.testlibrary
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.alearning.data.local.entities.standards.FitnessTestEntity
-import com.example.alearning.data.local.entities.standards.TestCategoryEntity
+import com.example.alearning.domain.model.standards.FitnessTest
+import com.example.alearning.domain.model.standards.TestCategory
 import com.example.alearning.domain.usecase.standards.GetTestLibraryUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,9 +13,9 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class TestLibraryUiState(
-    val categories: List<TestCategoryEntity> = emptyList(),
-    val selectedCategory: TestCategoryEntity? = null,
-    val testsForCategory: List<FitnessTestEntity> = emptyList()
+    val categories: List<TestCategory> = emptyList(),
+    val selectedCategory: TestCategory? = null,
+    val testsForCategory: List<FitnessTest> = emptyList()
 )
 
 @HiltViewModel
@@ -37,7 +37,7 @@ class TestLibraryViewModel @Inject constructor(
         }
     }
 
-    fun selectCategory(category: TestCategoryEntity) {
+    fun selectCategory(category: TestCategory) {
         _uiState.value = _uiState.value.copy(selectedCategory = category)
         viewModelScope.launch {
             getTestLibrary.getTestsByCategory(category.id).collect { tests ->

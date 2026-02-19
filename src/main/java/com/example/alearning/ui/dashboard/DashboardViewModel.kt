@@ -2,8 +2,8 @@ package com.example.alearning.ui.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.alearning.data.local.entities.people.GroupEntity
-import com.example.alearning.data.local.entities.testing.TestingEventEntity
+import com.example.alearning.domain.model.people.Group
+import com.example.alearning.domain.model.testing.TestingEvent
 import com.example.alearning.domain.repository.PeopleRepository
 import com.example.alearning.domain.repository.TestingRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,8 +14,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class DashboardUiState(
-    val recentEvents: List<TestingEventEntity> = emptyList(),
-    val groups: List<GroupEntity> = emptyList(),
+    val recentEvents: List<TestingEvent> = emptyList(),
+    val groups: List<Group> = emptyList(),
     val studentCount: Int = 0,
     val groupCount: Int = 0
 )
