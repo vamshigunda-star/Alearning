@@ -16,5 +16,6 @@ data class TestResult(
     val percentile: Int? = null,
     val classification: String? = null,
     val normVariantUsed: String? = null,
+    val captureMethod: CaptureMethod = CaptureMethod.MANUAL_ENTRY,
     val createdAt: Long
 )

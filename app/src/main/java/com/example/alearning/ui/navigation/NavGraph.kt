@@ -1,6 +1,7 @@
 package com.example.alearning.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -15,12 +16,14 @@ import com.example.alearning.ui.roster.RosterScreen
 import com.example.alearning.ui.testlibrary.TestLibraryScreen
 import com.example.alearning.ui.testing.CreateEventScreen
 import com.example.alearning.ui.testing.TestingGridScreen
+import com.example.alearning.ui.testing.stopwatch.StopwatchScreen
 
 @Composable
-fun NavGraph(navController: NavHostController) {
+fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Dashboard.route
+        startDestination = Screen.Dashboard.route,
+        modifier = modifier
     ) {
         composable(Screen.Dashboard.route) {
             DashboardScreen(
@@ -30,7 +33,9 @@ fun NavGraph(navController: NavHostController) {
                 onNavigateToQuickTest = { navController.navigate(Screen.QuickTest.route) },
                 onNavigateToTestingGrid = { eventId, groupId ->
                     navController.navigate(Screen.TestingGrid.createRoute(eventId, groupId))
-                }
+                },
+                onNavigateToLeaderboard = { navController.navigate(Screen.Leaderboard.route) },
+                onNavigateToAnalytics = { navController.navigate(Screen.Analytics.route) }
             )
         }
 
@@ -66,23 +71,40 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
+        composable(Screen.Analytics.route) {
+            // Placeholder for Analytics Screen
+        }
+
+        composable(Screen.Report.route){
+            // Placeholder for Report Screen
+
+        }
+
+
+
+
         composable(
             route = Screen.TestingGrid.route,
             arguments = listOf(
                 navArgument("eventId") { type = NavType.StringType },
                 navArgument("groupId") { type = NavType.StringType }
             )
-        ) {
+        ) { backStackEntry ->
+            val eventId = backStackEntry.arguments?.getString("eventId") ?: ""
+            val groupId = backStackEntry.arguments?.getString("groupId") ?: ""
             TestingGridScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToAthleteReport = { individualId ->
                     navController.navigate(Screen.AthleteReport.createRoute(individualId))
                 },
-                onNavigateToLeaderboard = { eventId, groupId, mode ->
-                    navController.navigate(Screen.Leaderboard.createRoute(eventId, groupId, mode))
+                onNavigateToLeaderboard = { _, _, _ ->
+                    navController.navigate(Screen.Leaderboard.route)
                 },
-                onNavigateToGroupReport = { eventId, groupId ->
-                    navController.navigate(Screen.GroupReport.createRoute(eventId, groupId))
+                onNavigateToGroupReport = { evId, grId ->
+                    navController.navigate(Screen.GroupReport.createRoute(evId, grId))
+                },
+                onNavigateToStopwatch = { evId, testId, grId ->
+                    navController.navigate(Screen.Stopwatch.createRoute(evId, testId, grId))
                 }
             )
         }
@@ -110,23 +132,30 @@ fun NavGraph(navController: NavHostController) {
                 onNavigateToAthleteReport = { individualId ->
                     navController.navigate(Screen.AthleteReport.createRoute(individualId))
                 },
-                onNavigateToLeaderboard = { eventId, groupId, mode ->
-                    navController.navigate(Screen.Leaderboard.createRoute(eventId, groupId, mode))
+                onNavigateToLeaderboard = { _, _, _ ->
+                    navController.navigate(Screen.Leaderboard.route)
                 }
             )
         }
 
+
+
+
         composable(
-            route = Screen.Leaderboard.route,
+            route = Screen.Stopwatch.route,
             arguments = listOf(
                 navArgument("eventId") { type = NavType.StringType },
-                navArgument("groupId") { type = NavType.StringType },
-                navArgument("mode") { type = NavType.StringType }
+                navArgument("fitnessTestId") { type = NavType.StringType },
+                navArgument("groupId") { type = NavType.StringType }
             )
         ) {
-            LeaderboardScreen(
+            StopwatchScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
+        }
+
+        composable(route = Screen.Leaderboard.route) {
+            LeaderboardScreen(onNavigateBack = { navController.popBackStack() })
         }
     }
 }

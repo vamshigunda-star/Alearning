@@ -1,12 +1,17 @@
 package com.example.alearning.ui.quicktest
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SkipNext
@@ -14,10 +19,18 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.alearning.domain.model.people.Individual
+import com.example.alearning.ui.theme.*
+import com.example.alearning.ui.components.testing.PercentileGauge
+import com.example.alearning.ui.components.testing.TestInputSwitcher
+import com.example.alearning.domain.model.people.BiologicalSex
 
 @Composable
 fun QuickTestScreen(
@@ -33,7 +46,8 @@ fun QuickTestScreen(
                 is QuickTestAction.OnNavigateBack -> onNavigateBack()
                 else -> viewModel.onAction(action)
             }
-        }
+        },
+        onLiveScoreChange = { viewModel.onLiveScoreChange(it) }
     )
 }
 
@@ -41,217 +55,291 @@ fun QuickTestScreen(
 @Composable
 fun QuickTestContent(
     uiState: QuickTestUiState,
-    onAction: (QuickTestAction) -> Unit
+    onAction: (QuickTestAction) -> Unit,
+    onLiveScoreChange: (Double) -> Unit
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = {
                     Text(
                         when (uiState.step) {
-                            QuickTestStep.SELECT_ATHLETE -> "Select Athlete"
-                            QuickTestStep.SELECT_TESTS -> "Select Tests"
+                            QuickTestStep.SETUP -> "Quick Test Setup"
                             QuickTestStep.ENTER_SCORES -> "Enter Scores"
                             QuickTestStep.COMPLETE -> "Complete"
-                        }
+                        },
+                        style = MaterialTheme.typography.titleLarge
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = { onAction(QuickTestAction.OnNavigateBack) }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = NavyPrimary,
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White
+                )
             )
-        }
-    ) { padding ->
-        when {
-            uiState.isLoading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize().padding(padding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
+        },
+        bottomBar = {
+            if (uiState.step == QuickTestStep.SETUP) {
+                Surface(tonalElevation = 3.dp) {
+                    val canStart = uiState.athleteSearchQuery.isNotBlank() && 
+                                 uiState.selectedTestIds.isNotEmpty() &&
+                                 (!uiState.isGuest || (uiState.guestAge.isNotBlank() && uiState.guestSex != BiologicalSex.UNSPECIFIED))
+
+                    Button(
+                        onClick = { onAction(QuickTestAction.OnConfirmSetup) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                            .height(56.dp),
+                        enabled = canStart,
+                        shape = MaterialTheme.shapes.large
+                    ) {
+                        Text("Start Testing", style = MaterialTheme.typography.titleMedium)
+                    }
                 }
             }
-            uiState.errorMessage != null && uiState.allAthletes.isEmpty() -> {
-                Box(
-                    modifier = Modifier.fillMaxSize().padding(padding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(uiState.errorMessage, color = MaterialTheme.colorScheme.error)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        TextButton(onClick = { onAction(QuickTestAction.OnDismissError) }) {
-                            Text("Dismiss")
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { padding ->
+        when {
+            uiState.isLoading -> LoadingState()
+            uiState.errorMessage != null && uiState.categories.isEmpty() -> ErrorState(
+                message = uiState.errorMessage,
+                onDismiss = { onAction(QuickTestAction.OnDismissError) }
+            )
+            else -> {
+                Box(modifier = Modifier.padding(padding)) {
+                    when (uiState.step) {
+                        QuickTestStep.SETUP -> SetupStep(uiState, onAction)
+                        QuickTestStep.ENTER_SCORES -> EnterScoresStep(uiState, onAction, onLiveScoreChange)
+                        QuickTestStep.COMPLETE -> CompleteStep(onAction)
+                    }
+
+                    // Floating error message if any
+                    if (uiState.errorMessage != null) {
+                        Snackbar(
+                            modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
+                            action = {
+                                TextButton(onClick = { onAction(QuickTestAction.OnDismissError) }) {
+                                    Text("Dismiss")
+                                }
+                            }
+                        ) {
+                            Text(uiState.errorMessage)
                         }
                     }
                 }
             }
-            else -> {
-                when (uiState.step) {
-                    QuickTestStep.SELECT_ATHLETE -> SelectAthleteStep(uiState, onAction, padding)
-                    QuickTestStep.SELECT_TESTS -> SelectTestsStep(uiState, onAction, padding)
-                    QuickTestStep.ENTER_SCORES -> EnterScoresStep(uiState, onAction, padding)
-                    QuickTestStep.COMPLETE -> CompleteStep(onAction, padding)
-                }
-            }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SelectAthleteStep(
+private fun SetupStep(
     uiState: QuickTestUiState,
-    onAction: (QuickTestAction) -> Unit,
-    padding: PaddingValues
+    onAction: (QuickTestAction) -> Unit
 ) {
-    val filteredAthletes = if (uiState.searchQuery.isBlank()) {
-        uiState.allAthletes
-    } else {
-        uiState.allAthletes.filter { athlete ->
-            val query = uiState.searchQuery.lowercase()
-            athlete.firstName.lowercase().contains(query) ||
-                    athlete.lastName.lowercase().contains(query)
-        }
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(padding)
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        OutlinedTextField(
-            value = uiState.searchQuery,
-            onValueChange = { onAction(QuickTestAction.OnSearchQueryChange(it)) },
-            label = { Text("Search athletes") },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            singleLine = true
-        )
+        item {
+            Text(
+                "Athlete Details",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+        }
 
-        if (filteredAthletes.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("No athletes found. Register athletes first.")
-            }
-        } else {
-            LazyColumn {
-                items(filteredAthletes) { athlete ->
-                    ListItem(
-                        headlineContent = { Text("${athlete.firstName} ${athlete.lastName}") },
-                        supportingContent = {
-                            Text(
-                                "Sex: ${athlete.sex.name.lowercase().replaceFirstChar { it.uppercase() }}",
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        },
-                        leadingContent = {
-                            Icon(Icons.Default.Person, contentDescription = null)
-                        },
-                        modifier = Modifier.clickable {
-                            onAction(QuickTestAction.OnSelectAthlete(athlete))
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = uiState.athleteSearchQuery,
+                    onValueChange = { onAction(QuickTestAction.OnAthleteQueryChange(it)) },
+                    label = { Text("Athlete Name") },
+                    placeholder = { Text("Enter name or search...") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    leadingIcon = { Icon(Icons.Default.Person, null) },
+                    trailingIcon = {
+                        if (uiState.selectedAthlete != null) {
+                            Icon(Icons.Default.CheckCircle, null, tint = Color(0xFF4CAF50))
                         }
-                    )
-                    HorizontalDivider()
+                    },
+                    shape = MaterialTheme.shapes.medium
+                )
+
+                // Search Suggestions
+                if (uiState.matchingAthletes.isNotEmpty()) {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.medium,
+                        tonalElevation = 2.dp,
+                        shadowElevation = 4.dp
+                    ) {
+                        Column {
+                            uiState.matchingAthletes.take(3).forEach { athlete ->
+                                ListItem(
+                                    headlineContent = { Text(athlete.fullName) },
+                                    supportingContent = { Text(athlete.sex.name) },
+                                    leadingContent = { 
+                                        Box(Modifier.size(32.dp).background(NavyPrimary, CircleShape), contentAlignment = Alignment.Center) {
+                                            Text(athlete.firstName.first().toString(), color = Color.White)
+                                        }
+                                    },
+                                    modifier = Modifier.clickable { onAction(QuickTestAction.OnSelectAthlete(athlete)) }
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
-    }
-}
 
-@Composable
-private fun SelectTestsStep(
-    uiState: QuickTestUiState,
-    onAction: (QuickTestAction) -> Unit,
-    padding: PaddingValues
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(padding)
-    ) {
-        // Athlete info
-        uiState.selectedAthlete?.let { athlete ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-            ) {
-                Row(
-                    modifier = Modifier.padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+        if (uiState.isGuest && uiState.athleteSearchQuery.isNotBlank()) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                 ) {
-                    Icon(Icons.Default.Person, contentDescription = null)
-                    Text(
-                        "${athlete.firstName} ${athlete.lastName}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text("Guest Details (Required for Percentiles)", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                        
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedTextField(
+                                value = uiState.guestAge,
+                                onValueChange = { if (it.all { char -> char.isDigit() }) onAction(QuickTestAction.OnSetGuestAge(it)) },
+                                label = { Text("Age") },
+                                modifier = Modifier.weight(1f),
+                                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number)
+                            )
+                            
+                            var expanded by remember { mutableStateOf(false) }
+                            Box(modifier = Modifier.weight(1f)) {
+                                OutlinedTextField(
+                                    value = uiState.guestSex.name,
+                                    onValueChange = {},
+                                    readOnly = true,
+                                    label = { Text("Sex") },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    trailingIcon = {ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedContainerColor = Color.Transparent,
+                                        unfocusedContainerColor = Color.Transparent
+                                    ),
+                                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+                                        .also { interactionSource ->
+                                            LaunchedEffect(interactionSource) {
+                                                interactionSource.interactions.collect {
+                                                    if (it is androidx.compose.foundation.interaction.PressInteraction.Release) {
+                                                        expanded = !expanded
+                                                    }
+                                                }
+                                            }
+                                        }
+                                )
+                                DropdownMenu(
+                                    expanded = expanded,
+                                    onDismissRequest = { expanded = false }
+                                ) {
+                                    BiologicalSex.values().filter { it != BiologicalSex.UNSPECIFIED }.forEach { sex ->
+                                        DropdownMenuItem(
+                                            text = { Text(sex.name) },
+                                            onClick = {
+                                                onAction(QuickTestAction.OnSetGuestSex(sex))
+                                                expanded = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
 
-        // Category tabs
-        if (uiState.categories.isNotEmpty()) {
-            ScrollableTabRow(
-                selectedTabIndex = uiState.selectedCategoryIndex
-            ) {
-                uiState.categories.forEachIndexed { index, category ->
-                    Tab(
-                        selected = index == uiState.selectedCategoryIndex,
-                        onClick = { onAction(QuickTestAction.OnSelectCategory(index)) },
-                        text = { Text(category.name, maxLines = 1) }
-                    )
-                }
-            }
+        item {
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
         }
 
-        // Test checkboxes
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            items(uiState.availableTests) { test ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onAction(QuickTestAction.OnToggleTest(test.id)) }
-                        .padding(vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+        item {
+            OutlinedTextField(
+                value = uiState.eventName,
+                onValueChange = { onAction(QuickTestAction.OnSetEventName(it)) },
+                label = { Text("Event Name (Optional)") },
+                placeholder = { Text("e.g., Morning Session") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                shape = MaterialTheme.shapes.medium
+            )
+        }
+
+        item {
+            Text(
+                "Select Tests",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        item {
+            if (uiState.categories.isNotEmpty()) {
+                ScrollableTabRow(
+                    selectedTabIndex = uiState.selectedCategoryIndex,
+                    edgePadding = 0.dp,
+                    containerColor = Color.Transparent,
+                    divider = {}
                 ) {
-                    Checkbox(
-                        checked = test.id in uiState.selectedTestIds,
-                        onCheckedChange = { onAction(QuickTestAction.OnToggleTest(test.id)) }
-                    )
-                    Column {
-                        Text(test.name, style = MaterialTheme.typography.bodyLarge)
-                        Text(
-                            "${test.unit} - ${if (test.isHigherBetter) "Higher is better" else "Lower is better"}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                    uiState.categories.forEachIndexed { index, category ->
+                        Tab(
+                            selected = index == uiState.selectedCategoryIndex,
+                            onClick = { onAction(QuickTestAction.OnSelectCategory(index)) },
+                            text = { Text(category.name, style = MaterialTheme.typography.labelLarge) }
                         )
                     }
                 }
             }
         }
 
-        // Confirm button
-        Button(
-            onClick = { onAction(QuickTestAction.OnConfirmTests) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            enabled = uiState.selectedTestIds.isNotEmpty()
-        ) {
-            Text("Continue with ${uiState.selectedTestIds.size} tests")
+        items(uiState.availableTests) { test ->
+            val isSelected = test.id in uiState.selectedTestIds
+            OutlinedCard(
+                onClick = { onAction(QuickTestAction.OnToggleTest(test.id)) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.outlinedCardColors(
+                    containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                    else MaterialTheme.colorScheme.surface
+                ),
+                border = if (isSelected) CardDefaults.outlinedCardBorder().copy(brush = SolidColor(MaterialTheme.colorScheme.primary))
+                else CardDefaults.outlinedCardBorder()
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Checkbox(
+                        checked = isSelected,
+                        onCheckedChange = { onAction(QuickTestAction.OnToggleTest(test.id)) }
+                    )
+                    Column {
+                        Text(test.name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+                        Text(
+                            "${test.unit} \u00b7 ${if (test.isHigherBetter) "Higher is better" else "Lower is better"}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -260,98 +348,133 @@ private fun SelectTestsStep(
 private fun EnterScoresStep(
     uiState: QuickTestUiState,
     onAction: (QuickTestAction) -> Unit,
-    padding: PaddingValues
+    onLiveScoreChange: (Double) -> Unit
 ) {
     val currentTest = uiState.selectedTests.getOrNull(uiState.currentTestIndex)
     var scoreText by remember(uiState.currentTestIndex) { mutableStateOf("") }
 
+    // Trigger live calculation whenever text changes
+    LaunchedEffect(scoreText) {
+        scoreText.toDoubleOrNull()?.let { onLiveScoreChange(it) }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(padding)
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // Progress indicator
-        LinearProgressIndicator(
-            progress = { (uiState.currentTestIndex + 1).toFloat() / uiState.selectedTests.size },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Text(
-            "Test ${uiState.currentTestIndex + 1} of ${uiState.selectedTests.size}",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        // Athlete name
-        uiState.selectedAthlete?.let { athlete ->
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            LinearProgressIndicator(
+                progress = { (uiState.currentTestIndex + 1).toFloat() / uiState.selectedTests.size },
+                modifier = Modifier.fillMaxWidth().height(6.dp).clip(MaterialTheme.shapes.small)
+            )
             Text(
-                "${athlete.firstName} ${athlete.lastName}",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                "Test ${uiState.currentTestIndex + 1} of ${uiState.selectedTests.size}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.End
             )
         }
 
+        // Athlete info
+        ElevatedCard(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.elevatedCardColors(
+                containerColor = if (uiState.isGuest) Color(0xFF546E7A) else NavyPrimary
+            )
+        ) {
+            Row(
+                modifier = Modifier.padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Icon(Icons.Default.Person, contentDescription = null, tint = Color.White)
+                Column {
+                    Text(
+                        if (uiState.isGuest) "${uiState.athleteSearchQuery} (Guest)" 
+                        else uiState.selectedAthlete?.fullName ?: "Unknown",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    if (uiState.isGuest) {
+                        Text(
+                            "Guest: ${uiState.guestSex}, Age ${uiState.guestAge}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White.copy(alpha = 0.8f)
+                        )
+                    }
+                }
+            }
+        }
+
         if (currentTest != null) {
-            // Test info
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        currentTest.name,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        "Unit: ${currentTest.unit}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    currentTest.description?.let { desc ->
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(desc, style = MaterialTheme.typography.bodySmall)
+            // Live Percentile Gauge (Compact)
+            PercentileGauge(
+                percentile = uiState.lastRecordedPercentile,
+                modifier = Modifier.fillMaxWidth().height(140.dp)
+            )
+
+            // Test info & Score Display (Combined for space)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedCard(modifier = Modifier.weight(1f)) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(
+                            currentTest.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            maxLines = 1
+                        )
+                        Text("Unit: ${currentTest.unit}", style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+
+                Surface(
+                    modifier = Modifier.width(120.dp).height(56.dp),
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = scoreText.ifEmpty { "0.0" },
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = if (scoreText.isEmpty()) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                            else MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 }
             }
 
-            // Score input
-            OutlinedTextField(
-                value = scoreText,
+            // DYNAMIC MODULAR INPUT
+            TestInputSwitcher(
+                paradigm = currentTest.inputParadigm,
+                currentValue = scoreText,
                 onValueChange = { scoreText = it },
-                label = { Text("Score (${currentTest.unit})") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            // Actions
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                OutlinedButton(
-                    onClick = { onAction(QuickTestAction.OnSkipTest) },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(Icons.Default.SkipNext, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Skip")
-                }
-                Button(
-                    onClick = {
-                        scoreText.toDoubleOrNull()?.let { score ->
-                            onAction(QuickTestAction.OnSaveScore(score))
-                        }
-                    },
-                    modifier = Modifier.weight(1f),
-                    enabled = scoreText.toDoubleOrNull() != null && !uiState.isSaving
-                ) {
-                    if (uiState.isSaving) {
-                        CircularProgressIndicator(modifier = Modifier.size(18.dp))
-                    } else {
-                        Text("Save")
+                onSubmit = {
+                    scoreText.toDoubleOrNull()?.let { score ->
+                        onAction(QuickTestAction.OnSaveScore(score))
                     }
                 }
+            )
+
+            // Skip Action
+            TextButton(
+                onClick = { onAction(QuickTestAction.OnSkipTest) },
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            ) {
+                Icon(Icons.Default.SkipNext, null)
+                Spacer(Modifier.width(8.dp))
+                Text("Skip this test")
             }
         }
     }
@@ -359,38 +482,65 @@ private fun EnterScoresStep(
 
 @Composable
 private fun CompleteStep(
-    onAction: (QuickTestAction) -> Unit,
-    padding: PaddingValues
+    onAction: (QuickTestAction) -> Unit
 ) {
+    EmptyState(
+        icon = Icons.Default.CheckCircle,
+        title = "Quick Test Complete",
+        message = "All scores have been recorded to the event.",
+        actionLabel = "Back to Dashboard",
+        onAction = { onAction(QuickTestAction.OnNavigateBack) }
+    )
+}
+
+@Composable
+private fun LoadingState(message: String = "Loading...") {
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(padding),
+        modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Icon(
-                Icons.Default.CheckCircle,
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
-            Text(
-                "Testing Complete",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                "All scores have been recorded.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Button(onClick = { onAction(QuickTestAction.OnNavigateBack) }) {
-                Text("Back to Dashboard")
-            }
+            CircularProgressIndicator(strokeWidth = 3.dp)
+            Text(message, style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+}
+
+@Composable
+private fun ErrorState(message: String, onDismiss: () -> Unit) {
+    EmptyState(
+        icon = Icons.Default.ErrorOutline,
+        title = "An error occurred",
+        message = message,
+        actionLabel = "Dismiss",
+        onAction = onDismiss
+    )
+}
+
+@Composable
+private fun EmptyState(
+    icon: ImageVector,
+    title: String,
+    message: String,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null
+) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(icon, null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+        Spacer(Modifier.height(16.dp))
+        Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(8.dp))
+        Text(message, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (actionLabel != null && onAction != null) {
+            Spacer(Modifier.height(24.dp))
+            Button(onClick = onAction) { Text(actionLabel) }
         }
     }
 }

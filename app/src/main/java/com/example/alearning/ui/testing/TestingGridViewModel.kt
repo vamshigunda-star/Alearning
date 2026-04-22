@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.alearning.domain.model.people.Individual
 import com.example.alearning.domain.model.standards.FitnessTest
+import com.example.alearning.domain.model.standards.TimingMode
 import com.example.alearning.domain.model.testing.TestResult
 import com.example.alearning.domain.model.testing.TestingEvent
 import com.example.alearning.domain.repository.TestingRepository
@@ -48,6 +49,7 @@ sealed interface TestingGridAction {
     data class OnNavigateToAthleteReport(val individualId: String) : TestingGridAction
     data class OnNavigateToLeaderboard(val eventId: String, val groupId: String, val mode: String) : TestingGridAction
     data class OnNavigateToGroupReport(val eventId: String, val groupId: String) : TestingGridAction
+    data class OnNavigateToStopwatch(val eventId: String, val fitnessTestId: String, val groupId: String) : TestingGridAction
 }
 
 @HiltViewModel
@@ -102,7 +104,8 @@ class TestingGridViewModel @Inject constructor(
             is TestingGridAction.OnNavigateBack,
             is TestingGridAction.OnNavigateToAthleteReport,
             is TestingGridAction.OnNavigateToLeaderboard,
-            is TestingGridAction.OnNavigateToGroupReport -> Unit
+            is TestingGridAction.OnNavigateToGroupReport,
+            is TestingGridAction.OnNavigateToStopwatch -> Unit
         }
     }
 

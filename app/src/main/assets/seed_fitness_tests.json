@@ -38,7 +38,9 @@
       "name": "PACER (20m Shuttle Run)",
       "unit": "laps",
       "isHigherBetter": true,
-      "description": "Run back and forth across a 20-meter space at an increasing pace set by audio cues."
+      "description": "Run back and forth across a 20-meter space at an increasing pace set by audio cues.",
+      "timingMode": "MANUAL_ENTRY",
+      "trialsPerAthlete": 1
     },
     {
       "id": "test_mile_run",
@@ -46,7 +48,10 @@
       "name": "One-Mile Run",
       "unit": "min:sec",
       "isHigherBetter": false,
-      "description": "Run one mile (1609m) as fast as possible on a flat measured course."
+      "description": "Run one mile (1609m) as fast as possible on a flat measured course.",
+      "timingMode": "GROUP_START",
+      "athletesPerHeat": 8,
+      "trialsPerAthlete": 1
     },
     {
       "id": "test_walk",
@@ -54,7 +59,10 @@
       "name": "One-Mile Walk",
       "unit": "min:sec",
       "isHigherBetter": false,
-      "description": "Walk one mile as briskly as possible. Heart rate recorded at finish."
+      "description": "Walk one mile as briskly as possible. Heart rate recorded at finish.",
+      "timingMode": "GROUP_START",
+      "athletesPerHeat": 8,
+      "trialsPerAthlete": 1
     },
     {
       "id": "test_curlup",
@@ -62,7 +70,9 @@
       "name": "Curl-Up",
       "unit": "reps",
       "isHigherBetter": true,
-      "description": "Lie face up with knees bent. Curl up slowly sliding fingers across the measuring strip, then return. Complete as many as possible at the set cadence."
+      "description": "Lie face up with knees bent. Curl up slowly sliding fingers across the measuring strip, then return. Complete as many as possible at the set cadence.",
+      "timingMode": "MANUAL_ENTRY",
+      "trialsPerAthlete": 1
     },
     {
       "id": "test_pushup",
@@ -70,7 +80,9 @@
       "name": "Push-Up",
       "unit": "reps",
       "isHigherBetter": true,
-      "description": "From a front-leaning rest position, lower body until elbows are at 90 degrees, then push back up. Complete as many as possible at a steady cadence."
+      "description": "From a front-leaning rest position, lower body until elbows are at 90 degrees, then push back up. Complete as many as possible at a steady cadence.",
+      "timingMode": "MANUAL_ENTRY",
+      "trialsPerAthlete": 1
     },
     {
       "id": "test_trunk_lift",
@@ -78,7 +90,9 @@
       "name": "Trunk Lift",
       "unit": "inches",
       "isHigherBetter": true,
-      "description": "Lie face down, lift upper body off the floor using back muscles. Measure distance chin lifts from the floor (max 12 inches)."
+      "description": "Lie face down, lift upper body off the floor using back muscles. Measure distance chin lifts from the floor (max 12 inches).",
+      "timingMode": "MANUAL_ENTRY",
+      "trialsPerAthlete": 2
     },
     {
       "id": "test_flexed_arm_hang",
@@ -86,7 +100,9 @@
       "name": "Flexed-Arm Hang",
       "unit": "seconds",
       "isHigherBetter": true,
-      "description": "Using an overhand grip, hang with chin above the bar as long as possible."
+      "description": "Using an overhand grip, hang with chin above the bar as long as possible.",
+      "timingMode": "INDIVIDUAL",
+      "trialsPerAthlete": 1
     },
     {
       "id": "test_pullup",
@@ -94,7 +110,9 @@
       "name": "Pull-Up",
       "unit": "reps",
       "isHigherBetter": true,
-      "description": "From a dead hang with overhand grip, pull body up until chin clears the bar, then lower back to dead hang."
+      "description": "From a dead hang with overhand grip, pull body up until chin clears the bar, then lower back to dead hang.",
+      "timingMode": "MANUAL_ENTRY",
+      "trialsPerAthlete": 1
     },
     {
       "id": "test_sit_reach",
@@ -102,7 +120,9 @@
       "name": "Sit and Reach (Back-Saver)",
       "unit": "inches",
       "isHigherBetter": true,
-      "description": "Sit on floor with one leg extended, other knee bent. Reach forward along a measuring line as far as possible. Test each side."
+      "description": "Sit on floor with one leg extended, other knee bent. Reach forward along a measuring line as far as possible. Test each side.",
+      "timingMode": "MANUAL_ENTRY",
+      "trialsPerAthlete": 2
     },
     {
       "id": "test_shoulder_stretch",
@@ -110,7 +130,9 @@
       "name": "Shoulder Stretch",
       "unit": "pass/fail",
       "isHigherBetter": true,
-      "description": "Reach one hand over the shoulder and the other behind the back. Attempt to touch or overlap fingers. Record pass or fail for each side."
+      "description": "Reach one hand over the shoulder and the other behind the back. Attempt to touch or overlap fingers. Record pass or fail for each side.",
+      "timingMode": "MANUAL_ENTRY",
+      "trialsPerAthlete": 1
     },
     {
       "id": "test_bmi",
@@ -118,7 +140,9 @@
       "name": "Body Mass Index (BMI)",
       "unit": "kg/m²",
       "isHigherBetter": false,
-      "description": "Calculate BMI from height and weight: weight(kg) / height(m)²."
+      "description": "Calculate BMI from height and weight: weight(kg) / height(m)².",
+      "timingMode": "MANUAL_ENTRY",
+      "trialsPerAthlete": 1
     },
     {
       "id": "test_skinfold",
@@ -126,7 +150,9 @@
       "name": "Skinfold Measurements",
       "unit": "mm",
       "isHigherBetter": false,
-      "description": "Measure triceps and calf skinfold thickness using calipers. Sum of two sites."
+      "description": "Measure triceps and calf skinfold thickness using calipers. Sum of two sites.",
+      "timingMode": "MANUAL_ENTRY",
+      "trialsPerAthlete": 1
     },
     {
       "id": "test_50yard",
@@ -134,7 +160,10 @@
       "name": "50-Yard Dash",
       "unit": "seconds",
       "isHigherBetter": false,
-      "description": "Sprint 50 yards (45.7m) as fast as possible from a standing start."
+      "description": "Sprint 50 yards (45.7m) as fast as possible from a standing start.",
+      "timingMode": "GROUP_START",
+      "athletesPerHeat": 6,
+      "trialsPerAthlete": 1
     },
     {
       "id": "test_shuttle_run",
@@ -142,7 +171,9 @@
       "name": "Shuttle Run (4x10m)",
       "unit": "seconds",
       "isHigherBetter": false,
-      "description": "Sprint 10 meters, pick up a block, return it, sprint back, pick up second block and sprint to finish."
+      "description": "Sprint 10 meters, pick up a block, return it, sprint back, pick up second block and sprint to finish.",
+      "timingMode": "INDIVIDUAL",
+      "trialsPerAthlete": 2
     },
     {
       "id": "test_standing_long_jump",
@@ -150,7 +181,9 @@
       "name": "Standing Long Jump",
       "unit": "inches",
       "isHigherBetter": true,
-      "description": "From a standing position behind a line, jump forward as far as possible landing on both feet."
+      "description": "From a standing position behind a line, jump forward as far as possible landing on both feet.",
+      "timingMode": "MANUAL_ENTRY",
+      "trialsPerAthlete": 2
     },
     {
       "id": "test_vball_toss",
@@ -158,7 +191,9 @@
       "name": "Softball/Volleyball Throw",
       "unit": "feet",
       "isHigherBetter": true,
-      "description": "Overhand throw for maximum distance from behind a line."
+      "description": "Overhand throw for maximum distance from behind a line.",
+      "timingMode": "MANUAL_ENTRY",
+      "trialsPerAthlete": 2
     },
     {
       "id": "test_sit_ups_60",
@@ -166,7 +201,9 @@
       "name": "Sit-Ups (60 seconds)",
       "unit": "reps",
       "isHigherBetter": true,
-      "description": "Perform as many correct sit-ups as possible in 60 seconds."
+      "description": "Perform as many correct sit-ups as possible in 60 seconds.",
+      "timingMode": "MANUAL_ENTRY",
+      "trialsPerAthlete": 1
     },
     {
       "id": "test_plank",
@@ -174,7 +211,9 @@
       "name": "Plank Hold",
       "unit": "seconds",
       "isHigherBetter": true,
-      "description": "Hold a forearm plank position with proper form for as long as possible."
+      "description": "Hold a forearm plank position with proper form for as long as possible.",
+      "timingMode": "INDIVIDUAL",
+      "trialsPerAthlete": 1
     },
     {
       "id": "test_400m",
@@ -182,7 +221,10 @@
       "name": "400-Meter Run",
       "unit": "min:sec",
       "isHigherBetter": false,
-      "description": "Run 400 meters (one lap of standard track) as fast as possible."
+      "description": "Run 400 meters (one lap of standard track) as fast as possible.",
+      "timingMode": "GROUP_START",
+      "athletesPerHeat": 6,
+      "trialsPerAthlete": 1
     },
     {
       "id": "test_wall_sit",
@@ -190,7 +232,9 @@
       "name": "Wall Sit",
       "unit": "seconds",
       "isHigherBetter": true,
-      "description": "Lean against wall with knees at 90 degrees and hold the position as long as possible."
+      "description": "Lean against wall with knees at 90 degrees and hold the position as long as possible.",
+      "timingMode": "INDIVIDUAL",
+      "trialsPerAthlete": 1
     }
   ],
   "norms": [

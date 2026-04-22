@@ -24,7 +24,10 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             "alearning-db"
-        ).fallbackToDestructiveMigration().build()
+        )
+            .addMigrations(AppDatabase.MIGRATION_3_4)
+            .fallbackToDestructiveMigration()
+            .build()
     }
 
     @Provides

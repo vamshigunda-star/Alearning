@@ -1,26 +1,64 @@
 package com.example.alearning.ui.testing
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Backspace
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Leaderboard
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -29,8 +67,11 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.alearning.domain.model.people.Individual
 import com.example.alearning.domain.model.standards.FitnessTest
+import com.example.alearning.domain.model.standards.TimingMode
 import com.example.alearning.domain.model.testing.TestResult
 import com.example.alearning.ui.theme.*
+import com.example.alearning.ui.components.testing.TestInputSwitcher
+import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -40,6 +81,7 @@ fun TestingGridScreen(
     onNavigateToAthleteReport: (String) -> Unit,
     onNavigateToLeaderboard: (String, String, String) -> Unit,
     onNavigateToGroupReport: (String, String) -> Unit,
+    onNavigateToStopwatch: (String, String, String) -> Unit = { _, _, _ -> },
     viewModel: TestingGridViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -54,6 +96,7 @@ fun TestingGridScreen(
                 is TestingGridAction.OnNavigateToAthleteReport -> onNavigateToAthleteReport(action.individualId)
                 is TestingGridAction.OnNavigateToLeaderboard -> onNavigateToLeaderboard(action.eventId, action.groupId, action.mode)
                 is TestingGridAction.OnNavigateToGroupReport -> onNavigateToGroupReport(action.eventId, action.groupId)
+                is TestingGridAction.OnNavigateToStopwatch -> onNavigateToStopwatch(action.eventId, action.fitnessTestId, action.groupId)
                 else -> viewModel.onAction(action)
             }
         }
@@ -62,20 +105,38 @@ fun TestingGridScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TestingGridContent(
+private fun TestingGridContent(
     uiState: TestingGridUiState,
     eventId: String,
     groupId: String,
     onAction: (TestingGridAction) -> Unit
 ) {
+    var sessionSeconds by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(uiState.phase) {
+        if (uiState.phase == TestingPhase.LIVE_ENTRY) {
+            while (true) {
+                delay(1000L)
+                sessionSeconds++
+            }
+        }
+    }
+
+    val sessionTimeStr = remember(sessionSeconds) {
+        "%d:%02d".format(sessionSeconds / 60, sessionSeconds % 60)
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        if (uiState.phase == TestingPhase.EVENT_DETAIL) "Testing Event"
-                        else "Live Testing"
-                    )
+                    when (uiState.phase) {
+                        TestingPhase.LIVE_ENTRY -> Column {
+                            Text("Live Testing", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Text(sessionTimeStr, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        TestingPhase.EVENT_DETAIL -> Text("Testing Event", fontWeight = FontWeight.Bold)
+                    }
                 },
                 navigationIcon = {
                     IconButton(onClick = { onAction(TestingGridAction.OnNavigateBack) }) {
@@ -84,62 +145,26 @@ fun TestingGridContent(
                 },
                 actions = {
                     if (uiState.phase == TestingPhase.LIVE_ENTRY) {
-                        IconButton(onClick = {
-                            onAction(TestingGridAction.OnNavigateToLeaderboard(eventId, groupId, "event"))
-                        }) {
+                        IconButton(onClick = { onAction(TestingGridAction.OnNavigateToLeaderboard(eventId, groupId, "event")) }) {
                             Icon(Icons.Default.Leaderboard, contentDescription = "Leaderboard")
                         }
-                        IconButton(onClick = {
-                            onAction(TestingGridAction.OnNavigateToGroupReport(eventId, groupId))
-                        }) {
+                        IconButton(onClick = { onAction(TestingGridAction.OnNavigateToGroupReport(eventId, groupId)) }) {
                             Icon(Icons.Default.Stop, contentDescription = "End Testing Event")
                         }
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
             )
         }
     ) { padding ->
         when {
-            uiState.isLoading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize().padding(padding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-            uiState.errorMessage != null && uiState.gridData == null -> {
-                Box(
-                    modifier = Modifier.fillMaxSize().padding(padding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = uiState.errorMessage,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        TextButton(onClick = { onAction(TestingGridAction.OnDismissError) }) {
-                            Text("Dismiss")
-                        }
-                    }
-                }
-            }
-            uiState.phase == TestingPhase.EVENT_DETAIL -> {
-                EventDetailPhase(
-                    uiState = uiState,
-                    onAction = onAction,
-                    padding = padding
-                )
-            }
-            else -> {
-                LiveEntryPhase(
-                    uiState = uiState,
-                    onAction = onAction,
-                    padding = padding
-                )
-            }
+            uiState.isLoading -> LoadingState()
+            uiState.errorMessage != null && uiState.gridData == null -> ErrorState(
+                message = uiState.errorMessage,
+                onDismiss = { onAction(TestingGridAction.OnDismissError) }
+            )
+            uiState.phase == TestingPhase.EVENT_DETAIL -> EventDetailPhase(uiState, onAction, padding)
+            else -> LiveEntryPhase(uiState, eventId, groupId, onAction, padding)
         }
     }
 
@@ -148,180 +173,67 @@ fun TestingGridContent(
             athleteName = "${cell.athlete.firstName} ${cell.athlete.lastName}",
             testName = cell.test.name,
             unit = cell.test.unit,
+            testDescription = cell.test.description,
+            inputParadigm = cell.test.inputParadigm,
             currentScore = cell.currentResult?.rawScore,
             onDismiss = { onAction(TestingGridAction.OnDismissEditing) },
-            onSave = { score -> onAction(TestingGridAction.OnSaveScore(score)) }
+            onSave = { score, autoAdvance -> onAction(TestingGridAction.OnSaveScore(score)) } // Note: Auto-advance logic would go into ViewModel
         )
-    }
-}
-
-@Composable
-private fun EventDetailPhase(
-    uiState: TestingGridUiState,
-    onAction: (TestingGridAction) -> Unit,
-    padding: PaddingValues
-) {
-    val gridData = uiState.gridData
-    val event = uiState.event
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(padding)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // Event info card
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    event?.name ?: "Testing Event",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                event?.date?.let { date ->
-                    val dateFormat = SimpleDateFormat("EEEE, MMMM d, yyyy", Locale.getDefault())
-                    Text(
-                        dateFormat.format(Date(date)),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                    Column {
-                        Text("${gridData?.students?.size ?: 0}", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-                        Text("Athletes", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Column {
-                        Text("${gridData?.tests?.size ?: 0}", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-                        Text("Tests", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-            }
-        }
-
-        // Tests list
-        if (gridData != null && gridData.tests.isNotEmpty()) {
-            Text("Tests in this event", style = MaterialTheme.typography.titleMedium)
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(gridData.tests) { test ->
-                    Card(modifier = Modifier.fillMaxWidth()) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(test.name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
-                                Text(
-                                    "${test.unit} - ${if (test.isHigherBetter) "Higher is better" else "Lower is better"}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Start Testing CTA
-        Button(
-            onClick = { onAction(TestingGridAction.OnStartTesting) },
-            modifier = Modifier.fillMaxWidth().height(56.dp),
-            enabled = gridData?.students?.isNotEmpty() == true && gridData.tests.isNotEmpty()
-        ) {
-            Icon(Icons.Default.PlayArrow, contentDescription = null)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Start Testing", style = MaterialTheme.typography.titleMedium)
-        }
     }
 }
 
 @Composable
 private fun LiveEntryPhase(
     uiState: TestingGridUiState,
+    eventId: String,
+    groupId: String,
     onAction: (TestingGridAction) -> Unit,
     padding: PaddingValues
 ) {
-    val gridData = uiState.gridData
-    if (gridData == null || gridData.tests.isEmpty()) {
-        Box(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("No tests configured for this event")
-        }
-        return
-    }
-
+    val gridData = uiState.gridData ?: return
     val horizontalScroll = rememberScrollState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(padding)
-    ) {
-        // Header row
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.primaryContainer)
-        ) {
-            Box(
-                modifier = Modifier
-                    .width(140.dp)
-                    .padding(8.dp)
-            ) {
-                Text(
-                    "Athlete",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp
-                )
-            }
+    Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+        TestingProgressBanner(
+            totalAthletes = gridData.students.size,
+            testedAthletes = gridData.students.count { athlete -> gridData.results.any { it.individualId == athlete.id } }
+        )
 
+        // PROFESSIONAL NAVY HEADER
+        Row(modifier = Modifier.fillMaxWidth().background(NavyPrimary)) {
+            Box(modifier = Modifier.width(140.dp).padding(14.dp)) {
+                Text("ATHLETE", fontWeight = FontWeight.Black, fontSize = 11.sp, color = Color.White, letterSpacing = 1.sp)
+            }
             Row(modifier = Modifier.horizontalScroll(horizontalScroll)) {
                 gridData.tests.forEach { test ->
-                    Box(
-                        modifier = Modifier
-                            .width(90.dp)
-                            .padding(4.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            test.name.take(12),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 11.sp,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                            textAlign = TextAlign.Center
-                        )
+                    Box(modifier = Modifier.width(100.dp).padding(vertical = 14.dp, horizontal = 4.dp), contentAlignment = Alignment.Center) {
+                        Text(test.name.uppercase(), fontWeight = FontWeight.ExtraBold, fontSize = 10.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center, color = Color.White, lineHeight = 12.sp)
                     }
                 }
             }
         }
 
-        HorizontalDivider()
-
         LazyColumn(modifier = Modifier.fillMaxSize()) {
-            items(gridData.students) { athlete ->
+            items(gridData.students.indices.toList()) { index ->
+                val athlete = gridData.students[index]
+                val rowBg = if (index % 2 == 0) Color.White else Color(0xFFF9FAFB)
+                
                 AthleteRow(
                     athlete = athlete,
                     tests = gridData.tests,
                     results = gridData.results,
                     horizontalScroll = horizontalScroll,
+                    modifier = Modifier.background(rowBg),
                     onCellClick = { test ->
-                        onAction(TestingGridAction.OnStartEditing(athlete, test))
+                        if (test.timingMode != TimingMode.MANUAL_ENTRY) {
+                            onAction(TestingGridAction.OnNavigateToStopwatch(eventId, test.id, groupId))
+                        } else {
+                            onAction(TestingGridAction.OnStartEditing(athlete, test))
+                        }
                     },
-                    onAthleteClick = {
-                        onAction(TestingGridAction.OnNavigateToAthleteReport(athlete.id))
-                    }
+                    onAthleteClick = { onAction(TestingGridAction.OnNavigateToAthleteReport(athlete.id)) }
                 )
-                HorizontalDivider()
+                HorizontalDivider(color = Color.LightGray.copy(alpha = 0.2f))
             }
         }
     }
@@ -333,140 +245,131 @@ private fun AthleteRow(
     tests: List<FitnessTest>,
     results: List<TestResult>,
     horizontalScroll: androidx.compose.foundation.ScrollState,
+    modifier: Modifier = Modifier,
     onCellClick: (FitnessTest) -> Unit,
     onAthleteClick: () -> Unit
 ) {
-    Row(modifier = Modifier.fillMaxWidth()) {
-        Box(
-            modifier = Modifier
-                .width(140.dp)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = onAthleteClick
-                )
-                .padding(8.dp),
-            contentAlignment = Alignment.CenterStart
-        ) {
+    Row(modifier = modifier.fillMaxWidth()) {
+        Box(modifier = Modifier.width(140.dp).clickable(onClick = onAthleteClick).padding(14.dp), contentAlignment = Alignment.CenterStart) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (athlete.isRestricted || athlete.medicalAlert != null) {
-                    Icon(
-                        Icons.Default.Warning,
-                        contentDescription = "Medical alert",
-                        tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.size(14.dp)
-                    )
+                    Icon(Icons.Default.Warning, null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(12.dp))
                     Spacer(modifier = Modifier.width(4.dp))
                 }
-                Text(
-                    "${athlete.lastName}, ${athlete.firstName.first()}.",
-                    fontSize = 13.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    color = if (athlete.isRestricted) MaterialTheme.colorScheme.error
-                            else Color.Unspecified
-                )
+                Text("${athlete.lastName}, ${athlete.firstName.first()}.", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
-
         Row(modifier = Modifier.horizontalScroll(horizontalScroll)) {
             tests.forEach { test ->
-                val result = results.find {
-                    it.individualId == athlete.id && it.testId == test.id
-                }
-                ScoreCell(
-                    result = result,
-                    onClick = { onCellClick(test) }
-                )
+                val result = results.find { it.individualId == athlete.id && it.testId == test.id }
+                ScoreCell(result = result, onClick = { onCellClick(test) })
             }
         }
     }
 }
 
 @Composable
-private fun ScoreCell(
-    result: TestResult?,
-    onClick: () -> Unit
-) {
-    val (bgColor, textColor, borderColor) = when {
-        result == null -> Triple(Color.Transparent, Color.Unspecified, MaterialTheme.colorScheme.outlineVariant)
-        result.percentile == null -> Triple(PerformanceGrey, PerformanceGreyText, PerformanceGreyBorder)
-        result.percentile >= 60 -> Triple(PerformanceGreen, PerformanceGreenText, PerformanceGreenBorder)
-        result.percentile >= 30 -> Triple(PerformanceYellow, PerformanceYellowText, PerformanceYellowBorder)
-        else -> Triple(PerformanceRed, PerformanceRedText, PerformanceRedBorder)
+private fun ScoreCell(result: TestResult?, onClick: () -> Unit) {
+    val (bgColor, textColor) = when {
+        result == null -> Color.Transparent to Color.Gray
+        result.percentile == null -> PerformanceGrey to Color.Black
+        result.percentile >= 70 -> PerformanceGreen.copy(alpha = 0.7f) to PerformanceGreenText
+        result.percentile >= 35 -> PerformanceYellow.copy(alpha = 0.7f) to PerformanceYellowText
+        else -> PerformanceRed.copy(alpha = 0.7f) to PerformanceRedText
     }
 
     Box(
-        modifier = Modifier
-            .width(90.dp)
-            .height(44.dp)
-            .border(0.5.dp, borderColor)
-            .background(bgColor)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onClick
-            ),
+        modifier = Modifier.width(100.dp).height(52.dp).background(bgColor).clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         if (result != null) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    String.format("%.1f", result.rawScore),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = textColor
-                )
-                result.percentile?.let { p ->
-                    Text(
-                        "${p}%",
-                        fontSize = 10.sp,
-                        color = textColor.copy(alpha = 0.7f)
-                    )
-                }
+                Text(String.format("%.1f", result.rawScore), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = textColor)
+                result.percentile?.let { p -> Text("${p}%", fontSize = 10.sp, fontWeight = FontWeight.Medium, color = textColor.copy(alpha = 0.8f)) }
             }
         } else {
-            Text("--", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+            Text("--", color = Color.LightGray, fontSize = 12.sp)
         }
     }
 }
 
 @Composable
 private fun ScoreEntryDialog(
-    athleteName: String,
-    testName: String,
-    unit: String,
-    currentScore: Double?,
-    onDismiss: () -> Unit,
-    onSave: (Double) -> Unit
+    athleteName: String, testName: String, unit: String, testDescription: String?,
+    inputParadigm: com.example.alearning.domain.model.standards.InputParadigm,
+    currentScore: Double?, onDismiss: () -> Unit, onSave: (Double, Boolean) -> Unit
 ) {
     var scoreText by remember { mutableStateOf(currentScore?.toString() ?: "") }
-
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Enter Score") },
+        title = null,
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(athleteName, fontWeight = FontWeight.Bold)
-                Text(testName, style = MaterialTheme.typography.bodySmall)
-                OutlinedTextField(
-                    value = scoreText,
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(athleteName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("$testName \u00b7 $unit", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Surface(modifier = Modifier.fillMaxWidth().height(72.dp), shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(scoreText.ifEmpty { "\u2014" }, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
+                    }
+                }
+                TestInputSwitcher(
+                    paradigm = inputParadigm,
+                    currentValue = scoreText,
                     onValueChange = { scoreText = it },
-                    label = { Text("Score ($unit)") },
-                    singleLine = true
+                    onSubmit = { scoreText.toDoubleOrNull()?.let { onSave(it, false) } }
                 )
             }
         },
         confirmButton = {
-            TextButton(
-                onClick = {
-                    scoreText.toDoubleOrNull()?.let { onSave(it) }
-                },
-                enabled = scoreText.toDoubleOrNull() != null
-            ) { Text("Save") }
+            Button(onClick = { scoreText.toDoubleOrNull()?.let { onSave(it, false) } }, modifier = Modifier.fillMaxWidth()) {
+                Text("Save Score")
+            }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) { Text("Cancel") }
         }
     )
+}
+
+@Composable
+private fun TestingProgressBanner(totalAthletes: Int, testedAthletes: Int) {
+    val progress = if (totalAthletes > 0) testedAthletes.toFloat() / totalAthletes else 0f
+    Surface(modifier = Modifier.fillMaxWidth(), color = Color(0xFFF3F4F6)) {
+        Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            LinearProgressIndicator(progress = { progress }, modifier = Modifier.weight(1f).height(8.dp).clip(CircleShape), color = NavyPrimary)
+            Text("$testedAthletes / $totalAthletes Completed", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
+private fun LoadingState() { Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator(color = NavyPrimary) } }
+
+@Composable
+private fun ErrorState(message: String, onDismiss: () -> Unit) { 
+    Box(Modifier.fillMaxSize().padding(32.dp), Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(Icons.Default.ErrorOutline, null, Modifier.size(48.dp), MaterialTheme.colorScheme.error)
+            Text(message, textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.error)
+            TextButton(onClick = onDismiss) { Text("Dismiss") }
+        }
+    }
+}
+
+@Composable
+private fun EventDetailPhase(uiState: TestingGridUiState, onAction: (TestingGridAction) -> Unit, padding: PaddingValues) {
+    val gridData = uiState.gridData
+    Column(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = NavyPrimary)) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Text(uiState.event?.name ?: "Testing Event", color = Color.White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Text("${gridData?.students?.size ?: 0} Athletes \u2022 ${gridData?.tests?.size ?: 0} Tests", color = Color.White.copy(alpha = 0.7f), style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+        Button(onClick = { onAction(TestingGridAction.OnStartTesting) }, modifier = Modifier.fillMaxWidth().height(56.dp), colors = ButtonDefaults.buttonColors(containerColor = NavyPrimary)) {
+            Text("Begin Testing Session", fontWeight = FontWeight.Bold)
+        }
+    }
 }

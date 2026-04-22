@@ -46,10 +46,10 @@ interface PeopleDao {
     @Delete
     suspend fun deleteGroup(group: GroupEntity)
 
-    @Query("SELECT * FROM groups WHERE isDeleted = 0 ORDER BY name ASC")
+    @Query("SELECT * FROM `groups` WHERE isDeleted = 0 ORDER BY name ASC")
     fun getAllGroups(): Flow<List<GroupEntity>>
 
-    @Query("SELECT * FROM groups WHERE id = :id LIMIT 1")
+    @Query("SELECT * FROM `groups` WHERE id = :id LIMIT 1")
     suspend fun getGroupById(id: String): GroupEntity?
 
     // --- ROSTERING (Many-to-Many Relationships) ---
@@ -62,18 +62,18 @@ interface PeopleDao {
 
     // Feature: Get all students in a specific group (e.g., "Class 9A Roster")
     @Query("""
-        SELECT individuals.* FROM individuals
-        INNER JOIN group_members ON individuals.id = group_members.individualId
-        WHERE group_members.groupId = :groupId AND individuals.isDeleted = 0
-        ORDER BY individuals.lastName ASC
+        SELECT i.* FROM individuals AS i
+        INNER JOIN group_members AS gm ON i.id = gm.individualId
+        WHERE gm.groupId = :groupId AND i.isDeleted = 0
+        ORDER BY i.lastName ASC
     """)
     fun getIndividualsInGroup(groupId: String): Flow<List<IndividualEntity>>
 
     // Feature: Get all groups a student belongs to (e.g., "John's Teams")
     @Query("""
-        SELECT groups.* FROM groups
-        INNER JOIN group_members ON groups.id = group_members.groupId
-        WHERE group_members.individualId = :studentId AND groups.isDeleted = 0
+        SELECT g.* FROM `groups` AS g
+        INNER JOIN group_members AS gm ON g.id = gm.groupId
+        WHERE gm.individualId = :studentId AND g.isDeleted = 0
     """)
     fun getGroupsForIndividual(studentId: String): Flow<List<GroupEntity>>
 }
