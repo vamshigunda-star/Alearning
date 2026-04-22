@@ -15,19 +15,19 @@ import java.util.UUID
             entity = TestingEventEntity::class,
             parentColumns = ["id"],
             childColumns = ["eventId"],
-            onDelete = ForeignKey.Companion.CASCADE
+            onDelete = ForeignKey.CASCADE
         ),
         ForeignKey(
             entity = IndividualEntity::class,
             parentColumns = ["id"],
             childColumns = ["individualId"],
-            onDelete = ForeignKey.Companion.CASCADE
+            onDelete = ForeignKey.CASCADE
         ),
         ForeignKey(
             entity = FitnessTestEntity::class,
             parentColumns = ["id"],
             childColumns = ["testId"],
-            onDelete = ForeignKey.Companion.RESTRICT
+            onDelete = ForeignKey.RESTRICT
         )
     ],
     indices = [Index("eventId"), Index("individualId"), Index("testId")]
@@ -50,6 +50,7 @@ data class TestResultEntity(
     val percentile: Int? = null,           // e.g., 92
     val classification: String? = null,    // e.g., "High Performance"
     val normVariantUsed: String? = null,   // e.g., "Standard 2025"
+    val captureMethod: String = "MANUAL_ENTRY",  // STOPWATCH or MANUAL_ENTRY
 
     val createdAt: Long = System.currentTimeMillis()
 )

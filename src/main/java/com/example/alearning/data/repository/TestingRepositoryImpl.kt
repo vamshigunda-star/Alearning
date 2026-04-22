@@ -2,9 +2,11 @@ package com.example.alearning.data.repository
 
 import com.example.alearning.data.local.daos.testing.TestingDao
 import com.example.alearning.data.local.entities.testing.EventTestCrossRef
+import com.example.alearning.data.mapper.people.toDomain
 import com.example.alearning.data.mapper.standards.toDomain
 import com.example.alearning.data.mapper.testing.toDomain
 import com.example.alearning.data.mapper.testing.toEntity
+import com.example.alearning.domain.model.people.Individual
 import com.example.alearning.domain.model.standards.FitnessTest
 import com.example.alearning.domain.model.testing.TestResult
 import com.example.alearning.domain.model.testing.TestingEvent
@@ -65,5 +67,18 @@ class TestingRepositoryImpl @Inject constructor(
 
     override fun getAllResultsForIndividual(individualId: String): Flow<List<TestResult>> {
         return dao.getAllResultsForIndividual(individualId).map { list -> list.map { it.toDomain() } }
+    }
+
+    // --- STOPWATCH SUPPORT ---
+    override suspend fun getAthletesInGroupOrdered(groupId: String): List<Individual> {
+        return dao.getAthletesInGroupOrdered(groupId).map { it.toDomain() }
+    }
+
+    override suspend fun getTrialCountForAthlete(eventId: String, individualId: String, testId: String): Int {
+        return dao.getTrialCountForAthlete(eventId, individualId, testId)
+    }
+
+    override suspend fun deleteResultById(resultId: String) {
+        dao.deleteResultById(resultId)
     }
 }

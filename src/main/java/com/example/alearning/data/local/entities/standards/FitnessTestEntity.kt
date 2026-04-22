@@ -34,6 +34,12 @@ data class FitnessTestEntity(
 
     val description: String? = null, // Instructions for the teacher
 
+    // Stopwatch configuration
+    val timingMode: String = "MANUAL_ENTRY",  // INDIVIDUAL, GROUP_START, MANUAL_ENTRY
+    val inputParadigm: String = "NUMERIC",    // NUMERIC, INCREMENTAL, CHRONO, MULTI_STAGE, SCALE
+    val athletesPerHeat: Int? = null,          // null for INDIVIDUAL/MANUAL, 4-8 for GROUP_START
+    val trialsPerAthlete: Int = 1,             // e.g., 2 for best-of-2
+
     // Sync Metadata
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),

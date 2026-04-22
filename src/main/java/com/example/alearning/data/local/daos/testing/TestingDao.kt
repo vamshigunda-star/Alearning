@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.example.alearning.data.local.entities.people.IndividualEntity
 import com.example.alearning.data.local.entities.standards.FitnessTestEntity
 import com.example.alearning.data.local.entities.testing.EventTestCrossRef
 import com.example.alearning.data.local.entities.testing.TestResultEntity
@@ -89,6 +90,24 @@ interface TestingDao {
 """)
     fun getGroupResultsForTest(groupId: String, testId: String): Flow<List<TestResultEntity>>
 
+    // --- STOPWATCH SUPPORT ---
 
+    @Query(
+        """
+        SELECT i.* FROM individuals i
+        INNER JOIN group_members gm ON i.id = gm.individualId
+        WHERE gm.groupId = :groupId AND i.isActive = 1
+        ORDER BY i.lastName ASC, i.firstName ASC
+    """
+    )
+    suspend fun getAthletesInGroupOrdered(groupId: String): List<IndividualEntity>
 
+    @Query("""
+        SELECT COUNT(*) FROM test_results
+        WHERE eventId = :eventId AND individualId = :individualId AND testId = :testId
+    """)
+    suspend fun getTrialCountForAthlete(eventId: String, individualId: String, testId: String): Int
+
+    @Query("DELETE FROM test_results WHERE id = :resultId")
+    suspend fun deleteResultById(resultId: String)
 }

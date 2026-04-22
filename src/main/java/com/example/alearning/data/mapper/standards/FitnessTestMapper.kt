@@ -2,6 +2,8 @@ package com.example.alearning.data.mapper.standards
 
 import com.example.alearning.data.local.entities.standards.FitnessTestEntity
 import com.example.alearning.domain.model.standards.FitnessTest
+import com.example.alearning.domain.model.standards.TimingMode
+import com.example.alearning.domain.model.standards.InputParadigm
 
 fun FitnessTestEntity.toDomain(): FitnessTest {
     return FitnessTest(
@@ -10,7 +12,11 @@ fun FitnessTestEntity.toDomain(): FitnessTest {
         name = this.name,
         unit = this.unit,
         isHigherBetter = this.isHigherBetter,
-        description = this.description
+        description = this.description,
+        timingMode = try { TimingMode.valueOf(this.timingMode) } catch (_: Exception) { TimingMode.MANUAL_ENTRY },
+        inputParadigm = try { InputParadigm.valueOf(this.inputParadigm) } catch (_: Exception) { InputParadigm.NUMERIC },
+        athletesPerHeat = this.athletesPerHeat,
+        trialsPerAthlete = this.trialsPerAthlete
     )
 }
 
@@ -24,6 +30,10 @@ fun FitnessTest.toEntity(
         unit = this.unit,
         isHigherBetter = this.isHigherBetter,
         description = this.description,
+        timingMode = this.timingMode.name,
+        inputParadigm = this.inputParadigm.name,
+        athletesPerHeat = this.athletesPerHeat,
+        trialsPerAthlete = this.trialsPerAthlete,
         createdAt = createdAt,
         updatedAt = System.currentTimeMillis(),
         isDeleted = false

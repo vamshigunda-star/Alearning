@@ -18,8 +18,8 @@ import javax.inject.Inject
 data class DashboardUiState(
     val recentEvents: List<TestingEvent> = emptyList(),
     val groups: List<Group> = emptyList(),
-    val athleteCount: Int = 0,
-    val groupCount: Int = 0,
+    val activeAthletes: Int = 0,
+    val scheduledTestCount: Int = 0,
     val isLoading: Boolean = true,
     val errorMessage: String? = null
 )
@@ -31,6 +31,8 @@ sealed interface DashboardAction {
     data object OnTestLibraryClick : DashboardAction
     data class OnEventClick(val eventId: String, val groupId: String) : DashboardAction
     data object OnDismissError : DashboardAction
+    data object OnLeaderboardClick : DashboardAction
+    data object OnAnalyticsClick : DashboardAction
 }
 
 @HiltViewModel
@@ -51,28 +53,24 @@ class DashboardViewModel @Inject constructor(
             is DashboardAction.OnDismissError -> {
                 _uiState.update { it.copy(errorMessage = null) }
             }
-            // Navigation actions handled by the screen composable
             else -> Unit
         }
     }
 
     private fun loadDashboardData() {
+        _uiState.update { it.copy(isLoading = true) }
         viewModelScope.launch {
             peopleRepository.getAllIndividuals()
-                .catch { e ->
-                    _uiState.update { it.copy(errorMessage = e.message, isLoading = false) }
-                }
+                .catch { e -> _uiState.update { it.copy(errorMessage = e.message) } }
                 .collect { athletes ->
-                    _uiState.update { it.copy(athleteCount = athletes.size, isLoading = false) }
+                    _uiState.update { it.copy(activeAthletes = athletes.size) }
                 }
         }
         viewModelScope.launch {
             peopleRepository.getAllGroups()
-                .catch { e ->
-                    _uiState.update { it.copy(errorMessage = e.message, isLoading = false) }
-                }
+                .catch { e -> _uiState.update { it.copy(errorMessage = e.message) } }
                 .collect { groups ->
-                    _uiState.update { it.copy(groups = groups, groupCount = groups.size) }
+                    _uiState.update { it.copy(groups = groups) }
                 }
         }
         viewModelScope.launch {
@@ -81,7 +79,13 @@ class DashboardViewModel @Inject constructor(
                     _uiState.update { it.copy(errorMessage = e.message, isLoading = false) }
                 }
                 .collect { events ->
-                    _uiState.update { it.copy(recentEvents = events.take(5)) }
+                    _uiState.update {
+                        it.copy(
+                            recentEvents = events.sortedByDescending { it.date }.take(5),
+                            scheduledTestCount = events.size,
+                            isLoading = false
+                        )
+                    }
                 }
         }
     }

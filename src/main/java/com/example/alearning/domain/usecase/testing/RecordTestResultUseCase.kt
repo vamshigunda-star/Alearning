@@ -1,6 +1,7 @@
 package com.example.alearning.domain.usecase.testing
 
 import com.example.alearning.domain.model.people.BiologicalSex
+import com.example.alearning.domain.model.testing.CaptureMethod
 import com.example.alearning.domain.model.testing.TestResult
 import com.example.alearning.domain.repository.TestingRepository
 import com.example.alearning.domain.usecase.standards.CalculatePercentileUseCase
@@ -17,7 +18,8 @@ class RecordTestResultUseCase @Inject constructor(
         testId: String,
         rawScore: Double,
         ageAtTime: Float,
-        sex: BiologicalSex
+        sex: BiologicalSex,
+        captureMethod: CaptureMethod = CaptureMethod.MANUAL_ENTRY
     ): TestResult {
         val percentileResult = calculatePercentile(testId, rawScore, ageAtTime.toDouble(), sex)
 
@@ -30,6 +32,7 @@ class RecordTestResultUseCase @Inject constructor(
             ageAtTime = ageAtTime,
             percentile = percentileResult?.percentile,
             classification = percentileResult?.classification,
+            captureMethod = captureMethod,
             createdAt = System.currentTimeMillis()
         )
         repository.saveResult(result)

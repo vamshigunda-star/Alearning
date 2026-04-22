@@ -1,5 +1,6 @@
 package com.example.alearning.domain.repository
 
+import com.example.alearning.domain.model.people.Individual
 import com.example.alearning.domain.model.standards.FitnessTest
 import com.example.alearning.domain.model.testing.TestResult
 import com.example.alearning.domain.model.testing.TestingEvent
@@ -32,4 +33,9 @@ interface TestingRepository {
     fun getEventResults(eventId: String): Flow<List<TestResult>>
 
     fun getAllResultsForIndividual(individualId: String): Flow<List<TestResult>>
+
+    // --- Stopwatch Support ---
+    suspend fun getAthletesInGroupOrdered(groupId: String): List<Individual>
+    suspend fun getTrialCountForAthlete(eventId: String, individualId: String, testId: String): Int
+    suspend fun deleteResultById(resultId: String)
 }

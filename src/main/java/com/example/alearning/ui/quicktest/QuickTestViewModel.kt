@@ -2,6 +2,7 @@ package com.example.alearning.ui.quicktest
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.alearning.domain.model.people.BiologicalSex
 import com.example.alearning.domain.model.people.Individual
 import com.example.alearning.domain.model.standards.FitnessTest
 import com.example.alearning.domain.model.standards.TestCategory
@@ -20,31 +21,43 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
+import com.example.alearning.domain.usecase.standards.CalculatePercentileUseCase
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 
-enum class QuickTestStep { SELECT_ATHLETE, SELECT_TESTS, ENTER_SCORES, COMPLETE }
+enum class QuickTestStep { SETUP, ENTER_SCORES, COMPLETE }
 
 data class QuickTestUiState(
-    val step: QuickTestStep = QuickTestStep.SELECT_ATHLETE,
+    val step: QuickTestStep = QuickTestStep.SETUP,
+    val eventName: String = "",
     val allAthletes: List<Individual> = emptyList(),
-    val searchQuery: String = "",
+    val athleteSearchQuery: String = "",
+    val matchingAthletes: List<Individual> = emptyList(),
     val selectedAthlete: Individual? = null,
+    val isGuest: Boolean = false,
+    val guestSex: BiologicalSex = BiologicalSex.UNSPECIFIED,
+    val guestAge: String = "",
     val categories: List<TestCategory> = emptyList(),
     val selectedCategoryIndex: Int = 0,
     val availableTests: List<FitnessTest> = emptyList(),
     val selectedTestIds: Set<String> = emptySet(),
     val selectedTests: List<FitnessTest> = emptyList(),
     val currentTestIndex: Int = 0,
+    val lastRecordedPercentile: Int? = null,
     val isSaving: Boolean = false,
     val isLoading: Boolean = true,
     val errorMessage: String? = null
 )
 
 sealed interface QuickTestAction {
-    data class OnSearchQueryChange(val query: String) : QuickTestAction
-    data class OnSelectAthlete(val athlete: Individual) : QuickTestAction
+    data class OnSetEventName(val name: String) : QuickTestAction
+    data class OnAthleteQueryChange(val query: String) : QuickTestAction
+    data class OnSelectAthlete(val athlete: Individual?) : QuickTestAction
+    data class OnSetGuestSex(val sex: BiologicalSex) : QuickTestAction
+    data class OnSetGuestAge(val age: String) : QuickTestAction
     data class OnSelectCategory(val index: Int) : QuickTestAction
     data class OnToggleTest(val testId: String) : QuickTestAction
-    data object OnConfirmTests : QuickTestAction
+    data object OnConfirmSetup : QuickTestAction
     data class OnSaveScore(val rawScore: Double) : QuickTestAction
     data object OnSkipTest : QuickTestAction
     data object OnNavigateBack : QuickTestAction
@@ -56,38 +69,67 @@ class QuickTestViewModel @Inject constructor(
     private val peopleRepository: PeopleRepository,
     private val getTestLibrary: GetTestLibraryUseCase,
     private val createEventUseCase: CreateEventUseCase,
-    private val recordResult: RecordTestResultUseCase
+    private val recordResult: RecordTestResultUseCase,
+    private val calculatePercentile: CalculatePercentileUseCase // Injected for live feedback
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(QuickTestUiState())
     val uiState: StateFlow<QuickTestUiState> = _uiState.asStateFlow()
 
+    // Added for live calculation
+    private var calculationJob: Job? = null
+
     init {
+        loadData()
+    }
+
+    private fun loadData() {
         viewModelScope.launch {
-            peopleRepository.getAllIndividuals()
-                .catch { e -> _uiState.update { it.copy(errorMessage = e.message, isLoading = false) } }
-                .collect { athletes ->
-                    _uiState.update { it.copy(allAthletes = athletes, isLoading = false) }
-                }
-        }
-        viewModelScope.launch {
-            getTestLibrary.getCategories()
-                .catch { e -> _uiState.update { it.copy(errorMessage = e.message) } }
-                .collect { categories ->
+            _uiState.update { it.copy(isLoading = true) }
+            try {
+                // Load Categories
+                getTestLibrary.getCategories().collect { categories ->
                     _uiState.update { it.copy(categories = categories) }
                     if (categories.isNotEmpty()) {
                         loadTests(categories.first().id)
                     }
                 }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = e.message, isLoading = false) }
+            }
+        }
+
+        viewModelScope.launch {
+            // Load Athletes for Search
+            peopleRepository.getAllIndividuals().collect { athletes ->
+                _uiState.update { it.copy(allAthletes = athletes, isLoading = false) }
+            }
         }
     }
 
     fun onAction(action: QuickTestAction) {
         when (action) {
-            is QuickTestAction.OnSearchQueryChange -> _uiState.update { it.copy(searchQuery = action.query) }
-            is QuickTestAction.OnSelectAthlete -> {
-                _uiState.update { it.copy(selectedAthlete = action.athlete, step = QuickTestStep.SELECT_TESTS) }
+            is QuickTestAction.OnSetEventName -> _uiState.update { it.copy(eventName = action.name) }
+            is QuickTestAction.OnAthleteQueryChange -> {
+                val query = action.query
+                val matching = if (query.isBlank()) emptyList() else {
+                    _uiState.value.allAthletes.filter { 
+                        it.firstName.contains(query, ignoreCase = true) || 
+                        it.lastName.contains(query, ignoreCase = true) 
+                    }
+                }
+                _uiState.update { it.copy(athleteSearchQuery = query, matchingAthletes = matching, selectedAthlete = null) }
             }
+            is QuickTestAction.OnSelectAthlete -> {
+                _uiState.update { it.copy(
+                    selectedAthlete = action.athlete, 
+                    athleteSearchQuery = action.athlete?.fullName ?: "",
+                    matchingAthletes = emptyList(),
+                    isGuest = action.athlete == null
+                ) }
+            }
+            is QuickTestAction.OnSetGuestSex -> _uiState.update { it.copy(guestSex = action.sex, lastRecordedPercentile = null) }
+            is QuickTestAction.OnSetGuestAge -> _uiState.update { it.copy(guestAge = action.age, lastRecordedPercentile = null) }
             is QuickTestAction.OnSelectCategory -> {
                 val category = _uiState.value.categories.getOrNull(action.index) ?: return
                 _uiState.update { it.copy(selectedCategoryIndex = action.index) }
@@ -99,11 +141,39 @@ class QuickTestViewModel @Inject constructor(
                     it.copy(selectedTestIds = if (action.testId in current) current - action.testId else current + action.testId)
                 }
             }
-            is QuickTestAction.OnConfirmTests -> confirmTestsAndStartScoring()
+            is QuickTestAction.OnConfirmSetup -> {
+                val state = _uiState.value
+                if (state.athleteSearchQuery.isBlank()) {
+                    _uiState.update { it.copy(errorMessage = "Please enter a name") }
+                    return
+                }
+                if (state.selectedTestIds.isEmpty()) {
+                    _uiState.update { it.copy(errorMessage = "Select at least one test") }
+                    return
+                }
+                confirmSetupAndProceed()
+            }
             is QuickTestAction.OnSaveScore -> saveScoreAndAdvance(action.rawScore)
             is QuickTestAction.OnSkipTest -> skipTest()
             is QuickTestAction.OnDismissError -> _uiState.update { it.copy(errorMessage = null) }
             is QuickTestAction.OnNavigateBack -> Unit
+        }
+    }
+
+    // New helper for live calculation called from the UI
+    fun onLiveScoreChange(score: Double) {
+        val state = _uiState.value
+        val test = state.selectedTests.getOrNull(state.currentTestIndex) ?: return
+        
+        calculationJob?.cancel()
+        calculationJob = viewModelScope.launch {
+            delay(300) // Debounce calculations
+            val age = state.selectedAthlete?.currentAge?.toDouble() 
+                ?: state.guestAge.toDoubleOrNull() ?: 18.0
+            val sex = state.selectedAthlete?.sex ?: state.guestSex
+
+            val result = calculatePercentile(test.id, score, age, sex)
+            _uiState.update { it.copy(lastRecordedPercentile = result?.percentile) }
         }
     }
 
@@ -117,15 +187,8 @@ class QuickTestViewModel @Inject constructor(
         }
     }
 
-    private fun confirmTestsAndStartScoring() {
+    private fun confirmSetupAndProceed() {
         val state = _uiState.value
-        if (state.selectedTestIds.isEmpty()) {
-            _uiState.update { it.copy(errorMessage = "Select at least one test") }
-            return
-        }
-
-        // Collect the full FitnessTest objects for selected tests
-        // We need to load all tests across categories for selected IDs
         viewModelScope.launch {
             try {
                 val allTests = mutableListOf<FitnessTest>()
@@ -134,7 +197,11 @@ class QuickTestViewModel @Inject constructor(
                     allTests.addAll(tests.filter { it.id in state.selectedTestIds })
                 }
                 _uiState.update {
-                    it.copy(selectedTests = allTests, step = QuickTestStep.ENTER_SCORES, currentTestIndex = 0)
+                    it.copy(
+                        selectedTests = allTests, 
+                        step = QuickTestStep.ENTER_SCORES,
+                        isGuest = state.selectedAthlete == null
+                    )
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(errorMessage = e.message) }
@@ -144,26 +211,32 @@ class QuickTestViewModel @Inject constructor(
 
     private fun saveScoreAndAdvance(rawScore: Double) {
         val state = _uiState.value
-        val athlete = state.selectedAthlete ?: return
         val test = state.selectedTests.getOrNull(state.currentTestIndex) ?: return
 
         _uiState.update { it.copy(isSaving = true) }
         viewModelScope.launch {
             try {
-                // Auto-create event on first score
-                val eventId = ensureEventExists()
+                if (state.selectedAthlete != null) {
+                    val athlete = state.selectedAthlete
+                    val eventId = ensureEventExists()
+                    val ageMillis = System.currentTimeMillis() - athlete.dateOfBirth
+                    val ageYears = (ageMillis / (365.25 * 24 * 60 * 60 * 1000)).toFloat()
 
-                val ageMillis = System.currentTimeMillis() - athlete.dateOfBirth
-                val ageYears = (ageMillis / (365.25 * 24 * 60 * 60 * 1000)).toFloat()
-
-                recordResult(
-                    eventId = eventId,
-                    individualId = athlete.id,
-                    testId = test.id,
-                    rawScore = rawScore,
-                    ageAtTime = ageYears,
-                    sex = athlete.sex
-                )
+                    val result = recordResult(
+                        eventId = eventId,
+                        individualId = athlete.id,
+                        testId = test.id,
+                        rawScore = rawScore,
+                        ageAtTime = ageYears,
+                        sex = athlete.sex
+                    )
+                    _uiState.update { it.copy(lastRecordedPercentile = result.percentile) }
+                } else {
+                    // Guest logic: We don't save to DB, but we could still show a percentile
+                    // if we wanted to call calculatePercentile directly here.
+                    // For now, just advance.
+                    _uiState.update { it.copy(lastRecordedPercentile = null) }
+                }
 
                 advanceToNextTest()
             } catch (e: Exception) {
@@ -192,8 +265,10 @@ class QuickTestViewModel @Inject constructor(
         createdEventId?.let { return it }
 
         val state = _uiState.value
-        val dateFormat = SimpleDateFormat("MMM d, yyyy HH:mm", Locale.getDefault())
-        val eventName = "Quick Test - ${dateFormat.format(Date())}"
+        val eventName = state.eventName.ifBlank {
+            val dateFormat = SimpleDateFormat("MMM d, yyyy HH:mm", Locale.getDefault())
+            "Quick Test - ${dateFormat.format(Date())}"
+        }
 
         val result = createEventUseCase(
             name = eventName,
@@ -207,3 +282,5 @@ class QuickTestViewModel @Inject constructor(
         return event.id
     }
 }
+
+

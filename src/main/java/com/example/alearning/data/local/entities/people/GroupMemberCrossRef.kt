@@ -12,13 +12,13 @@ import androidx.room.Index
             entity = GroupEntity::class,
             parentColumns = ["id"],
             childColumns = ["groupId"],
-            onDelete = ForeignKey.Companion.CASCADE // If Group is deleted, remove memberships
+            onDelete = ForeignKey.CASCADE // If Group is deleted, remove memberships
         ),
         ForeignKey(
             entity = IndividualEntity::class,
             parentColumns = ["id"],
             childColumns = ["individualId"],
-            onDelete = ForeignKey.Companion.CASCADE // If Individual is deleted, remove memberships
+            onDelete = ForeignKey.CASCADE // If Individual is deleted, remove memberships
         )
     ],
     indices = [

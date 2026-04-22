@@ -1,6 +1,7 @@
 package com.example.alearning.data.mapper.testing
 
 import com.example.alearning.data.local.entities.testing.TestResultEntity
+import com.example.alearning.domain.model.testing.CaptureMethod
 import com.example.alearning.domain.model.testing.TestResult
 
 fun TestResultEntity.toDomain(): TestResult {
@@ -16,6 +17,7 @@ fun TestResultEntity.toDomain(): TestResult {
         percentile = this.percentile,
         classification = this.classification,
         normVariantUsed = this.normVariantUsed,
+        captureMethod = try { CaptureMethod.valueOf(this.captureMethod) } catch (_: Exception) { CaptureMethod.MANUAL_ENTRY },
         createdAt = this.createdAt
     )
 }
@@ -33,6 +35,7 @@ fun TestResult.toEntity(): TestResultEntity {
         percentile = this.percentile,
         classification = this.classification,
         normVariantUsed = this.normVariantUsed,
+        captureMethod = this.captureMethod.name,
         createdAt = this.createdAt
     )
 }
