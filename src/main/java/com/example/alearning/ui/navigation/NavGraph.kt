@@ -103,8 +103,8 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
                 onNavigateToGroupReport = { evId, grId ->
                     navController.navigate(Screen.GroupReport.createRoute(evId, grId))
                 },
-                onNavigateToStopwatch = { evId, testId, grId ->
-                    navController.navigate(Screen.Stopwatch.createRoute(evId, testId, grId))
+                onNavigateToStopwatch = { evId, testId, grId, athleteId ->
+                    navController.navigate(Screen.Stopwatch.createRoute(evId, testId, grId, athleteId))
                 }
             )
         }
@@ -146,7 +146,12 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
             arguments = listOf(
                 navArgument("eventId") { type = NavType.StringType },
                 navArgument("fitnessTestId") { type = NavType.StringType },
-                navArgument("groupId") { type = NavType.StringType }
+                navArgument("groupId") { type = NavType.StringType },
+                navArgument("athleteId") { 
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
             )
         ) {
             StopwatchScreen(

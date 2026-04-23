@@ -30,9 +30,9 @@ sealed class Screen(val route: String) {
 
     data object Leaderboard : Screen("leaderboard")
 
-    data object Stopwatch : Screen("stopwatch/{eventId}/{fitnessTestId}/{groupId}") {
-        fun createRoute(eventId: String, fitnessTestId: String, groupId: String) =
-            "stopwatch/$eventId/$fitnessTestId/$groupId"
+    data object Stopwatch : Screen("stopwatch/{eventId}/{fitnessTestId}/{groupId}?athleteId={athleteId}") {
+        fun createRoute(eventId: String, fitnessTestId: String, groupId: String, athleteId: String? = null) =
+            "stopwatch/$eventId/$fitnessTestId/$groupId" + if (athleteId != null) "?athleteId=$athleteId" else ""
     }
 }
 

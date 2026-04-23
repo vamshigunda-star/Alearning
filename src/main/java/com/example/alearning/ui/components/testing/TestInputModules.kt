@@ -119,7 +119,7 @@ private fun NumericInputModule(
         listOf("7", "8", "9"),
         listOf("4", "5", "6"),
         listOf("1", "2", "3"),
-        listOf(".", "0", "?")
+        listOf(".", "0", "BACKSPACE")
     )
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -131,12 +131,12 @@ private fun NumericInputModule(
                         modifier = Modifier.weight(1f),
                         onClick = {
                             when (key) {
-                                "?" -> if (value.isNotEmpty()) onValueChange(value.dropLast(1))
+                                "BACKSPACE" -> if (value.isNotEmpty()) onValueChange(value.dropLast(1))
                                 "." -> if (!value.contains(".")) onValueChange(value + ".")
                                 else -> onValueChange(value + key)
                             }
                         },
-                        isDelete = key == "?"
+                        isDelete = key == "BACKSPACE"
                     )
                 }
             }
