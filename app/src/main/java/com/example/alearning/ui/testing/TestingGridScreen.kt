@@ -81,7 +81,7 @@ fun TestingGridScreen(
     onNavigateToAthleteReport: (String) -> Unit,
     onNavigateToLeaderboard: (String, String, String) -> Unit,
     onNavigateToGroupReport: (String, String) -> Unit,
-    onNavigateToStopwatch: (String, String, String) -> Unit = { _, _, _ -> },
+    onNavigateToStopwatch: (String, String, String, String?) -> Unit = { _, _, _, _ -> },
     viewModel: TestingGridViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -96,7 +96,7 @@ fun TestingGridScreen(
                 is TestingGridAction.OnNavigateToAthleteReport -> onNavigateToAthleteReport(action.individualId)
                 is TestingGridAction.OnNavigateToLeaderboard -> onNavigateToLeaderboard(action.eventId, action.groupId, action.mode)
                 is TestingGridAction.OnNavigateToGroupReport -> onNavigateToGroupReport(action.eventId, action.groupId)
-                is TestingGridAction.OnNavigateToStopwatch -> onNavigateToStopwatch(action.eventId, action.fitnessTestId, action.groupId)
+                is TestingGridAction.OnNavigateToStopwatch -> onNavigateToStopwatch(action.eventId, action.fitnessTestId, action.groupId, action.individualId)
                 else -> viewModel.onAction(action)
             }
         }
@@ -226,7 +226,7 @@ private fun LiveEntryPhase(
                     modifier = Modifier.background(rowBg),
                     onCellClick = { test ->
                         if (test.timingMode != TimingMode.MANUAL_ENTRY) {
-                            onAction(TestingGridAction.OnNavigateToStopwatch(eventId, test.id, groupId))
+                            onAction(TestingGridAction.OnNavigateToStopwatch(eventId, test.id, groupId, athlete.id))
                         } else {
                             onAction(TestingGridAction.OnStartEditing(athlete, test))
                         }
@@ -322,11 +322,7 @@ private fun ScoreEntryDialog(
                 )
             }
         },
-        confirmButton = {
-            Button(onClick = { scoreText.toDoubleOrNull()?.let { onSave(it, false) } }, modifier = Modifier.fillMaxWidth()) {
-                Text("Save Score")
-            }
-        },
+        confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) { Text("Cancel") }
         }

@@ -19,7 +19,8 @@ data class StopwatchUiState(
     val canUndo: Boolean = false,
     val isLoading: Boolean = true,
     val errorMessage: String? = null,
-    val isSessionComplete: Boolean = false
+    val isSessionComplete: Boolean = false,
+    val selectedAthleteId: String? = null
 )
 
 enum class StopwatchPhase { READY, RUNNING, CONFIRMING }
@@ -48,4 +49,10 @@ sealed interface StopwatchAction {
     data object OnUndo : StopwatchAction
     data object OnDismissError : StopwatchAction
     data object OnNavigateBack : StopwatchAction
+    data object OnNext : StopwatchAction
+    data class OnSelectAthlete(val athleteId: String) : StopwatchAction
+    data object OnResetHeat : StopwatchAction
+    data object OnResetAthlete : StopwatchAction
 }
+
+

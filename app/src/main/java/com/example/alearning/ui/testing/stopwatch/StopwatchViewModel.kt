@@ -15,6 +15,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -30,6 +31,7 @@ class StopwatchViewModel @Inject constructor(
     private val eventId: String = savedStateHandle["eventId"] ?: ""
     private val fitnessTestId: String = savedStateHandle["fitnessTestId"] ?: ""
     private val groupId: String = savedStateHandle["groupId"] ?: ""
+    private val initialAthleteId: String? = savedStateHandle["athleteId"] // New: handle passed athleteId
 
     private val _uiState = MutableStateFlow(StopwatchUiState())
     val uiState: StateFlow<StopwatchUiState> = _uiState.asStateFlow()
@@ -39,20 +41,15 @@ class StopwatchViewModel @Inject constructor(
     private var startNanos: Long = 0L
     private var lastSavedResultId: String? = null
 
-    // Full queue of athletes with their trial progress
-    private var athleteQueue: List<AthleteQueueEntry> = emptyList()
-    private var currentQueueIndex: Int = 0
+    // Full list of unique athletes for this test session
+    private var athletes: List<Individual> = emptyList()
+    
+    // Tracks completed trial counts per athlete for this specific session
+    private var completionState = mutableMapOf<String, Int>()
 
     // For GROUP_START mode
     private var heats: List<List<Individual>> = emptyList()
     private var currentHeatIndex: Int = 0
-    private var heatFinishIndex: Int = 0
-
-    private data class AthleteQueueEntry(
-        val athlete: Individual,
-        val currentTrial: Int,
-        val totalTrials: Int
-    )
 
     init {
         loadSession()
@@ -64,66 +61,48 @@ class StopwatchViewModel @Inject constructor(
                 val session = stopwatchSessionUseCase(eventId, fitnessTestId, groupId)
                 val test = session.fitnessTest
 
-                // Build queue: each athlete appears trialsPerAthlete times
-                // but subtract already-completed trials
-                val queue = mutableListOf<AthleteQueueEntry>()
-                for (athlete in session.athletes) {
-                    val completed = session.trialCounts[athlete.id] ?: 0
-                    for (trial in (completed + 1)..session.trialsPerAthlete) {
-                        queue.add(AthleteQueueEntry(athlete, trial, session.trialsPerAthlete))
-                    }
-                }
-                athleteQueue = queue
+                athletes = session.athletes
+                completionState = session.trialCounts.toMutableMap()
                 heats = session.heats
 
-                val totalAthletes = session.athletes.size
-                val totalTrials = totalAthletes * session.trialsPerAthlete
-                val completedTrials = session.trialCounts.values.sum()
+                val totalTrials = athletes.size * session.trialsPerAthlete
+                val completedTrials = completionState.values.sum()
 
-                // Load event name
                 val event = testingRepository.getEventById(eventId)
 
                 when (test.timingMode) {
                     TimingMode.INDIVIDUAL -> {
-                        val currentEntry = queue.firstOrNull()
                         _uiState.update {
                             it.copy(
                                 mode = TimingMode.INDIVIDUAL,
                                 eventName = event?.name ?: "",
                                 testName = test.name,
                                 testUnit = test.unit,
-                                currentAthlete = currentEntry?.toQueueItem(AthleteStatus.ACTIVE),
                                 completedCount = completedTrials,
                                 totalCount = totalTrials,
                                 isLoading = false,
-                                isSessionComplete = queue.isEmpty()
+                                selectedAthleteId = initialAthleteId // Use passed ID instead of first entry
                             )
                         }
                     }
                     TimingMode.GROUP_START -> {
-                        // Find first heat that has incomplete athletes
-                        currentHeatIndex = findNextIncompleteHeat(session)
+                        currentHeatIndex = findFirstIncompleteHeat(session)
                         _uiState.update {
                             it.copy(
                                 mode = TimingMode.GROUP_START,
                                 eventName = event?.name ?: "",
                                 testName = test.name,
                                 testUnit = test.unit,
-                                heatAthletes = buildHeatAthletesList(),
+                                heatAthletes = buildHeatAthletesList(session.trialsPerAthlete),
                                 currentHeatNumber = currentHeatIndex + 1,
                                 totalHeats = heats.size,
                                 completedCount = completedTrials,
                                 totalCount = totalTrials,
-                                isLoading = false,
-                                isSessionComplete = queue.isEmpty()
+                                isLoading = false
                             )
                         }
                     }
-                    TimingMode.MANUAL_ENTRY -> {
-                        _uiState.update {
-                            it.copy(isLoading = false, isSessionComplete = true)
-                        }
-                    }
+                    else -> _uiState.update { it.copy(isLoading = false) }
                 }
             } catch (e: Exception) {
                 _uiState.update {
@@ -133,26 +112,24 @@ class StopwatchViewModel @Inject constructor(
         }
     }
 
-    private fun findNextIncompleteHeat(session: com.example.alearning.domain.usecase.testing.StopwatchSession): Int {
+    private fun findFirstIncompleteHeat(session: com.example.alearning.domain.usecase.testing.StopwatchSession): Int {
         for (i in heats.indices) {
-            val hasIncomplete = heats[i].any { athlete ->
-                (session.trialCounts[athlete.id] ?: 0) < session.trialsPerAthlete
-            }
+            val hasIncomplete = heats[i].any { (completionState[it.id] ?: 0) < session.trialsPerAthlete }
             if (hasIncomplete) return i
         }
         return 0
     }
 
-    private fun buildHeatAthletesList(): List<AthleteQueueItem> {
+    private fun buildHeatAthletesList(totalTrials: Int): List<AthleteQueueItem> {
         if (currentHeatIndex >= heats.size) return emptyList()
         return heats[currentHeatIndex].map { athlete ->
-            val entry = athleteQueue.find { it.athlete.id == athlete.id }
+            val done = completionState[athlete.id] ?: 0
             AthleteQueueItem(
                 athleteId = athlete.id,
                 name = athlete.fullName,
-                currentTrial = entry?.currentTrial ?: 1,
-                totalTrials = entry?.totalTrials ?: 1,
-                status = if (entry != null) AthleteStatus.WAITING else AthleteStatus.COMPLETED
+                currentTrial = done + 1,
+                totalTrials = totalTrials,
+                status = if (done < totalTrials) AthleteStatus.WAITING else AthleteStatus.COMPLETED
             )
         }
     }
@@ -163,36 +140,51 @@ class StopwatchViewModel @Inject constructor(
             is StopwatchAction.OnFinishTap -> handleFinishTap()
             is StopwatchAction.OnStopHeat -> handleStopHeat()
             is StopwatchAction.OnUndo -> handleUndo()
+            is StopwatchAction.OnNext -> handleNext()
+            is StopwatchAction.OnSelectAthlete -> {
+                val currentPhase = _uiState.value.stopwatchPhase
+                val currentMode = _uiState.value.mode
+                
+                if (currentMode == TimingMode.INDIVIDUAL) {
+                    if (currentPhase != StopwatchPhase.RUNNING) {
+                        _uiState.update { it.copy(
+                            selectedAthleteId = action.athleteId,
+                            stopwatchPhase = StopwatchPhase.READY,
+                            elapsedMs = 0L,
+                            confirmationData = null,
+                            canUndo = false
+                        ) }
+                    }
+                } else {
+                    // Group Mode: allow selection to target finishers
+                    _uiState.update { it.copy(selectedAthleteId = action.athleteId) }
+                }
+            }
+            is StopwatchAction.OnResetHeat -> handleResetHeat()
+            is StopwatchAction.OnResetAthlete -> handleResetAthlete()
             is StopwatchAction.OnDismissError -> _uiState.update { it.copy(errorMessage = null) }
-            is StopwatchAction.OnNavigateBack -> Unit // handled by screen
+            is StopwatchAction.OnNavigateBack -> Unit 
         }
     }
 
     private fun handleStartStop() {
         val phase = _uiState.value.stopwatchPhase
-        when {
-            phase == StopwatchPhase.READY -> startTimer()
-            phase == StopwatchPhase.RUNNING && _uiState.value.mode == TimingMode.INDIVIDUAL -> stopAndSaveIndividual()
-            phase == StopwatchPhase.RUNNING && _uiState.value.mode == TimingMode.GROUP_START -> {
-                // In group mode, the main button starts. Finish taps capture individual athletes.
-                // This shouldn't be called during RUNNING for group mode; use OnFinishTap instead.
-            }
+        if (phase == StopwatchPhase.READY) {
+            startTimer()
+        } else if (phase == StopwatchPhase.RUNNING && _uiState.value.mode == TimingMode.INDIVIDUAL) {
+            stopAndSaveIndividual()
         }
     }
 
     private fun startTimer() {
         startNanos = System.nanoTime()
         _uiState.update { it.copy(stopwatchPhase = StopwatchPhase.RUNNING, elapsedMs = 0L) }
-        heatFinishIndex = 0
 
-        // Mark active athletes
         if (_uiState.value.mode == TimingMode.GROUP_START) {
             _uiState.update { state ->
                 state.copy(
-                    heatAthletes = state.heatAthletes.map { athlete ->
-                        if (athlete.status == AthleteStatus.WAITING) {
-                            athlete.copy(status = AthleteStatus.ACTIVE)
-                        } else athlete
+                    heatAthletes = state.heatAthletes.map { 
+                        if (it.status == AthleteStatus.WAITING) it.copy(status = AthleteStatus.ACTIVE) else it 
                     }
                 )
             }
@@ -211,8 +203,9 @@ class StopwatchViewModel @Inject constructor(
         val elapsedMs = (System.nanoTime() - startNanos) / 1_000_000
         tickerJob?.cancel()
 
-        val entry = athleteQueue.getOrNull(currentQueueIndex) ?: return
-        val athlete = entry.athlete
+        val selectedId = _uiState.value.selectedAthleteId ?: return
+        val athlete = athletes.find { it.id == selectedId } ?: return
+        val currentTrial = (completionState[selectedId] ?: 0) + 1
 
         _uiState.update {
             it.copy(
@@ -221,7 +214,7 @@ class StopwatchViewModel @Inject constructor(
                 confirmationData = ConfirmationData(
                     athleteName = athlete.fullName,
                     timeMs = elapsedMs,
-                    trialNumber = entry.currentTrial
+                    trialNumber = currentTrial
                 ),
                 canUndo = true
             )
@@ -229,175 +222,136 @@ class StopwatchViewModel @Inject constructor(
 
         viewModelScope.launch {
             saveResult(athlete, elapsedMs)
-        }
-
-        confirmationJob = viewModelScope.launch {
-            delay(1500)
-            advanceToNextIndividual()
+            completionState[selectedId] = currentTrial
         }
     }
 
     private fun handleFinishTap() {
-        if (_uiState.value.mode != TimingMode.GROUP_START) return
-        if (_uiState.value.stopwatchPhase != StopwatchPhase.RUNNING) return
+        if (_uiState.value.mode != TimingMode.GROUP_START || _uiState.value.stopwatchPhase != StopwatchPhase.RUNNING) return
 
-        val currentHeat = heats.getOrNull(currentHeatIndex) ?: return
-        val activeAthletes = _uiState.value.heatAthletes.filter { it.status == AthleteStatus.ACTIVE }
-        if (activeAthletes.isEmpty()) return
+        val state = _uiState.value
+        val targetedAthlete = if (state.selectedAthleteId != null) {
+            state.heatAthletes.find { it.athleteId == state.selectedAthleteId && it.status == AthleteStatus.ACTIVE }
+        } else {
+            state.heatAthletes.find { it.status == AthleteStatus.ACTIVE }
+        }
+
+        if (targetedAthlete == null) return
 
         val elapsedMs = (System.nanoTime() - startNanos) / 1_000_000
-        val capturedAthlete = activeAthletes.first()
-
-        // Update the heat list to show captured time
-        _uiState.update { state ->
-            state.copy(
-                heatAthletes = state.heatAthletes.map { athlete ->
-                    if (athlete.athleteId == capturedAthlete.athleteId && athlete.status == AthleteStatus.ACTIVE) {
-                        athlete.copy(status = AthleteStatus.CAPTURED, capturedTimeMs = elapsedMs)
-                    } else athlete
+        
+        _uiState.update { s ->
+            s.copy(
+                selectedAthleteId = null,
+                heatAthletes = s.heatAthletes.map { 
+                    if (it.athleteId == targetedAthlete.athleteId) it.copy(status = AthleteStatus.CAPTURED, capturedTimeMs = elapsedMs) else it
                 }
             )
         }
 
-        // Save the result
-        val individual = currentHeat.find { it.id == capturedAthlete.athleteId } ?: return
+        val athlete = athletes.find { it.id == targetedAthlete.athleteId } ?: return
         viewModelScope.launch {
-            saveResult(individual, elapsedMs)
+            saveResult(athlete, elapsedMs)
+            completionState[athlete.id] = (completionState[athlete.id] ?: 0) + 1
         }
 
-        heatFinishIndex++
-
-        // Check if all athletes in heat are captured
-        val remainingActive = _uiState.value.heatAthletes.count { it.status == AthleteStatus.ACTIVE }
-        if (remainingActive == 0) {
-            finishHeat(capturedAthlete.name, elapsedMs)
+        if (_uiState.value.heatAthletes.count { it.status == AthleteStatus.ACTIVE } == 0) {
+            finishHeat(targetedAthlete.name, elapsedMs)
         }
     }
 
     private fun handleStopHeat() {
-        if (_uiState.value.stopwatchPhase != StopwatchPhase.RUNNING) return
         tickerJob?.cancel()
-
         val lastCaptured = _uiState.value.heatAthletes.lastOrNull { it.status == AthleteStatus.CAPTURED }
-
-        // Mark remaining ACTIVE athletes as DNF (they don't get a result saved)
-        _uiState.update { state ->
-            state.copy(
-                heatAthletes = state.heatAthletes.map { athlete ->
-                    if (athlete.status == AthleteStatus.ACTIVE) {
-                        athlete.copy(status = AthleteStatus.WAITING) // Reset to waiting for retry
-                    } else athlete
-                }
-            )
-        }
-
         if (lastCaptured != null) {
             finishHeat(lastCaptured.name, lastCaptured.capturedTimeMs ?: 0L)
         } else {
-            // No one was captured, just reset
             _uiState.update { it.copy(stopwatchPhase = StopwatchPhase.READY) }
         }
     }
 
-    private fun finishHeat(lastAthleteName: String, lastTimeMs: Long) {
+    private fun handleResetHeat() {
         tickerJob?.cancel()
-
-        _uiState.update {
-            it.copy(
-                stopwatchPhase = StopwatchPhase.CONFIRMING,
-                confirmationData = ConfirmationData(
-                    athleteName = lastAthleteName,
-                    timeMs = lastTimeMs,
-                    trialNumber = 0 // heat mode
-                ),
-                canUndo = false // Undo is complex for multi-capture; disabled for heats
+        _uiState.update { state ->
+            state.copy(
+                stopwatchPhase = StopwatchPhase.READY,
+                elapsedMs = 0L,
+                selectedAthleteId = null,
+                heatAthletes = state.heatAthletes.map { it.copy(status = AthleteStatus.WAITING, capturedTimeMs = null) }
             )
-        }
-
-        confirmationJob = viewModelScope.launch {
-            delay(1500)
-            advanceToNextHeat()
         }
     }
 
-    private fun advanceToNextIndividual() {
-        currentQueueIndex++
-        if (currentQueueIndex >= athleteQueue.size) {
-            _uiState.update {
-                it.copy(
-                    stopwatchPhase = StopwatchPhase.READY,
-                    confirmationData = null,
-                    canUndo = false,
-                    isSessionComplete = true,
-                    completedCount = it.totalCount,
-                    currentAthlete = null
-                )
-            }
-            return
-        }
-
-        val nextEntry = athleteQueue[currentQueueIndex]
+    private fun handleResetAthlete() {
+        tickerJob?.cancel()
         _uiState.update {
             it.copy(
                 stopwatchPhase = StopwatchPhase.READY,
                 elapsedMs = 0L,
-                currentAthlete = nextEntry.toQueueItem(AthleteStatus.ACTIVE),
                 confirmationData = null,
-                canUndo = false,
-                completedCount = currentQueueIndex
+                canUndo = false
             )
+        }
+    }
+
+    private fun finishHeat(name: String, timeMs: Long) {
+        tickerJob?.cancel()
+        _uiState.update {
+            it.copy(
+                stopwatchPhase = StopwatchPhase.CONFIRMING,
+                confirmationData = ConfirmationData(name, timeMs, 0),
+                canUndo = false
+            )
+        }
+    }
+
+    private fun handleNext() {
+        if (_uiState.value.mode == TimingMode.INDIVIDUAL) {
+            val all = getAllAthletes()
+            val nextAthlete = all.find { it.status == AthleteStatus.WAITING }
+            
+            _uiState.update { state ->
+                state.copy(
+                    stopwatchPhase = StopwatchPhase.READY,
+                    selectedAthleteId = nextAthlete?.athleteId,
+                    confirmationData = null,
+                    canUndo = false,
+                    completedCount = completionState.values.sum(),
+                    elapsedMs = 0L,
+                    isSessionComplete = nextAthlete == null && completionState.values.sum() >= state.totalCount
+                )
+            }
+        } else {
+            advanceToNextHeat()
         }
     }
 
     private fun advanceToNextHeat() {
         currentHeatIndex++
         if (currentHeatIndex >= heats.size) {
-            _uiState.update {
-                it.copy(
+            _uiState.update { state -> state.copy(isSessionComplete = true) }
+        } else {
+            _uiState.update { state ->
+                val trialsPerAthlete = if (athletes.isNotEmpty()) state.totalCount / athletes.size else 0
+                state.copy(
                     stopwatchPhase = StopwatchPhase.READY,
+                    elapsedMs = 0L,
+                    heatAthletes = buildHeatAthletesList(trialsPerAthlete),
+                    currentHeatNumber = currentHeatIndex + 1,
                     confirmationData = null,
-                    isSessionComplete = true,
-                    completedCount = it.totalCount
+                    completedCount = completionState.values.sum()
                 )
             }
-            return
-        }
-
-        heatFinishIndex = 0
-        _uiState.update {
-            it.copy(
-                stopwatchPhase = StopwatchPhase.READY,
-                elapsedMs = 0L,
-                heatAthletes = buildHeatAthletesList(),
-                currentHeatNumber = currentHeatIndex + 1,
-                confirmationData = null,
-                completedCount = it.completedCount + heatFinishIndex
-            )
         }
     }
 
     private fun handleUndo() {
         val resultId = lastSavedResultId ?: return
-        confirmationJob?.cancel()
-
         viewModelScope.launch {
             try {
                 testingRepository.deleteResultById(resultId)
                 lastSavedResultId = null
-
-                // Revert to current athlete, ready state
-                if (_uiState.value.mode == TimingMode.INDIVIDUAL) {
-                    val entry = athleteQueue.getOrNull(currentQueueIndex) ?: return@launch
-                    _uiState.update {
-                        it.copy(
-                            stopwatchPhase = StopwatchPhase.READY,
-                            elapsedMs = 0L,
-                            currentAthlete = entry.toQueueItem(AthleteStatus.ACTIVE),
-                            confirmationData = null,
-                            canUndo = false
-                        )
-                    }
-                }
+                _uiState.update { it.copy(stopwatchPhase = StopwatchPhase.READY, confirmationData = null, canUndo = false) }
             } catch (e: Exception) {
                 _uiState.update { it.copy(errorMessage = "Undo failed: ${e.message}") }
             }
@@ -406,39 +360,27 @@ class StopwatchViewModel @Inject constructor(
 
     private suspend fun saveResult(athlete: Individual, timeMs: Long) {
         try {
-            val ageMillis = System.currentTimeMillis() - athlete.dateOfBirth
-            val ageYears = (ageMillis / (365.25 * 24 * 60 * 60 * 1000)).toFloat()
-
-            // Convert milliseconds to seconds for rawScore (stored as Double)
-            val rawScoreSeconds = timeMs / 1000.0
-
-            val result = recordResult(
-                eventId = eventId,
-                individualId = athlete.id,
-                testId = fitnessTestId,
-                rawScore = rawScoreSeconds,
-                ageAtTime = ageYears,
-                sex = athlete.sex,
-                captureMethod = CaptureMethod.STOPWATCH
-            )
+            val age = ((System.currentTimeMillis() - athlete.dateOfBirth) / 31_557_600_000L).toFloat()
+            val result = recordResult(eventId, athlete.id, fitnessTestId, timeMs / 1000.0, age, athlete.sex, CaptureMethod.STOPWATCH)
             lastSavedResultId = result.id
         } catch (e: Exception) {
             _uiState.update { it.copy(errorMessage = "Save failed: ${e.message}") }
         }
     }
 
-    private fun AthleteQueueEntry.toQueueItem(status: AthleteStatus) = AthleteQueueItem(
-        athleteId = athlete.id,
-        name = athlete.fullName,
-        currentTrial = currentTrial,
-        totalTrials = totalTrials,
-        status = status
-    )
-
-    fun getUpcomingAthletes(): List<AthleteQueueItem> {
-        if (_uiState.value.mode != TimingMode.INDIVIDUAL) return emptyList()
-        return athleteQueue.drop(currentQueueIndex + 1).take(5).map {
-            it.toQueueItem(AthleteStatus.WAITING)
+    fun getAllAthletes(): List<AthleteQueueItem> {
+        val count = athletes.size
+        if (count == 0) return emptyList()
+        val totalTrialsPerAthlete = _uiState.value.totalCount / count
+        return athletes.map { athlete ->
+            val done = completionState[athlete.id] ?: 0
+            AthleteQueueItem(
+                athleteId = athlete.id,
+                name = athlete.fullName,
+                currentTrial = done + 1,
+                totalTrials = totalTrialsPerAthlete,
+                status = if (done >= totalTrialsPerAthlete) AthleteStatus.COMPLETED else AthleteStatus.WAITING
+            )
         }
     }
 

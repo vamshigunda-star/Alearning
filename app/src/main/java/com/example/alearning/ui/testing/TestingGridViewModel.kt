@@ -49,7 +49,7 @@ sealed interface TestingGridAction {
     data class OnNavigateToAthleteReport(val individualId: String) : TestingGridAction
     data class OnNavigateToLeaderboard(val eventId: String, val groupId: String, val mode: String) : TestingGridAction
     data class OnNavigateToGroupReport(val eventId: String, val groupId: String) : TestingGridAction
-    data class OnNavigateToStopwatch(val eventId: String, val fitnessTestId: String, val groupId: String) : TestingGridAction
+    data class OnNavigateToStopwatch(val eventId: String, val fitnessTestId: String, val groupId: String, val individualId: String?) : TestingGridAction
 }
 
 @HiltViewModel
