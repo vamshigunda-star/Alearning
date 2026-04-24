@@ -1,0 +1,7 @@
+id,name,sortOrder,radarAxis
+cat_cardio,Cardiorespiratory Endurance,1,ENDURANCE
+cat_muscular_strength,Muscular Strength,2,STRENGTH
+cat_muscular_endurance,Muscular Endurance,3,STRENGTH
+cat_flexibility,Flexibility,4,FLEXIBILITY
+cat_body_comp,Body Composition,5,
+cat_agility,Speed & Agility,6,AGILITY

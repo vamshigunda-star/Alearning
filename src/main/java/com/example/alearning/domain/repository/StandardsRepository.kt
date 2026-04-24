@@ -13,6 +13,8 @@ interface StandardsRepository {
 
     fun getTestsByCategory(categoryId: String): Flow<List<FitnessTest>>
 
+    fun getAllTests(): Flow<List<FitnessTest>>
+
     suspend fun getTestById(testId: String): FitnessTest?
 
     // --- The "Magic" Lookup ---
@@ -30,4 +32,6 @@ interface StandardsRepository {
     )
 
     suspend fun insertNorms(norms: List<NormReference>)
+
+    suspend fun clearAllStandards()
 }

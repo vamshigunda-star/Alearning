@@ -8,6 +8,12 @@ enum class InputParadigm {
     SCALE         // 1-10 scores (RPE)
 }
 
+enum class InterpretationStrategy {
+    NONE,
+    NORM_LOOKUP,
+    CALCULATED
+}
+
 data class FitnessTest(
     val id: String,
     val categoryId: String,
@@ -18,5 +24,9 @@ data class FitnessTest(
     val timingMode: TimingMode = TimingMode.MANUAL_ENTRY,
     val inputParadigm: InputParadigm = InputParadigm.NUMERIC, // Driving modular UI
     val athletesPerHeat: Int? = null,
-    val trialsPerAthlete: Int = 1
+    val trialsPerAthlete: Int = 1,
+    val validMin: Double? = null,
+    val validMax: Double? = null,
+    val interpretationStrategy: InterpretationStrategy = InterpretationStrategy.NORM_LOOKUP,
+    val calculationConfig: String? = null
 )

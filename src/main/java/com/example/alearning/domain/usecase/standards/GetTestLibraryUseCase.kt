@@ -16,4 +16,8 @@ class GetTestLibraryUseCase @Inject constructor(
     fun getTestsByCategory(categoryId: String): Flow<List<FitnessTest>> {
         return repository.getTestsByCategory(categoryId)
     }
+
+    fun getAllTests(): Flow<List<FitnessTest>> {
+        return repository.getAllTests()
+    }
 }

@@ -175,6 +175,8 @@ private fun TestingGridContent(
             unit = cell.test.unit,
             testDescription = cell.test.description,
             inputParadigm = cell.test.inputParadigm,
+            validMin = cell.test.validMin,
+            validMax = cell.test.validMax,
             currentScore = cell.currentResult?.rawScore,
             onDismiss = { onAction(TestingGridAction.OnDismissEditing) },
             onSave = { score, autoAdvance -> onAction(TestingGridAction.OnSaveScore(score)) } // Note: Auto-advance logic would go into ViewModel
@@ -297,9 +299,18 @@ private fun ScoreCell(result: TestResult?, onClick: () -> Unit) {
 private fun ScoreEntryDialog(
     athleteName: String, testName: String, unit: String, testDescription: String?,
     inputParadigm: com.example.alearning.domain.model.standards.InputParadigm,
-    currentScore: Double?, onDismiss: () -> Unit, onSave: (Double, Boolean) -> Unit
+    currentScore: Double?, onDismiss: () -> Unit, onSave: (Double, Boolean) -> Unit,
+    validMin: Double? = null, validMax: Double? = null
 ) {
     var scoreText by remember { mutableStateOf(currentScore?.toString() ?: "") }
+
+    val isInRange = remember(scoreText, validMin, validMax) {
+        val v = scoreText.toDoubleOrNull() ?: return@remember false
+        val minOk = validMin?.let { v >= it } ?: true
+        val maxOk = validMax?.let { v <= it } ?: true
+        minOk && maxOk
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = null,
@@ -314,11 +325,27 @@ private fun ScoreEntryDialog(
                         Text(scoreText.ifEmpty { "\u2014" }, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
                     }
                 }
+                if (!isInRange && scoreText.isNotEmpty()) {
+                    Text(
+                        text = buildString {
+                            append("Valid range: ")
+                            if (validMin != null) append("\u2265 $validMin")
+                            if (validMin != null && validMax != null) append(" and ")
+                            if (validMax != null) append("\u2264 $validMax")
+                        },
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
                 TestInputSwitcher(
                     paradigm = inputParadigm,
                     currentValue = scoreText,
                     onValueChange = { scoreText = it },
-                    onSubmit = { scoreText.toDoubleOrNull()?.let { onSave(it, false) } }
+                    onSubmit = {
+                        if (isInRange) {
+                            scoreText.toDoubleOrNull()?.let { onSave(it, false) }
+                        }
+                    }
                 )
             }
         },

@@ -69,6 +69,10 @@ class TestingRepositoryImpl @Inject constructor(
         return dao.getAllResultsForIndividual(individualId).map { list -> list.map { it.toDomain() } }
     }
 
+    override suspend fun getLatestResultPerTestForIndividual(individualId: String): List<TestResult> {
+        return dao.getLatestResultPerTestForIndividual(individualId).map { it.toDomain() }
+    }
+
     // --- STOPWATCH SUPPORT ---
     override suspend fun getAthletesInGroupOrdered(groupId: String): List<Individual> {
         return dao.getAthletesInGroupOrdered(groupId).map { it.toDomain() }
@@ -80,5 +84,11 @@ class TestingRepositoryImpl @Inject constructor(
 
     override suspend fun deleteResultById(resultId: String) {
         dao.deleteResultById(resultId)
+    }
+
+    override suspend fun clearAllTestingData() {
+        dao.deleteAllResults()
+        dao.deleteAllEventTestCrossRefs()
+        dao.deleteAllEvents()
     }
 }

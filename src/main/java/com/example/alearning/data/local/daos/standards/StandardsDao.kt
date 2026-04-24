@@ -2,9 +2,8 @@ package com.example.alearning.data.local.daos.standards
 
 
 import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Upsert
 import com.example.alearning.data.local.entities.standards.FitnessTestEntity
 import com.example.alearning.data.local.entities.standards.NormReferenceEntity
 import com.example.alearning.data.local.entities.standards.TestCategoryEntity
@@ -53,13 +52,22 @@ interface StandardsDao {
 
     // --- DATA IMPORT (Admin/Setup) ---
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertCategory(category: TestCategoryEntity)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertTest(test: FitnessTestEntity)
 
     // Flexible: Insert a whole list of norms at once (for Excel import)
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertNorms(norms: List<NormReferenceEntity>)
+
+    @Query("DELETE FROM norm_references")
+    suspend fun deleteAllNorms()
+
+    @Query("DELETE FROM fitness_tests")
+    suspend fun deleteAllTests()
+
+    @Query("DELETE FROM test_categories")
+    suspend fun deleteAllCategories()
 }

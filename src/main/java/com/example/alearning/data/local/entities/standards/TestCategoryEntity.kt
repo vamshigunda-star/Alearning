@@ -11,6 +11,7 @@ data class TestCategoryEntity(
 
     val name: String,          // e.g., "Cardiorespiratory Endurance"
     val sortOrder: Int = 0,    // To control display order in the UI
+    val radarAxis: String? = null, // SPEED, AGILITY, STRENGTH, ENDURANCE, FLEXIBILITY, BALANCE; null = not on radar
 
     // Sync Metadata
     val createdAt: Long = System.currentTimeMillis(),

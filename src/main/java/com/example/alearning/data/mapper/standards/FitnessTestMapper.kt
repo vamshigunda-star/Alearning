@@ -2,6 +2,7 @@ package com.example.alearning.data.mapper.standards
 
 import com.example.alearning.data.local.entities.standards.FitnessTestEntity
 import com.example.alearning.domain.model.standards.FitnessTest
+import com.example.alearning.domain.model.standards.InterpretationStrategy
 import com.example.alearning.domain.model.standards.TimingMode
 import com.example.alearning.domain.model.standards.InputParadigm
 
@@ -16,7 +17,13 @@ fun FitnessTestEntity.toDomain(): FitnessTest {
         timingMode = try { TimingMode.valueOf(this.timingMode) } catch (_: Exception) { TimingMode.MANUAL_ENTRY },
         inputParadigm = try { InputParadigm.valueOf(this.inputParadigm) } catch (_: Exception) { InputParadigm.NUMERIC },
         athletesPerHeat = this.athletesPerHeat,
-        trialsPerAthlete = this.trialsPerAthlete
+        trialsPerAthlete = this.trialsPerAthlete,
+        validMin = this.validMin,
+        validMax = this.validMax,
+        interpretationStrategy = try {
+            InterpretationStrategy.valueOf(this.interpretationStrategy)
+        } catch (_: Exception) { InterpretationStrategy.NORM_LOOKUP },
+        calculationConfig = this.calculationConfig
     )
 }
 
@@ -34,6 +41,10 @@ fun FitnessTest.toEntity(
         inputParadigm = this.inputParadigm.name,
         athletesPerHeat = this.athletesPerHeat,
         trialsPerAthlete = this.trialsPerAthlete,
+        validMin = this.validMin,
+        validMax = this.validMax,
+        interpretationStrategy = this.interpretationStrategy.name,
+        calculationConfig = this.calculationConfig,
         createdAt = createdAt,
         updatedAt = System.currentTimeMillis(),
         isDeleted = false

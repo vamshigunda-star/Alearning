@@ -7,8 +7,10 @@ import com.example.alearning.domain.model.standards.FitnessTest
 import com.example.alearning.domain.model.testing.TestingEvent
 import com.example.alearning.domain.repository.TestingRepository
 import com.example.alearning.domain.usecase.testing.GetGroupLeaderboardUseCase
+import com.example.alearning.domain.usecase.testing.GetGroupProgressUseCase
 import com.example.alearning.domain.usecase.testing.GetRemediationListUseCase
 import com.example.alearning.domain.usecase.testing.GroupLeaderboard
+import com.example.alearning.domain.usecase.testing.GroupProgress
 import com.example.alearning.domain.usecase.testing.RemediationList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,8 +28,10 @@ data class GroupReportUiState(
     val selectedTestId: String? = null,
     val leaderboard: GroupLeaderboard? = null,
     val remediationList: RemediationList? = null,
+    val selectedTestProgress: GroupProgress? = null,
     val isLoading: Boolean = true,
     val isLeaderboardLoading: Boolean = false,
+    val isProgressLoading: Boolean = false,
     val errorMessage: String? = null
 )
 
@@ -44,7 +48,8 @@ class GroupReportViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val testingRepository: TestingRepository,
     private val getGroupLeaderboard: GetGroupLeaderboardUseCase,
-    private val getRemediationList: GetRemediationListUseCase
+    private val getRemediationList: GetRemediationListUseCase,
+    private val getGroupProgress: GetGroupProgressUseCase
 ) : ViewModel() {
 
     val eventId: String = savedStateHandle["eventId"] ?: ""
@@ -59,7 +64,10 @@ class GroupReportViewModel @Inject constructor(
 
     fun onAction(action: GroupReportAction) {
         when (action) {
-            is GroupReportAction.OnSelectTest -> loadLeaderboard(action.testId)
+            is GroupReportAction.OnSelectTest -> {
+                loadLeaderboard(action.testId)
+                loadProgress(action.testId)
+            }
             is GroupReportAction.OnDismissError -> _uiState.update { it.copy(errorMessage = null) }
             // Navigation actions handled by screen
             is GroupReportAction.OnNavigateToAthleteReport,
@@ -84,9 +92,11 @@ class GroupReportViewModel @Inject constructor(
                     )
                 }
 
-                // Auto-select first test for leaderboard
+                // Auto-select first test for leaderboard and progress
                 if (tests.isNotEmpty()) {
-                    loadLeaderboard(tests.first().id)
+                    val firstTestId = tests.first().id
+                    loadLeaderboard(firstTestId)
+                    loadProgress(firstTestId)
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(errorMessage = e.message, isLoading = false) }
@@ -102,6 +112,18 @@ class GroupReportViewModel @Inject constructor(
                 _uiState.update { it.copy(leaderboard = leaderboard, isLeaderboardLoading = false) }
             } catch (e: Exception) {
                 _uiState.update { it.copy(errorMessage = e.message, isLeaderboardLoading = false) }
+            }
+        }
+    }
+
+    private fun loadProgress(testId: String) {
+        _uiState.update { it.copy(isProgressLoading = true) }
+        viewModelScope.launch {
+            try {
+                val progress = getGroupProgress(groupId, testId)
+                _uiState.update { it.copy(selectedTestProgress = progress, isProgressLoading = false) }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = e.message, isProgressLoading = false) }
             }
         }
     }

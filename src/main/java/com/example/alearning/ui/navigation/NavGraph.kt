@@ -12,6 +12,8 @@ import com.example.alearning.ui.groupreport.GroupReportScreen
 import com.example.alearning.ui.leaderboard.LeaderboardScreen
 import com.example.alearning.ui.quicktest.QuickTestScreen
 import com.example.alearning.ui.report.AthleteReportScreen
+import com.example.alearning.ui.report.ReportScreen
+import com.example.alearning.ui.analytics.AnalyticsScreen
 import com.example.alearning.ui.roster.RosterScreen
 import com.example.alearning.ui.testlibrary.TestLibraryScreen
 import com.example.alearning.ui.testing.CreateEventScreen
@@ -72,12 +74,15 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
         }
 
         composable(Screen.Analytics.route) {
-            // Placeholder for Analytics Screen
+            AnalyticsScreen()
         }
 
         composable(Screen.Report.route){
-            // Placeholder for Report Screen
-
+            ReportScreen(
+                onNavigateToGroupReport = { eventId, groupId ->
+                    navController.navigate(Screen.GroupReport.createRoute(eventId, groupId))
+                }
+            )
         }
 
 

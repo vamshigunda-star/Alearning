@@ -40,6 +40,12 @@ data class FitnessTestEntity(
     val athletesPerHeat: Int? = null,          // null for INDIVIDUAL/MANUAL, 4-8 for GROUP_START
     val trialsPerAthlete: Int = 1,             // e.g., 2 for best-of-2
 
+    // Score validity range and interpretation strategy
+    val validMin: Double? = null,
+    val validMax: Double? = null,
+    val interpretationStrategy: String = "NORM_LOOKUP",
+    val calculationConfig: String? = null,
+
     // Sync Metadata
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
