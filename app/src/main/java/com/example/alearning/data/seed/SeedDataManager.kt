@@ -8,7 +8,6 @@ import com.example.alearning.data.mapper.standards.toDomain
 import com.example.alearning.domain.model.people.BiologicalSex
 import com.example.alearning.domain.usecase.people.RegisterAthleteUseCase
 import com.example.alearning.domain.usecase.standards.ImportStandardsUseCase
-import com.google.gson.Gson
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -22,68 +21,85 @@ class SeedDataManager @Inject constructor(
 ) {
     companion object {
         private const val PREFS_NAME = "alearning_prefs"
-        private const val KEY_DATA_SEEDED = "data_seeded_v2" // Bumped version to force re-seed
+        private const val KEY_DATA_SEEDED = "data_seeded_csv_v5" // Need to change the version from V5 to V6 if I am making changes in the csv files in the asset folders. Bumped version for CSV
     }
 
     suspend fun seedIfNeeded() {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        if (prefs.getBoolean(KEY_DATA_SEEDED, false)) return
+        if (prefs.getBoolean(KEY_DATA_SEEDED, false)) {
+            android.util.Log.d("SeedDataManager", "Data already seeded")
+            return
+        }
 
-        // 1. Seed Test Library
+        android.util.Log.d("SeedDataManager", "Starting data seeding from CSV...")
+        // 1. Seed Test Library from CSV
         try {
-            val json = context.assets.open("seed_fitness_tests.json")
-                .bufferedReader().use { it.readText() }
+            val categoryMaps = com.example.alearning.util.CsvParser.parse(context.assets.open("test_categories.csv"))
+            val testMaps = com.example.alearning.util.CsvParser.parse(context.assets.open("tests.csv"))
+            val normMaps = com.example.alearning.util.CsvParser.parse(context.assets.open("norms.csv"))
 
-            val seedData = Gson().fromJson(json, SeedJson::class.java)
+            android.util.Log.d("SeedDataManager", "Parsed ${categoryMaps.size} categories, ${testMaps.size} tests, ${normMaps.size} norms")
 
-            val categories = seedData.categories.map { c ->
+            val categories = categoryMaps.map { row ->
                 TestCategoryEntity(
-                    id = c.id,
-                    name = c.name,
-                    sortOrder = c.sortOrder
+                    id = row["id"]!!,
+                    name = row["name"]!!,
+                    sortOrder = row["sortOrder"]?.toIntOrNull() ?: 0,
+                    radarAxis = row["radarAxis"]
                 )
             }
 
-            val tests = seedData.tests.map { t ->
+            val tests = testMaps.map { row ->
                 FitnessTestEntity(
-                    id = t.id,
-                    categoryId = t.categoryId,
-                    name = t.name,
-                    unit = t.unit,
-                    isHigherBetter = t.isHigherBetter,
-                    description = t.description,
-                    timingMode = t.timingMode ?: "MANUAL_ENTRY",
-                    athletesPerHeat = t.athletesPerHeat,
-                    trialsPerAthlete = t.trialsPerAthlete ?: 1
+                    id = row["id"]!!,
+                    categoryId = row["categoryId"]!!,
+                    name = row["name"]!!,
+                    unit = row["unit"]!!,
+                    isHigherBetter = row["isHigherBetter"]?.lowercase() == "true",
+                    description = row["description"],
+                    timingMode = row["timingMode"] ?: "MANUAL_ENTRY",
+                    inputParadigm = row["inputParadigm"] ?: "NUMERIC",
+                    athletesPerHeat = row["athletesPerHeat"]?.toIntOrNull(),
+                    trialsPerAthlete = row["trialsPerAthlete"]?.toIntOrNull() ?: 1,
+                    validMin = row["validMin"]?.toDoubleOrNull(),
+                    validMax = row["validMax"]?.toDoubleOrNull(),
+                    interpretationStrategy = row["interpretationStrategy"] ?: "NORM_LOOKUP",
+                    calculationConfig = row["calculationConfig"]
                 )
             }
 
-            val norms = seedData.norms.map { n ->
+            val norms = normMaps.map { row ->
                 NormReferenceEntity(
-                    testId = n.testId,
-                    sex = BiologicalSex.valueOf(n.sex),
-                    ageMin = n.ageMin,
-                    ageMax = n.ageMax,
-                    minScore = n.minScore,
-                    maxScore = n.maxScore,
-                    percentile = n.percentile,
-                    classification = n.classification
+                    testId = row["testId"]!!,
+                    variant = row["variant"] ?: "Default",
+                    sex = BiologicalSex.valueOf(row["sex"]?.uppercase() ?: "MALE"),
+                    ageMin = row["ageMin"]?.toFloatOrNull() ?: 0f,
+                    ageMax = row["ageMax"]?.toFloatOrNull() ?: 99f,
+                    minScore = row["minScore"]?.toDoubleOrNull() ?: 0.0,
+                    maxScore = row["maxScore"]?.toDoubleOrNull() ?: 999.0,
+                    percentile = row["percentile"]?.toIntOrNull() ?: 0,
+                    classification = row["classification"]
                 )
             }
 
             importStandardsUseCase(
                 categories.map { it.toDomain() },
                 tests.map { it.toDomain() },
-                norms.map { it.toDomain() }
+                norms.map { it.toDomain() },
+                clearExisting = true
             )
+            android.util.Log.d("SeedDataManager", "Successfully imported standards into database")
         } catch (e: Exception) {
+            android.util.Log.e("SeedDataManager", "Error seeding from CSV", e)
             e.printStackTrace()
         }
 
         // 2. Seed Dummy Athletes
         seedAthletes()
+        android.util.Log.d("SeedDataManager", "Successfully seeded athletes")
 
         prefs.edit().putBoolean(KEY_DATA_SEEDED, true).apply()
+        android.util.Log.d("SeedDataManager", "Seeding complete")
     }
 
     private suspend fun seedAthletes() {
@@ -107,38 +123,3 @@ class SeedDataManager @Inject constructor(
 
     private data class AthleteSeed(val firstName: String, val lastName: String, val birthYear: Int, val sex: BiologicalSex)
 }
-
-private data class SeedJson(
-    val categories: List<SeedCategory>,
-    val tests: List<SeedTest>,
-    val norms: List<SeedNorm>
-)
-
-private data class SeedCategory(
-    val id: String,
-    val name: String,
-    val sortOrder: Int
-)
-
-private data class SeedTest(
-    val id: String,
-    val categoryId: String,
-    val name: String,
-    val unit: String,
-    val isHigherBetter: Boolean,
-    val description: String?,
-    val timingMode: String? = null,
-    val athletesPerHeat: Int? = null,
-    val trialsPerAthlete: Int? = null
-)
-
-private data class SeedNorm(
-    val testId: String,
-    val sex: String,
-    val ageMin: Float,
-    val ageMax: Float,
-    val minScore: Double,
-    val maxScore: Double,
-    val percentile: Int,
-    val classification: String?
-)

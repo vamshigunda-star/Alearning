@@ -25,6 +25,10 @@ class StandardsRepositoryImpl @Inject constructor(
         return dao.getTestsByCategory(categoryId).map { list -> list.map { it.toDomain() } }
     }
 
+    override fun getAllTests(): Flow<List<FitnessTest>> {
+        return dao.getAllTests().map { list -> list.map { it.toDomain() } }
+    }
+
     override suspend fun getTestById(testId: String): FitnessTest? {
         return dao.getTestById(testId)?.toDomain()
     }
@@ -50,5 +54,11 @@ class StandardsRepositoryImpl @Inject constructor(
 
     override suspend fun insertNorms(norms: List<NormReference>) {
         dao.insertNorms(norms.map { it.toEntity() })
+    }
+
+    override suspend fun clearAllStandards() {
+        dao.deleteAllNorms()
+        dao.deleteAllTests()
+        dao.deleteAllCategories()
     }
 }

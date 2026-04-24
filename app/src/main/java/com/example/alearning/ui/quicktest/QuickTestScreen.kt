@@ -353,6 +353,15 @@ private fun EnterScoresStep(
     val currentTest = uiState.selectedTests.getOrNull(uiState.currentTestIndex)
     var scoreText by remember(uiState.currentTestIndex) { mutableStateOf("") }
 
+    val validMin = currentTest?.validMin
+    val validMax = currentTest?.validMax
+    val isInRange = remember(scoreText, validMin, validMax) {
+        val v = scoreText.toDoubleOrNull() ?: return@remember false
+        val minOk = validMin?.let { v >= it } ?: true
+        val maxOk = validMax?.let { v <= it } ?: true
+        minOk && maxOk
+    }
+
     // Trigger live calculation whenever text changes
     LaunchedEffect(scoreText) {
         scoreText.toDoubleOrNull()?.let { onLiveScoreChange(it) }
@@ -455,14 +464,30 @@ private fun EnterScoresStep(
                 }
             }
 
+            if (!isInRange && scoreText.isNotEmpty()) {
+                Text(
+                    text = buildString {
+                        append("Valid range: ")
+                        if (validMin != null) append("≥ $validMin")
+                        if (validMin != null && validMax != null) append(" and ")
+                        if (validMax != null) append("≤ $validMax")
+                    },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+            }
+
             // DYNAMIC MODULAR INPUT
             TestInputSwitcher(
                 paradigm = currentTest.inputParadigm,
                 currentValue = scoreText,
                 onValueChange = { scoreText = it },
                 onSubmit = {
-                    scoreText.toDoubleOrNull()?.let { score ->
-                        onAction(QuickTestAction.OnSaveScore(score))
+                    if (isInRange) {
+                        scoreText.toDoubleOrNull()?.let { score ->
+                            onAction(QuickTestAction.OnSaveScore(score))
+                        }
                     }
                 }
             )

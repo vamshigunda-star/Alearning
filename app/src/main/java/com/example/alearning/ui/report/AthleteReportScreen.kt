@@ -27,6 +27,8 @@ import com.example.alearning.domain.model.people.Individual
 import com.example.alearning.domain.usecase.testing.AthleteTestSummary
 import com.example.alearning.domain.usecase.testing.IndividualProgress
 import com.example.alearning.domain.usecase.testing.ProgressDataPoint
+import com.example.alearning.ui.components.charts.ProgressLineChart
+import com.example.alearning.ui.components.charts.RadarChart
 import com.example.alearning.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -156,6 +158,29 @@ private fun AthleteReportBody(
         uiState.athlete?.let { athlete ->
             item {
                 AthleteHeaderCard(athlete)
+            }
+        }
+
+        uiState.radarData?.let { radar ->
+            if (radar.axisScores.isNotEmpty()) {
+                item {
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                "Athletic Profile",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            RadarChart(
+                                data = radar,
+                                modifier = Modifier.height(300.dp)
+                            )
+                        }
+                    }
+                }
             }
         }
 
@@ -346,7 +371,13 @@ private fun ProgressSection(progress: IndividualProgress) {
             if (progress.dataPoints.isEmpty()) {
                 Text("No data points", style = MaterialTheme.typography.bodyMedium)
             } else {
-                progress.dataPoints.forEach { point ->
+                if (progress.dataPoints.size >= 2) {
+                    ProgressLineChart(
+                        dataPoints = progress.dataPoints.map { (it.percentile ?: 0).toFloat() / 100f },
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                }
+                progress.dataPoints.reversed().forEach { point ->
                     ProgressPointRow(point = point, isHigherBetter = progress.isHigherBetter)
                     HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                 }

@@ -27,6 +27,7 @@ import com.example.alearning.domain.usecase.testing.GroupLeaderboard
 import com.example.alearning.domain.usecase.testing.LeaderboardEntry
 import com.example.alearning.domain.usecase.testing.RemediationFlag
 import com.example.alearning.domain.usecase.testing.RemediationList
+import com.example.alearning.ui.components.charts.ProgressLineChart
 import com.example.alearning.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -241,6 +242,56 @@ private fun GroupReportBody(
                             entry = entry,
                             onClick = { onAction(GroupReportAction.OnNavigateToAthleteReport(entry.individualId)) }
                         )
+                    }
+                }
+            }
+
+            // Group Progress section
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    "Group Trend",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            if (uiState.isProgressLoading) {
+                item {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    }
+                }
+            } else {
+                uiState.selectedTestProgress?.let { progress ->
+                    if (progress.dataPoints.isNotEmpty()) {
+                        item {
+                            Card(modifier = Modifier.fillMaxWidth()) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Text(
+                                        "Average Percentile Improvement",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    if (progress.dataPoints.size >= 2) {
+                                        ProgressLineChart(
+                                            dataPoints = progress.dataPoints.map { it.averagePercentile / 100f },
+                                            modifier = Modifier.height(150.dp)
+                                        )
+                                    } else {
+                                        Box(
+                                            modifier = Modifier.fillMaxWidth().height(100.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text("More data points needed for trend", style = MaterialTheme.typography.bodySmall)
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }

@@ -6,7 +6,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.alearning.domain.model.people.Individual
 import com.example.alearning.domain.repository.PeopleRepository
 import com.example.alearning.domain.usecase.testing.AthleteProfile
+import com.example.alearning.domain.usecase.testing.AthleteRadarData
 import com.example.alearning.domain.usecase.testing.GetAthleteProfileUseCase
+import com.example.alearning.domain.usecase.testing.GetAthleteRadarDataUseCase
 import com.example.alearning.domain.usecase.testing.GetIndividualProgressUseCase
 import com.example.alearning.domain.usecase.testing.IndividualProgress
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -20,6 +22,7 @@ import javax.inject.Inject
 data class AthleteReportUiState(
     val athlete: Individual? = null,
     val profile: AthleteProfile? = null,
+    val radarData: AthleteRadarData? = null,
     val selectedTestProgress: IndividualProgress? = null,
     val selectedTestId: String? = null,
     val isLoading: Boolean = true,
@@ -38,6 +41,7 @@ class AthleteReportViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val peopleRepository: PeopleRepository,
     private val getAthleteProfile: GetAthleteProfileUseCase,
+    private val getAthleteRadarData: GetAthleteRadarDataUseCase,
     private val getIndividualProgress: GetIndividualProgressUseCase
 ) : ViewModel() {
 
@@ -65,7 +69,8 @@ class AthleteReportViewModel @Inject constructor(
                 _uiState.update { it.copy(athlete = athlete) }
 
                 val profile = getAthleteProfile(individualId)
-                _uiState.update { it.copy(profile = profile, isLoading = false) }
+                val radar = getAthleteRadarData(individualId)
+                _uiState.update { it.copy(profile = profile, radarData = radar, isLoading = false) }
             } catch (e: Exception) {
                 _uiState.update { it.copy(errorMessage = e.message, isLoading = false) }
             }

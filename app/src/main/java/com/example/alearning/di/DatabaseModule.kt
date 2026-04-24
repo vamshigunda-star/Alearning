@@ -25,8 +25,11 @@ object DatabaseModule {
             AppDatabase::class.java,
             "alearning-db"
         )
-            .addMigrations(AppDatabase.MIGRATION_3_4)
-            .fallbackToDestructiveMigration()
+            .addMigrations(
+                AppDatabase.MIGRATION_3_4,
+                AppDatabase.MIGRATION_4_5,
+                AppDatabase.MIGRATION_5_6
+            )
             .build()
     }
 

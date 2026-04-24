@@ -30,7 +30,7 @@ import com.example.alearning.data.local.entities.testing.TestingEventEntity
         TestResultEntity::class,
         EventTestCrossRef::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -40,6 +40,16 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun testingDao(): TestingDao
 
     companion object {
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE fitness_tests ADD COLUMN validMin REAL DEFAULT NULL")
+                db.execSQL("ALTER TABLE fitness_tests ADD COLUMN validMax REAL DEFAULT NULL")
+                db.execSQL("ALTER TABLE fitness_tests ADD COLUMN interpretationStrategy TEXT NOT NULL DEFAULT 'NORM_LOOKUP'")
+                db.execSQL("ALTER TABLE fitness_tests ADD COLUMN calculationConfig TEXT DEFAULT NULL")
+                db.execSQL("ALTER TABLE test_categories ADD COLUMN radarAxis TEXT DEFAULT NULL")
+            }
+        }
+
         val MIGRATION_4_5 = object : Migration(4, 5) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE fitness_tests ADD COLUMN inputParadigm TEXT NOT NULL DEFAULT 'NUMERIC'")
