@@ -79,8 +79,8 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
 
         composable(Screen.Report.route){
             ReportScreen(
-                onNavigateToGroupReport = { eventId, groupId ->
-                    navController.navigate(Screen.GroupReport.createRoute(eventId, groupId))
+                onNavigateToGroupReport = { groupId, eventId ->
+                    navController.navigate(Screen.GroupReport.createRoute(groupId, eventId))
                 }
             )
         }
@@ -128,10 +128,16 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
         composable(
             route = Screen.GroupReport.route,
             arguments = listOf(
-                navArgument("eventId") { type = NavType.StringType },
-                navArgument("groupId") { type = NavType.StringType }
+                navArgument("groupId") { type = NavType.StringType },
+                navArgument("eventId") { 
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
             )
-        ) {
+        ) { backStackEntry ->
+            val groupId = backStackEntry.arguments?.getString("groupId") ?: ""
+            val eventId = backStackEntry.arguments?.getString("eventId")
             GroupReportScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToAthleteReport = { individualId ->

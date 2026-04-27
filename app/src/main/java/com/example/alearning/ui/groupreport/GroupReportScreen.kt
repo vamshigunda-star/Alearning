@@ -14,11 +14,13 @@ import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -43,7 +45,7 @@ fun GroupReportScreen(
 
     GroupReportContent(
         uiState = uiState,
-        eventId = viewModel.eventId,
+        eventId = viewModel.eventId ?: "",
         groupId = viewModel.groupId,
         onAction = { action ->
             when (action) {
@@ -165,7 +167,7 @@ private fun GroupReportBody(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Event summary card
+        // Event summary card (if eventId is provided)
         uiState.event?.let { event ->
             item {
                 Card(
@@ -183,43 +185,49 @@ private fun GroupReportBody(
                             dateFormat.format(Date(event.date)),
                             style = MaterialTheme.typography.bodyMedium
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            "${uiState.tests.size} tests completed",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
                     }
                 }
             }
         }
 
-        // Test selection tabs for leaderboard
+        // Test selection tabs
         if (uiState.tests.isNotEmpty()) {
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Leaderboard", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    TextButton(onClick = {
-                        onAction(GroupReportAction.OnNavigateToLeaderboard(eventId, groupId, "event"))
-                    }) {
-                        Text("Full View")
-                    }
-                }
+                Text(
+                    "Leaderboard",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
             }
 
             item {
                 ScrollableTabRow(
-                    selectedTabIndex = uiState.tests.indexOfFirst { it.id == uiState.selectedTestId }.coerceAtLeast(0)
+                    selectedTabIndex = uiState.tests.indexOfFirst { it.id == uiState.selectedTestId }.coerceAtLeast(0),
+                    edgePadding = 0.dp,
+                    containerColor = Color.Transparent,
+                    divider = {},
+                    indicator = { tabPositions ->
+                        val index = uiState.tests.indexOfFirst { it.id == uiState.selectedTestId }.coerceAtLeast(0)
+                        if (index < tabPositions.size) {
+                            TabRowDefaults.SecondaryIndicator(
+                                modifier = Modifier.tabIndicatorOffset(tabPositions[index]),
+                                color = NavyPrimary
+                            )
+                        }
+                    }
                 ) {
                     uiState.tests.forEach { test ->
                         Tab(
                             selected = test.id == uiState.selectedTestId,
                             onClick = { onAction(GroupReportAction.OnSelectTest(test.id)) },
-                            text = { Text(test.name, maxLines = 1) }
+                            text = { 
+                                Text(
+                                    test.name, 
+                                    maxLines = 1,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = if (test.id == uiState.selectedTestId) Color.Black else Color.Gray
+                                ) 
+                            }
                         )
                     }
                 }
@@ -228,20 +236,25 @@ private fun GroupReportBody(
             // Leaderboard results
             if (uiState.isLeaderboardLoading) {
                 item {
-                    Box(
-                        modifier = Modifier.fillMaxWidth().padding(24.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
+                    Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(modifier = Modifier.size(24.dp))
                     }
                 }
             } else {
                 uiState.leaderboard?.let { leaderboard ->
-                    items(leaderboard.entries.take(10)) { entry ->
-                        LeaderboardEntryCard(
-                            entry = entry,
-                            onClick = { onAction(GroupReportAction.OnNavigateToAthleteReport(entry.individualId)) }
-                        )
+                    if (leaderboard.entries.isEmpty()) {
+                        item {
+                            Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
+                                Text("No results for this test yet", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+                            }
+                        }
+                    } else {
+                        items(leaderboard.entries) { entry ->
+                            LeaderboardEntryCard(
+                                entry = entry,
+                                onClick = { onAction(GroupReportAction.OnNavigateToAthleteReport(entry.individualId)) }
+                            )
+                        }
                     }
                 }
             }
@@ -251,43 +264,48 @@ private fun GroupReportBody(
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     "Group Trend",
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
             }
 
             if (uiState.isProgressLoading) {
                 item {
-                    Box(
-                        modifier = Modifier.fillMaxWidth().padding(24.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
+                    Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(modifier = Modifier.size(24.dp))
                     }
                 }
             } else {
                 uiState.selectedTestProgress?.let { progress ->
-                    if (progress.dataPoints.isNotEmpty()) {
-                        item {
-                            Card(modifier = Modifier.fillMaxWidth()) {
-                                Column(modifier = Modifier.padding(16.dp)) {
-                                    Text(
-                                        "Average Percentile Improvement",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    "Average Percentile Over Time",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = Color.Gray
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                if (progress.dataPoints.size >= 2) {
+                                    ProgressLineChart(
+                                        dataPoints = progress.dataPoints.map { it.averagePercentile / 100f },
+                                        modifier = Modifier.height(180.dp),
+                                        color = NavyPrimary
                                     )
-                                    if (progress.dataPoints.size >= 2) {
-                                        ProgressLineChart(
-                                            dataPoints = progress.dataPoints.map { it.averagePercentile / 100f },
-                                            modifier = Modifier.height(150.dp)
+                                } else {
+                                    Box(
+                                        modifier = Modifier.fillMaxWidth().height(100.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            "Need at least 2 testing events to show trend",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color.Gray
                                         )
-                                    } else {
-                                        Box(
-                                            modifier = Modifier.fillMaxWidth().height(100.dp),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text("More data points needed for trend", style = MaterialTheme.typography.bodySmall)
-                                        }
                                     }
                                 }
                             }
@@ -337,72 +355,83 @@ private fun LeaderboardEntryCard(
 ) {
     val (bgColor, textColor) = when {
         entry.percentile == null -> PerformanceGrey to PerformanceGreyText
-        entry.percentile >= 60 -> PerformanceGreen to PerformanceGreenText
-        entry.percentile >= 30 -> PerformanceYellow to PerformanceYellowText
-        else -> PerformanceRed to PerformanceRedText
+        entry.percentile >= 70 -> PerformanceGreen.copy(alpha = 0.7f) to PerformanceGreenText
+        entry.percentile >= 35 -> PerformanceYellow.copy(alpha = 0.7f) to PerformanceYellowText
+        else -> PerformanceRed.copy(alpha = 0.7f) to PerformanceRedText
+    }
+
+    val classification = when {
+        entry.percentile == null -> "—"
+        entry.percentile >= 70 -> "EXCELLENT"
+        entry.percentile >= 35 -> "HEALTHY"
+        else -> "NEEDS IMP."
     }
 
     Card(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Rank
-            Box(
-                modifier = Modifier.width(32.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                if (entry.rank <= 3) {
-                    Icon(
-                        Icons.Default.EmojiEvents,
-                        contentDescription = null,
-                        tint = when (entry.rank) {
-                            1 -> SportOrange
-                            2 -> OutlineGrey
-                            else -> SportOrange.copy(alpha = 0.6f)
-                        },
-                        modifier = Modifier.size(24.dp)
-                    )
-                } else {
+            // RANK
+            Text(
+                text = entry.rank.toString(),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Black,
+                color = NavyPrimary.copy(alpha = 0.2f),
+                modifier = Modifier.width(40.dp)
+            )
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    entry.athleteName,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        "#${entry.rank}",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold
+                        "${entry.rawScore} ${entry.unit}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray
                     )
+                    entry.isImproved?.let { improved ->
+                        Spacer(Modifier.width(8.dp))
+                        Icon(
+                            if (improved) Icons.AutoMirrored.Filled.TrendingUp else Icons.AutoMirrored.Filled.TrendingDown,
+                            contentDescription = null,
+                            tint = if (improved) PerformanceGreenText else PerformanceRedText,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
                 }
             }
 
-            Column(modifier = Modifier.weight(1f)) {
-                Text(entry.athleteName, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
-                Text(
-                    "${entry.rawScore} ${entry.unit}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            entry.isImproved?.let { improved ->
-                Icon(
-                    if (improved) Icons.AutoMirrored.Filled.TrendingUp else Icons.AutoMirrored.Filled.TrendingDown,
-                    contentDescription = null,
-                    tint = if (improved) PerformanceGreenText else PerformanceRedText,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
-
-            entry.percentile?.let { p ->
-                Box(
-                    modifier = Modifier
-                        .background(bgColor, RoundedCornerShape(4.dp))
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
+            // PERCENTILE & ZONE
+            Column(horizontalAlignment = Alignment.End) {
+                Surface(
+                    color = bgColor,
+                    shape = RoundedCornerShape(4.dp)
                 ) {
-                    Text("${p}%", style = MaterialTheme.typography.labelMedium, color = textColor, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = classification,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = textColor
+                    )
+                }
+                entry.percentile?.let {
+                    Text(
+                        "${it}th Percentile",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.Gray
+                    )
                 }
             }
         }

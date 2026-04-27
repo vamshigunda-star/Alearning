@@ -1,5 +1,6 @@
 package com.example.alearning.domain.usecase.testing
 
+import com.example.alearning.domain.model.testing.TestResult
 import com.example.alearning.domain.repository.PeopleRepository
 import com.example.alearning.domain.repository.StandardsRepository
 import com.example.alearning.domain.repository.TestingRepository
@@ -20,7 +21,7 @@ data class LeaderboardEntry(
 )
 
 data class GroupLeaderboard(
-    val eventId: String,
+    val eventId: String?, // Optional
     val testId: String,
     val testName: String,
     val isHigherBetter: Boolean,
@@ -35,47 +36,50 @@ class GetGroupLeaderboardUseCase @Inject constructor(
     private val standardsRepository: StandardsRepository
 ) {
     suspend operator fun invoke(
-        eventId: String,
+        eventId: String?,
         testId: String,
         groupId: String
     ): GroupLeaderboard? {
 
-        // Step 1: Fetch test metadata — needed for name, unit, isHigherBetter
+        // Step 1: Fetch test metadata
         val test = standardsRepository.getTestById(testId) ?: return null
 
-        // Step 2: Fetch all individuals in this group — used for name lookup and filtering
+        // Step 2: Fetch all individuals in this group
         val individuals = peopleRepository
             .getIndividualsInGroup(groupId)
             .first()
 
-        // Build a quick lookup map so we don't scan the list repeatedly
-        // individualId → athleteName
+        val groupAthleteIds = individuals.map { it.id }.toSet()
         val nameMap = individuals.associate { it.id to it.fullName }
 
-        // Step 3: Fetch all results for this event
-        val allEventResults = testingRepository
-            .getEventResults(eventId)
-            .first()
-
-        // Step 4: Filter to only this test AND only athletes who belong to this group
-        val groupAthleteIds = nameMap.keys
-        val relevantResults = allEventResults.filter { result ->
-            result.testId == testId && result.individualId in groupAthleteIds
+        // Step 3: Fetch results
+        val results = if (eventId != null) {
+            testingRepository
+                .getEventResults(eventId)
+                .first()
+                .filter { it.testId == testId && it.individualId in groupAthleteIds }
+        } else {
+            // "All Time" mode: Get latest result per athlete for this test
+            val allLatestResults = mutableListOf<TestResult>()
+            for (individual in individuals) {
+                val latest = testingRepository.getHistoryForTest(individual.id, testId).first()
+                    .maxByOrNull { it.createdAt }
+                if (latest != null) allLatestResults.add(latest)
+            }
+            allLatestResults
         }
 
-        // Step 5: For each result, compute isImproved by comparing to previous attempt
-        val entries = relevantResults.map { result ->
-
+        // Step 4: For each result, compute isImproved by comparing to previous attempt
+        val entries = results.map { result ->
             // Fetch this athlete's full history on this test
             val history = testingRepository
                 .getHistoryForTest(result.individualId, testId)
                 .first()
 
             // Find the result immediately before this event's result
-            // History is ordered oldest → newest by createdAt
             val previousResult = history
                 .filter { it.createdAt < result.createdAt }
-                .maxByOrNull { it.createdAt }  // most recent prior attempt
+                .maxByOrNull { it.createdAt }
 
             val isImproved = previousResult?.let {
                 val delta = result.rawScore - it.rawScore
@@ -83,7 +87,7 @@ class GetGroupLeaderboardUseCase @Inject constructor(
             }
 
             LeaderboardEntry(
-                rank = 0,            // placeholder — assigned after sorting
+                rank = 0,            // placeholder
                 individualId = result.individualId,
                 athleteName = nameMap[result.individualId] ?: "Unknown",
                 rawScore = result.rawScore,

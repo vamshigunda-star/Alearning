@@ -95,7 +95,7 @@ fun TestingGridScreen(
                 is TestingGridAction.OnNavigateBack -> onNavigateBack()
                 is TestingGridAction.OnNavigateToAthleteReport -> onNavigateToAthleteReport(action.individualId)
                 is TestingGridAction.OnNavigateToLeaderboard -> onNavigateToLeaderboard(action.eventId, action.groupId, action.mode)
-                is TestingGridAction.OnNavigateToGroupReport -> onNavigateToGroupReport(action.eventId, action.groupId)
+                is TestingGridAction.OnNavigateToGroupReport -> onNavigateToGroupReport(action.groupId, action.eventId)
                 is TestingGridAction.OnNavigateToStopwatch -> onNavigateToStopwatch(action.eventId, action.fitnessTestId, action.groupId, action.individualId)
                 else -> viewModel.onAction(action)
             }

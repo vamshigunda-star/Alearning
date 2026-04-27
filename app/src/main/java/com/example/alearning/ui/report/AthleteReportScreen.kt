@@ -372,8 +372,13 @@ private fun ProgressSection(progress: IndividualProgress) {
                 Text("No data points", style = MaterialTheme.typography.bodyMedium)
             } else {
                 if (progress.dataPoints.size >= 2) {
+                    val scores = progress.dataPoints.map { it.rawScore.toFloat() }
+                    val min = scores.minOrNull() ?: 0f
+                    val max = scores.maxOrNull() ?: 1f
+                    val range = if (max == min) 1f else max - min
+                    
                     ProgressLineChart(
-                        dataPoints = progress.dataPoints.map { (it.percentile ?: 0).toFloat() / 100f },
+                        dataPoints = scores.map { (it - min) / range },
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
                 }

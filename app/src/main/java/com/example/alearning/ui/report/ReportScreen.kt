@@ -29,7 +29,7 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReportScreen(
-    onNavigateToGroupReport: (String, String) -> Unit,
+    onNavigateToGroupReport: (String, String?) -> Unit,
     viewModel: ReportViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -71,10 +71,7 @@ fun ReportScreen(
                         GroupItem(
                             group = group,
                             onClick = { 
-                                // For landing, we navigate to the latest event of this group if it exists
-                                // or just show group report. Since GroupReport needs eventId, 
-                                // we'll need logic to find most recent. For now, just placeholder nav.
-                                // Ideal: navigate to a dedicated Group History screen.
+                                onNavigateToGroupReport(group.id, null)
                             }
                         )
                     }
