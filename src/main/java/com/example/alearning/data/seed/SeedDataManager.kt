@@ -21,7 +21,7 @@ class SeedDataManager @Inject constructor(
 ) {
     companion object {
         private const val PREFS_NAME = "alearning_prefs"
-        private const val KEY_DATA_SEEDED = "data_seeded_csv_v5" // Need to change the version from V5 to V6 if I am making changes in the csv files in the asset folders. Bumped version for CSV
+        private const val KEY_DATA_SEEDED = "data_seeded_csv_v6" // Bumped version for added norms
     }
 
     suspend fun seedIfNeeded() {

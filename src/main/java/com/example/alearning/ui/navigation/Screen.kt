@@ -24,8 +24,9 @@ sealed class Screen(val route: String) {
         fun createRoute(individualId: String) = "athlete_report/$individualId"
     }
 
-    data object GroupReport : Screen("group_report/{eventId}/{groupId}") {
-        fun createRoute(eventId: String, groupId: String) = "group_report/$eventId/$groupId"
+    data object GroupReport : Screen("group_report/{groupId}?eventId={eventId}") {
+        fun createRoute(groupId: String, eventId: String? = null) = 
+            "group_report/$groupId" + if (eventId != null) "?eventId=$eventId" else ""
     }
 
     data object Leaderboard : Screen("leaderboard")

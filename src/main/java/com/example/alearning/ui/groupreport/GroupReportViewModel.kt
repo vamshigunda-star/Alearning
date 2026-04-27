@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.alearning.domain.model.standards.FitnessTest
 import com.example.alearning.domain.model.testing.TestingEvent
+import com.example.alearning.domain.repository.StandardsRepository
 import com.example.alearning.domain.repository.TestingRepository
 import com.example.alearning.domain.usecase.testing.GetGroupLeaderboardUseCase
 import com.example.alearning.domain.usecase.testing.GetGroupProgressUseCase
@@ -47,13 +48,14 @@ sealed interface GroupReportAction {
 class GroupReportViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val testingRepository: TestingRepository,
+    private val standardsRepository: StandardsRepository,
     private val getGroupLeaderboard: GetGroupLeaderboardUseCase,
     private val getRemediationList: GetRemediationListUseCase,
     private val getGroupProgress: GetGroupProgressUseCase
 ) : ViewModel() {
 
-    val eventId: String = savedStateHandle["eventId"] ?: ""
     val groupId: String = savedStateHandle["groupId"] ?: ""
+    val eventId: String? = savedStateHandle["eventId"]
 
     private val _uiState = MutableStateFlow(GroupReportUiState())
     val uiState: StateFlow<GroupReportUiState> = _uiState.asStateFlow()
@@ -79,9 +81,14 @@ class GroupReportViewModel @Inject constructor(
     private fun loadData() {
         viewModelScope.launch {
             try {
-                val event = testingRepository.getEventById(eventId)
-                val tests = testingRepository.getTestsForEvent(eventId).first()
-                val remediation = getRemediationList(eventId, groupId)
+                val event = eventId?.let { testingRepository.getEventById(it) }
+                val tests = if (eventId != null) {
+                    testingRepository.getTestsForEvent(eventId).first()
+                } else {
+                    standardsRepository.getAllTests().first()
+                }
+                
+                val remediation = eventId?.let { getRemediationList(it, groupId) }
 
                 _uiState.update {
                     it.copy(
@@ -108,7 +115,9 @@ class GroupReportViewModel @Inject constructor(
         _uiState.update { it.copy(selectedTestId = testId, isLeaderboardLoading = true) }
         viewModelScope.launch {
             try {
-                val leaderboard = getGroupLeaderboard(eventId, testId, groupId)
+                // If no eventId, we might need a "Global Leaderboard" use case
+                // For now, we'll use a placeholder or just skip if no eventId
+                val leaderboard = eventId?.let { getGroupLeaderboard(it, testId, groupId) }
                 _uiState.update { it.copy(leaderboard = leaderboard, isLeaderboardLoading = false) }
             } catch (e: Exception) {
                 _uiState.update { it.copy(errorMessage = e.message, isLeaderboardLoading = false) }

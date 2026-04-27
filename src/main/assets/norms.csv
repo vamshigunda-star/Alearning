@@ -12,3 +12,15 @@ test_pushup,Default,MALE,13.0,13.99,10.0,17.0,30,Healthy Fitness Zone
 test_pushup,Default,MALE,13.0,13.99,18.0,24.0,55,Healthy Fitness Zone
 test_pushup,Elite,MALE,13.0,13.99,35.0,45.0,50,Average
 test_pushup,Elite,MALE,13.0,13.99,46.0,999.0,90,Excellent
+test_1rm_bench,Default,FEMALE,14.0,14.99,0.0,40.0,10,Needs Improvement
+test_1rm_bench,Default,FEMALE,14.0,14.99,41.0,60.0,40,Healthy Fitness Zone
+test_1rm_bench,Default,FEMALE,14.0,14.99,61.0,80.0,70,Healthy Fitness Zone
+test_1rm_bench,Default,FEMALE,14.0,14.99,81.0,999.0,95,Superior
+test_1rm_squat,Default,FEMALE,14.0,14.99,0.0,50.0,10,Needs Improvement
+test_1rm_squat,Default,FEMALE,14.0,14.99,51.0,80.0,40,Healthy Fitness Zone
+test_1rm_squat,Default,FEMALE,14.0,14.99,81.0,110.0,70,Healthy Fitness Zone
+test_1rm_squat,Default,FEMALE,14.0,14.99,111.0,999.0,95,Superior
+test_1_5_mile_run,Default,FEMALE,14.0,14.99,900.0,9999.0,10,Needs Improvement
+test_1_5_mile_run,Default,FEMALE,14.0,14.99,750.0,899.0,40,Healthy Fitness Zone
+test_1_5_mile_run,Default,FEMALE,14.0,14.99,600.0,749.0,70,Healthy Fitness Zone
+test_1_5_mile_run,Default,FEMALE,14.0,14.99,0.0,599.0,95,Superior
