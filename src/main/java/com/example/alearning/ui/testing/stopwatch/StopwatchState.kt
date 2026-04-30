@@ -20,8 +20,12 @@ data class StopwatchUiState(
     val isLoading: Boolean = true,
     val errorMessage: String? = null,
     val isSessionComplete: Boolean = false,
-    val selectedAthleteId: String? = null
-)
+    val selectedAthleteId: String? = null,
+    val pendingResults: Map<String, Double> = emptyMap(), // athleteId -> rawScore
+    val isSubmitting: Boolean = false
+) {
+    val hasPendingChanges: Boolean get() = pendingResults.isNotEmpty()
+}
 
 enum class StopwatchPhase { READY, RUNNING, CONFIRMING }
 
@@ -53,6 +57,7 @@ sealed interface StopwatchAction {
     data class OnSelectAthlete(val athleteId: String) : StopwatchAction
     data object OnResetHeat : StopwatchAction
     data object OnResetAthlete : StopwatchAction
+    data object OnSubmitPending : StopwatchAction
 }
 
 

@@ -2,66 +2,50 @@ package com.example.alearning.ui.report
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.alearning.domain.model.people.Group
-import com.example.alearning.domain.model.testing.TestingEvent
-import com.example.alearning.domain.repository.PeopleRepository
-import com.example.alearning.domain.repository.TestingRepository
+import com.example.alearning.reports.ReportsHomeData
+import com.example.alearning.reports.ReportsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class ReportUiState(
-    val groups: List<Group> = emptyList(),
-    val recentEvents: List<TestingEvent> = emptyList(),
-    val needsAttentionCount: Int = 0,
+    val data: ReportsHomeData? = null,
     val isLoading: Boolean = true,
     val errorMessage: String? = null
 )
 
 sealed interface ReportAction {
+    data class OnNavigateToGroup(val groupId: String) : ReportAction
+    data class OnNavigateToSession(val groupId: String, val sessionId: String) : ReportAction
+    data class OnNavigateToAthlete(val individualId: String, val sessionId: String?) : ReportAction
     data object OnDismissError : ReportAction
 }
 
 @HiltViewModel
 class ReportViewModel @Inject constructor(
-    private val peopleRepository: PeopleRepository,
-    private val testingRepository: TestingRepository
+    private val reports: ReportsRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ReportUiState())
     val uiState: StateFlow<ReportUiState> = _uiState.asStateFlow()
 
     init {
-        loadData()
-    }
-
-    private fun loadData() {
         viewModelScope.launch {
-            combine(
-                peopleRepository.getAllGroups(),
-                testingRepository.getAllEvents()
-            ) { groups: List<Group>, events: List<TestingEvent> ->
-                // Simple placeholder for attention count for landing page performance
-                val attentionCount = 0
-                
-                Triple(groups, events, attentionCount)
-            }.catch { e ->
-                _uiState.update { it.copy(errorMessage = e.message, isLoading = false) }
-            }.collect { (groups, events, count) ->
-                _uiState.update { it.copy(
-                    groups = groups,
-                    recentEvents = events,
-                    needsAttentionCount = count,
-                    isLoading = false
-                ) }
-            }
+            reports.observeHome()
+                .catch { e -> _uiState.update { it.copy(errorMessage = e.message, isLoading = false) } }
+                .collect { d -> _uiState.update { it.copy(data = d, isLoading = false) } }
         }
     }
 
     fun onAction(action: ReportAction) {
         when (action) {
             ReportAction.OnDismissError -> _uiState.update { it.copy(errorMessage = null) }
+            else -> Unit
         }
     }
 }

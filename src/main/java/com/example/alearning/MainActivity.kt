@@ -53,6 +53,7 @@ class MainActivity : ComponentActivity() {
 fun ALearningBottomBar(navController: androidx.navigation.NavController) {
     val items = listOf(
         BottomNavItem.Home,
+        BottomNavItem.Roster,
         BottomNavItem.Athletes,
         BottomNavItem.Reports,
         BottomNavItem.Analytics

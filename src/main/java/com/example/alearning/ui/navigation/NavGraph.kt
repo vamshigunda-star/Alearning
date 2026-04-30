@@ -7,14 +7,16 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.alearning.ui.athlete.AthleteTestDetailScreen
+import com.example.alearning.ui.athlete.AthleteDashboardScreen
+import com.example.alearning.ui.athletes.AthletesScreen
 import com.example.alearning.ui.dashboard.DashboardScreen
-import com.example.alearning.ui.groupreport.GroupReportScreen
+import com.example.alearning.ui.groupoverview.GroupOverviewScreen
+
 import com.example.alearning.ui.leaderboard.LeaderboardScreen
 import com.example.alearning.ui.quicktest.QuickTestScreen
-import com.example.alearning.ui.report.AthleteReportScreen
-import com.example.alearning.ui.report.ReportScreen
-import com.example.alearning.ui.analytics.AnalyticsScreen
 import com.example.alearning.ui.roster.RosterScreen
+import com.example.alearning.ui.session.SessionReportScreen
 import com.example.alearning.ui.testlibrary.TestLibraryScreen
 import com.example.alearning.ui.testing.CreateEventScreen
 import com.example.alearning.ui.testing.TestingGridScreen
@@ -29,31 +31,40 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
     ) {
         composable(Screen.Dashboard.route) {
             DashboardScreen(
-                onNavigateToRoster = { navController.navigate(Screen.Roster.route) },
+                onNavigateToRoster = { navController.navigate(BottomNavItem.Roster.route) },
+                onNavigateToAnalytics = { navController.navigate(BottomNavItem.Analytics.route) },
                 onNavigateToTestLibrary = { navController.navigate(Screen.TestLibrary.route) },
                 onNavigateToCreateEvent = { navController.navigate(Screen.CreateEvent.route) },
-                onNavigateToQuickTest = { navController.navigate(Screen.QuickTest.route) },
+                onNavigateToQuickTest = { navController.navigate(Screen.QuickTest.createRoute()) },
                 onNavigateToTestingGrid = { eventId, groupId ->
                     navController.navigate(Screen.TestingGrid.createRoute(eventId, groupId))
                 },
-                onNavigateToLeaderboard = { navController.navigate(Screen.Leaderboard.route) },
-                onNavigateToAnalytics = { navController.navigate(Screen.Analytics.route) }
+                onNavigateToLeaderboard = {
+                    // Navigate to a default or global leaderboard if applicable, 
+                    // or this could be handled by passing specific IDs if the UI provided them.
+                }
             )
         }
 
         composable(Screen.Roster.route) {
             RosterScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToAthleteReport = { individualId ->
-                    navController.navigate(Screen.AthleteReport.createRoute(individualId))
+                onNavigateToAthleteReport = { athleteId ->
+                    navController.navigate(Screen.AthleteDashboard.createRoute(athleteId))
+                }
+            )
+        }
+
+        composable(Screen.Athletes.route) {
+            AthletesScreen(
+                onNavigateToAthleteReport = { athleteId ->
+                    navController.navigate(Screen.AthleteDashboard.createRoute(athleteId))
                 }
             )
         }
 
         composable(Screen.TestLibrary.route) {
-            TestLibraryScreen(
-                onNavigateBack = { navController.popBackStack() }
-            )
+            TestLibraryScreen(onNavigateBack = { navController.popBackStack() })
         }
 
         composable(Screen.CreateEvent.route) {
@@ -67,26 +78,101 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
             )
         }
 
-        composable(Screen.QuickTest.route) {
+        composable(
+            route = Screen.QuickTest.route,
+            arguments = listOf(
+                navArgument("athleteId") { type = NavType.StringType; nullable = true; defaultValue = null },
+                navArgument("testIds") { type = NavType.StringType; nullable = true; defaultValue = null }
+            )
+        ) {
             QuickTestScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
 
-        composable(Screen.Analytics.route) {
-            AnalyticsScreen()
-        }
+        // ───── Reports & Results layer ─────
 
-        composable(Screen.Report.route){
-            ReportScreen(
-                onNavigateToGroupReport = { groupId, eventId ->
-                    navController.navigate(Screen.GroupReport.createRoute(groupId, eventId))
+        composable(Screen.Report.route) {
+            com.example.alearning.ui.report.ReportScreen(
+                onNavigateToGroup = { groupId ->
+                    navController.navigate(Screen.GroupOverview.createRoute(groupId))
+                },
+                onNavigateToSession = { groupId, sessionId ->
+                    navController.navigate(Screen.SessionReport.createRoute(groupId, sessionId))
+                },
+                onNavigateToAthlete = { athleteId ->
+                    navController.navigate(Screen.AthleteDashboard.createRoute(athleteId))
                 }
             )
         }
 
+        composable(Screen.Analytics.route) {
+            com.example.alearning.ui.analytics.AnalyticsScreen()
+        }
 
+        composable(
+            route = Screen.GroupOverview.route,
+            arguments = listOf(navArgument("groupId") { type = NavType.StringType })
+        ) {
+            GroupOverviewScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToSession = { groupId, sessionId ->
+                    navController.navigate(Screen.SessionReport.createRoute(groupId, sessionId))
+                },
+                onNavigateToCreateSession = { navController.navigate(Screen.CreateEvent.route) }
+            )
+        }
 
+        composable(
+            route = Screen.SessionReport.route,
+            arguments = listOf(
+                navArgument("groupId") { type = NavType.StringType },
+                navArgument("sessionId") { type = NavType.StringType }
+            )
+        ) {
+            SessionReportScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToAthlete = { individualId, sessionId ->
+                    navController.navigate(Screen.AthleteDashboard.createRoute(individualId, sessionId))
+                },
+                onResumeTesting = { eventId, groupId ->
+                    navController.navigate(Screen.TestingGrid.createRoute(eventId, groupId))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.AthleteDashboard.route,
+            arguments = listOf(
+                navArgument("athleteId") { type = NavType.StringType },
+                navArgument("contextSessionId") { type = NavType.StringType; nullable = true }
+            )
+        ) {
+            AthleteDashboardScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToTest = { athleteId, testId, contextSessionId ->
+                    navController.navigate(Screen.AthleteTestDetail.createRoute(athleteId, testId, contextSessionId))
+                },
+                onStartQuickTest = { athleteId, testIds ->
+                    navController.navigate(Screen.QuickTest.createRoute(athleteId, testIds))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.AthleteTestDetail.route,
+            arguments = listOf(
+                navArgument("athleteId") { type = NavType.StringType },
+                navArgument("testId") { type = NavType.StringType },
+                navArgument("contextSessionId") { type = NavType.StringType; nullable = true }
+            )
+        ) {
+            AthleteTestDetailScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // ───── Live Testing layer ─────
 
         composable(
             route = Screen.TestingGrid.route,
@@ -94,63 +180,23 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
                 navArgument("eventId") { type = NavType.StringType },
                 navArgument("groupId") { type = NavType.StringType }
             )
-        ) { backStackEntry ->
-            val eventId = backStackEntry.arguments?.getString("eventId") ?: ""
-            val groupId = backStackEntry.arguments?.getString("groupId") ?: ""
+        ) {
             TestingGridScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToAthleteReport = { individualId ->
-                    navController.navigate(Screen.AthleteReport.createRoute(individualId))
+                onNavigateToStopwatch = { eventId, testId, groupId, athleteId ->
+                    navController.navigate(Screen.Stopwatch.createRoute(eventId, testId, groupId, athleteId))
                 },
-                onNavigateToLeaderboard = { _, _, _ ->
-                    navController.navigate(Screen.Leaderboard.route)
+                onNavigateToLeaderboard = { eventId, groupId, mode ->
+                    navController.navigate(Screen.Leaderboard.createRoute(eventId, groupId, mode))
                 },
-                onNavigateToGroupReport = { evId, grId ->
-                    navController.navigate(Screen.GroupReport.createRoute(evId, grId))
+                onNavigateToAthleteReport = { athleteId ->
+                    navController.navigate(Screen.AthleteDashboard.createRoute(athleteId))
                 },
-                onNavigateToStopwatch = { evId, testId, grId, athleteId ->
-                    navController.navigate(Screen.Stopwatch.createRoute(evId, testId, grId, athleteId))
+                onNavigateToGroupReport = { eventId, groupId ->
+                    navController.navigate(Screen.SessionReport.createRoute(groupId, eventId))
                 }
             )
         }
-
-        composable(
-            route = Screen.AthleteReport.route,
-            arguments = listOf(
-                navArgument("individualId") { type = NavType.StringType }
-            )
-        ) {
-            AthleteReportScreen(
-                onNavigateBack = { navController.popBackStack() }
-            )
-        }
-
-        composable(
-            route = Screen.GroupReport.route,
-            arguments = listOf(
-                navArgument("groupId") { type = NavType.StringType },
-                navArgument("eventId") { 
-                    type = NavType.StringType
-                    nullable = true
-                    defaultValue = null
-                }
-            )
-        ) { backStackEntry ->
-            val groupId = backStackEntry.arguments?.getString("groupId") ?: ""
-            val eventId = backStackEntry.arguments?.getString("eventId")
-            GroupReportScreen(
-                onNavigateBack = { navController.popBackStack() },
-                onNavigateToAthleteReport = { individualId ->
-                    navController.navigate(Screen.AthleteReport.createRoute(individualId))
-                },
-                onNavigateToLeaderboard = { _, _, _ ->
-                    navController.navigate(Screen.Leaderboard.route)
-                }
-            )
-        }
-
-
-
 
         composable(
             route = Screen.Stopwatch.route,
@@ -158,11 +204,7 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
                 navArgument("eventId") { type = NavType.StringType },
                 navArgument("fitnessTestId") { type = NavType.StringType },
                 navArgument("groupId") { type = NavType.StringType },
-                navArgument("athleteId") { 
-                    type = NavType.StringType
-                    nullable = true
-                    defaultValue = null
-                }
+                navArgument("athleteId") { type = NavType.StringType; nullable = true }
             )
         ) {
             StopwatchScreen(
@@ -170,8 +212,17 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
             )
         }
 
-        composable(route = Screen.Leaderboard.route) {
-            LeaderboardScreen(onNavigateBack = { navController.popBackStack() })
+        composable(
+            route = Screen.Leaderboard.route,
+            arguments = listOf(
+                navArgument("eventId") { type = NavType.StringType },
+                navArgument("groupId") { type = NavType.StringType },
+                navArgument("mode") { type = NavType.StringType }
+            )
+        ) {
+            LeaderboardScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
     }
 }

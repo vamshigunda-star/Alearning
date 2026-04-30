@@ -30,6 +30,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.alearning.domain.model.people.BiologicalSex
 import com.example.alearning.domain.model.people.Group
 import com.example.alearning.domain.model.people.Individual
+import com.example.alearning.ui.components.RegisterAthleteSheet
 import java.util.*
 
 // Modern minimalist color palette
@@ -73,7 +74,7 @@ fun RosterContent(
             TopAppBar(
                 title = {
                     Text(
-                        "Roster Manager",
+                        "Roster",
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary,
                         fontSize = 20.sp
@@ -85,10 +86,6 @@ fun RosterContent(
                     }
                 },
                 actions = {
-                    // Modern Header Actions: Group and Athlete
-                    IconButton(onClick = { onAction(RosterAction.OnShowAddGroupDialog) }) {
-                        Icon(Icons.Default.GroupAdd, contentDescription = "Create Group", tint = BrandAccent)
-                    }
                     IconButton(onClick = { onAction(RosterAction.OnShowRegisterAthleteDialog) }) {
                         Icon(Icons.Default.PersonAdd, contentDescription = "Register Athlete", tint = BrandAccent)
                     }
@@ -99,20 +96,61 @@ fun RosterContent(
                 ),
                 modifier = Modifier.border(width = 1.dp, color = BorderLight, shape = RoundedCornerShape(0.dp))
             )
+        },
+        floatingActionButton = {
+            if (uiState.selectedAthleteIds.isEmpty()) {
+                FloatingActionButton(
+                    onClick = {
+                        if (uiState.currentTab == RosterTab.ATHLETES) {
+                            onAction(RosterAction.OnShowRegisterAthleteDialog)
+                        } else {
+                            onAction(RosterAction.OnShowAddGroupDialog)
+                        }
+                    },
+                    containerColor = BrandAccent,
+                    contentColor = Color.White,
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Add")
+                }
+            }
         }
     ) { paddingValues ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            when {
-                uiState.isLoading -> LoadingState()
-                uiState.errorMessage != null -> ErrorState(
-                    message = uiState.errorMessage,
-                    onDismiss = { onAction(RosterAction.OnDismissError) }
-                )
-                else -> RosterBody(uiState = uiState, onAction = onAction)
+            RosterTabRow(
+                currentTab = uiState.currentTab,
+                onTabSelected = { onAction(RosterAction.OnTabSelected(it)) },
+                athleteCount = uiState.allAthletes.size,
+                groupCount = uiState.groups.size
+            )
+
+            Box(modifier = Modifier.weight(1f)) {
+                when {
+                    uiState.isLoading -> LoadingState()
+                    uiState.errorMessage != null && uiState.allAthletes.isEmpty() -> ErrorState(
+                        message = uiState.errorMessage,
+                        onDismiss = { onAction(RosterAction.OnDismissError) }
+                    )
+                    uiState.currentTab == RosterTab.ATHLETES -> AthleteTabContent(uiState, onAction)
+                    uiState.currentTab == RosterTab.GROUPS -> GroupsTabContent(uiState, onAction)
+                }
+                
+                // Contextual Action Bar
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = uiState.selectedAthleteIds.isNotEmpty(),
+                    enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                    exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
+                    modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp)
+                ) {
+                    ContextualActionBar(
+                        selectedCount = uiState.selectedAthleteIds.size,
+                        onAddToGroup = { onAction(RosterAction.OnShowAddToGroupDialog) }
+                    )
+                }
             }
         }
     }
@@ -128,22 +166,60 @@ fun RosterContent(
     if (uiState.showRegisterAthleteDialog) {
         RegisterAthleteSheet(
             onDismiss = { onAction(RosterAction.OnDismissRegisterAthleteDialog) },
-            onConfirm = { first, last, dob, sex, email, med -> onAction(RosterAction.OnRegisterAthlete(first, last, dob, sex, email, med)) }
+            onConfirm = { first, last, dob, sex, email, med -> 
+                onAction(RosterAction.OnRegisterAthlete(first, last, dob, sex, email, med)) 
+            }
         )
     }
 
     if (uiState.showAddToGroupDialog) {
+        AddToGroupSelectionSheet(
+            groups = uiState.groups,
+            onDismiss = { onAction(RosterAction.OnDismissAddToGroupDialog) },
+            onGroupSelected = { onAction(RosterAction.OnAddSelectedToGroup(it)) },
+            onCreateGroup = { onAction(RosterAction.OnShowAddGroupDialog) }
+        )
+    }
+
+    uiState.showManageMembersDialog?.let { groupId ->
+        val members = uiState.groupMembers[groupId] ?: emptyList()
         ManageGroupMembersSheet(
             allAthletes = uiState.allAthletes,
-            currentAthleteIds = uiState.athletesInGroup.map { it.id }.toSet(),
-            onDismiss = { onAction(RosterAction.OnDismissAddToGroupDialog) },
-            onAddAthlete = { id -> onAction(RosterAction.OnAddAthleteToGroup(id)) },
-            onRemoveAthlete = { id -> onAction(RosterAction.OnRemoveAthleteFromGroup(id)) }
+            currentAthleteIds = members.map { it.id }.toSet(),
+            onDismiss = { onAction(RosterAction.OnDismissManageMembersDialog) },
+            onAddAthlete = { id -> onAction(RosterAction.OnAddAthleteToGroup(groupId, id)) },
+            onRemoveAthlete = { id -> onAction(RosterAction.OnRemoveAthleteFromGroup(groupId, id)) }
+        )
+    }
+
+    // Confirmation Dialogs
+    uiState.showDeleteAthleteConfirmation?.let { id ->
+        val athlete = uiState.allAthletes.find { it.id == id }
+        ConfirmationDialog(
+            title = "Delete Athlete",
+            message = "Are you sure you want to delete ${athlete?.fullName}? This action cannot be undone.",
+            confirmText = "Delete",
+            isDestructive = true,
+            onConfirm = { onAction(RosterAction.OnConfirmDeleteAthlete(id)) },
+            onDismiss = { onAction(RosterAction.OnDismissDeleteConfirmation) }
+        )
+    }
+
+    uiState.showRemoveMemberConfirmation?.let { (groupId, individualId) ->
+        val athlete = uiState.allAthletes.find { it.id == individualId }
+        val group = uiState.groups.find { it.id == groupId }
+        ConfirmationDialog(
+            title = "Remove from Group",
+            message = "Remove ${athlete?.fullName} from ${group?.name}?",
+            confirmText = "Remove",
+            isDestructive = true,
+            onConfirm = { onAction(RosterAction.OnConfirmRemoveMember(groupId, individualId)) },
+            onDismiss = { onAction(RosterAction.OnDismissRemoveMemberConfirmation) }
         )
     }
 
     // Floating error message
-    if (uiState.errorMessage != null && uiState.groups.isNotEmpty()) {
+    if (uiState.errorMessage != null) {
         Snackbar(
             modifier = Modifier.padding(16.dp),
             action = {
@@ -158,195 +234,564 @@ fun RosterContent(
 }
 
 @Composable
-private fun RosterBody(
+private fun RosterTabRow(
+    currentTab: RosterTab,
+    onTabSelected: (RosterTab) -> Unit,
+    athleteCount: Int,
+    groupCount: Int
+) {
+    Surface(
+        color = SurfaceWhite,
+        shadowElevation = 1.dp
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            TabItem(
+                title = "Athletes",
+                count = athleteCount,
+                isSelected = currentTab == RosterTab.ATHLETES,
+                onClick = { onTabSelected(RosterTab.ATHLETES) },
+                modifier = Modifier.weight(1f)
+            )
+            TabItem(
+                title = "Groups",
+                count = groupCount,
+                isSelected = currentTab == RosterTab.GROUPS,
+                onClick = { onTabSelected(RosterTab.GROUPS) },
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun TabItem(
+    title: String,
+    count: Int,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .clickable { onClick() }
+            .padding(top = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                color = if (isSelected) BrandAccent else TextSecondary
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Surface(
+                color = if (isSelected) AvatarBackground else BackgroundGray,
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text(
+                    text = count.toString(),
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isSelected) BrandAccent else TextSecondary
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(3.dp)
+                .background(if (isSelected) BrandAccent else Color.Transparent)
+        )
+    }
+}
+
+@Composable
+private fun AthleteTabContent(
     uiState: RosterUiState,
     onAction: (RosterAction) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
-        if (uiState.groups.isEmpty()) {
-            EmptyGroupState(onCreateGroup = { onAction(RosterAction.OnShowAddGroupDialog) })
-        } else {
-            // Sleek Group Selector
-            Surface(
-                color = SurfaceWhite,
-                modifier = Modifier.fillMaxWidth(),
-                shadowElevation = 1.dp
-            ) {
-                GroupSelectorRow(
-                    groups = uiState.groups,
-                    selectedGroup = uiState.selectedGroup,
-                    onSelectGroup = { onAction(RosterAction.OnSelectGroup(it)) },
-                    onCreateGroup = { onAction(RosterAction.OnShowAddGroupDialog) }
-                )
-            }
+        SearchBar(
+            query = uiState.athleteSearchQuery,
+            onQueryChange = { onAction(RosterAction.OnAthleteSearchQueryChanged(it)) },
+            placeholder = "Search athletes..."
+        )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            if (uiState.selectedGroup != null) {
-                // List Header Actions
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "${uiState.athletesInGroup.size} Athletes",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = TextSecondary
-                    )
-                    TextButton(
-                        onClick = { onAction(RosterAction.OnShowAddToGroupDialog) },
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
-                    ) {
-                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp), tint = BrandAccent)
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Add to Group", color = BrandAccent, fontWeight = FontWeight.SemiBold)
-                    }
-                }
-
-                // Athlete List
-                LazyColumn(
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    items(uiState.athletesInGroup, key = { it.id }) { athlete ->
-                        ModernAthleteRow(
-                            athlete = athlete,
-                            onTap = { onAction(RosterAction.OnNavigateToAthleteReport(athlete.id)) },
-                            onRemove = { onAction(RosterAction.OnRemoveAthleteFromGroup(athlete.id)) }
-                        )
-                    }
-                    item { Spacer(modifier = Modifier.height(80.dp)) }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun GroupSelectorRow(
-    groups: List<Group>,
-    selectedGroup: Group?,
-    onSelectGroup: (Group) -> Unit,
-    onCreateGroup: () -> Unit
-) {
-    LazyRow(
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        items(groups, key = { it.id }) { group ->
-            val isSelected = group.id == selectedGroup?.id
-
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(if (isSelected) BrandAccent else SurfaceWhite)
-                    .border(1.dp, if (isSelected) BrandAccent else BorderLight, RoundedCornerShape(24.dp))
-                    .clickable { onSelectGroup(group) }
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = group.name,
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                    color = if (isSelected) Color.White else TextPrimary
-                )
-            }
-        }
-
-        // Direct "Add Group" chip at the end
-        item {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(BackgroundGray)
-                    .border(1.dp, BorderLight, CircleShape)
-                    .clickable { onCreateGroup() },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "New Group", tint = TextSecondary, modifier = Modifier.size(20.dp))
-            }
-        }
-    }
-}
-
-@Composable
-private fun ModernAthleteRow(
-    athlete: Individual,
-    onTap: () -> Unit,
-    onRemove: () -> Unit
-) {
-    val ageYears = remember(athlete.dateOfBirth) {
-        ((System.currentTimeMillis() - athlete.dateOfBirth) / 31_557_600_000L).toInt()
-    }
-    val initials = remember(athlete.firstName, athlete.lastName) {
-        "${athlete.firstName.first()}${athlete.lastName.first()}".uppercase()
-    }
-    val isRestricted = athlete.isRestricted || athlete.medicalAlert != null
-
-    // Flat, clean list item style
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(SurfaceWhite)
-            .border(1.dp, BorderLight, RoundedCornerShape(12.dp))
-            .clickable { onTap() }
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Modern Circular Avatar
-        Box(
-            modifier = Modifier
-                .size(44.dp)
-                .clip(CircleShape)
-                .background(if (isRestricted) MaterialTheme.colorScheme.errorContainer else AvatarBackground),
-            contentAlignment = Alignment.Center
+        LazyColumn(
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxSize()
         ) {
-            Text(
-                initials,
-                style = MaterialTheme.typography.titleMedium,
-                color = if (isRestricted) MaterialTheme.colorScheme.onErrorContainer else BrandAccent,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        Spacer(modifier = Modifier.width(16.dp))
-
-        // Name and Stats
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                "${athlete.firstName} ${athlete.lastName}",
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = TextPrimary
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            items(uiState.filteredAthletes, key = { it.id }) { athlete ->
+                val isSelected = uiState.selectedAthleteIds.contains(athlete.id)
+                val groups = uiState.athleteGroups[athlete.id] ?: emptyList()
+                
+                SwipeableAthleteCard(
+                    athlete = athlete,
+                    groups = groups,
+                    isSelected = isSelected,
+                    onToggleSelection = { onAction(RosterAction.OnToggleAthleteSelection(athlete.id)) },
+                    onDelete = { onAction(RosterAction.OnDeleteAthlete(athlete.id)) },
+                    onClick = { onAction(RosterAction.OnNavigateToAthleteReport(athlete.id)) }
+                )
+            }
+            item {
                 Text(
-                    "Age $ageYears • ${athlete.sex.name.lowercase().replaceFirstChar { it.uppercase() }}",
+                    "← Swipe left to delete",
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.bodySmall,
                     color = TextSecondary
                 )
-                if (isRestricted) {
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Icon(Icons.Default.Warning, contentDescription = "Medical Alert", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(14.dp))
+            }
+            item { Spacer(modifier = Modifier.height(80.dp)) }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SwipeableAthleteCard(
+    athlete: Individual,
+    groups: List<Group>,
+    isSelected: Boolean,
+    onToggleSelection: () -> Unit,
+    onDelete: () -> Unit,
+    onClick: () -> Unit
+) {
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = {
+            if (it == SwipeToDismissBoxValue.EndToStart) {
+                onDelete()
+                false // Don't dismiss yet, wait for confirmation dialog
+            } else false
+        }
+    )
+
+    SwipeToDismissBox(
+        state = dismissState,
+        enableDismissFromStartToEnd = false,
+        backgroundContent = {
+            val color = MaterialTheme.colorScheme.errorContainer
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(color)
+                    .padding(horizontal = 20.dp),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+            }
+        }
+    ) {
+        ModernAthleteCard(
+            athlete = athlete,
+            groups = groups,
+            isSelected = isSelected,
+            onToggleSelection = onToggleSelection,
+            onClick = onClick
+        )
+    }
+}
+
+@Composable
+private fun ModernAthleteCard(
+    athlete: Individual,
+    groups: List<Group>,
+    isSelected: Boolean,
+    onToggleSelection: () -> Unit,
+    onClick: () -> Unit
+) {
+    val initials = "${athlete.firstName.first()}${athlete.lastName.first()}".uppercase()
+    val isRestricted = athlete.isRestricted || athlete.medicalAlert != null
+    
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        shape = RoundedCornerShape(12.dp),
+        color = SurfaceWhite,
+        border = BorderStroke(1.5.dp, if (isSelected) BrandAccent else BorderLight)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Custom Checkbox
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(if (isSelected) BrandAccent else BackgroundGray)
+                    .border(1.5.dp, if (isSelected) BrandAccent else BorderLight, RoundedCornerShape(6.dp))
+                    .clickable { onToggleSelection() },
+                contentAlignment = Alignment.Center
+            ) {
+                if (isSelected) {
+                    Icon(Icons.Default.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                }
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Avatar
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(if (isRestricted) MaterialTheme.colorScheme.errorContainer else AvatarBackground),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    initials, 
+                    fontWeight = FontWeight.Bold, 
+                    color = if (isRestricted) MaterialTheme.colorScheme.error else BrandAccent
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(athlete.fullName, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+                    if (isRestricted) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Icon(Icons.Default.Warning, contentDescription = "Medical Alert", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp))
+                    }
+                }
+                Text(
+                    "Age ${((System.currentTimeMillis() - athlete.dateOfBirth) / 31_557_600_000L).toInt()} • ${athlete.sex.name.lowercase().replaceFirstChar { it.uppercase() }}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary
+                )
+                
+                if (groups.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        groups.take(3).forEach { group ->
+                            Surface(
+                                color = AvatarBackground,
+                                shape = RoundedCornerShape(4.dp)
+                            ) {
+                                Text(
+                                    group.name,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = BrandAccent,
+                                    fontSize = 10.sp
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
+    }
+}
 
-        // Action Menu / Remove
-        IconButton(onClick = onRemove, modifier = Modifier.size(32.dp)) {
-            Icon(Icons.Default.Close, contentDescription = "Remove", tint = TextSecondary, modifier = Modifier.size(20.dp))
+@Composable
+private fun GroupsTabContent(
+    uiState: RosterUiState,
+    onAction: (RosterAction) -> Unit
+) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        SearchBar(
+            query = uiState.groupSearchQuery,
+            onQueryChange = { onAction(RosterAction.OnGroupSearchQueryChanged(it)) },
+            placeholder = "Search groups..."
+        )
+
+        LazyColumn(
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            items(uiState.filteredGroups, key = { it.id }) { group ->
+                val isExpanded = uiState.expandedGroupIds.contains(group.id)
+                val members = uiState.groupMembers[group.id] ?: emptyList()
+                
+                ModernGroupCard(
+                    group = group,
+                    members = members,
+                    isExpanded = isExpanded,
+                    onToggleExpansion = { onAction(RosterAction.OnToggleGroupExpansion(group.id)) },
+                    onRemoveMember = { athleteId -> onAction(RosterAction.OnRemoveAthleteFromGroup(group.id, athleteId)) },
+                    onAddMember = { onAction(RosterAction.OnShowManageMembersDialog(group.id)) }
+                )
+            }
+            item { Spacer(modifier = Modifier.height(80.dp)) }
         }
     }
+}
+
+@Composable
+private fun ModernGroupCard(
+    group: Group,
+    members: List<Individual>,
+    isExpanded: Boolean,
+    onToggleExpansion: () -> Unit,
+    onRemoveMember: (String) -> Unit,
+    onAddMember: () -> Unit
+) {
+    val rotation by animateFloatAsState(if (isExpanded) 90f else 0f)
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        color = SurfaceWhite,
+        border = BorderStroke(1.5.dp, if (isExpanded) BrandAccent else BorderLight)
+    ) {
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onToggleExpansion() }
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    modifier = Modifier.size(40.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    color = AvatarBackground
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text("🏃", fontSize = 20.sp)
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(group.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
+                    Text("${members.size} athletes", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                }
+
+                if (!isExpanded) {
+                    AvatarStack(members)
+                }
+
+                IconButton(onClick = onToggleExpansion) {
+                    Icon(
+                        Icons.Default.ChevronRight,
+                        contentDescription = null,
+                        modifier = Modifier.rotate(rotation),
+                        tint = TextSecondary
+                    )
+                }
+            }
+
+            AnimatedVisibility(visible = isExpanded) {
+                Column {
+                    HorizontalDivider(color = BorderLight.copy(alpha = 0.5f))
+                    members.forEach { member ->
+                        MemberRow(member, onRemove = { onRemoveMember(member.id) })
+                    }
+                    
+                    // Add Athlete button at the bottom of the list
+                    TextButton(
+                        onClick = onAddMember,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        contentPadding = PaddingValues(16.dp)
+                    ) {
+                        Icon(Icons.Default.PersonAdd, contentDescription = null, tint = BrandAccent, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Add Athlete", color = BrandAccent, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MemberRow(member: Individual, onRemove: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(Icons.Default.Menu, contentDescription = "Drag", tint = BorderLight, modifier = Modifier.size(20.dp))
+        Spacer(modifier = Modifier.width(12.dp))
+        Box(
+            modifier = Modifier.size(32.dp).clip(CircleShape).background(BackgroundGray),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("${member.firstName.first()}${member.lastName.first()}".uppercase(), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+        }
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(member.fullName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+            Text("Age ${((System.currentTimeMillis() - member.dateOfBirth) / 31_557_600_000L).toInt()}", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+        }
+        IconButton(onClick = onRemove, modifier = Modifier.size(24.dp)) {
+            Icon(Icons.Default.Close, contentDescription = "Remove", tint = TextSecondary, modifier = Modifier.size(16.dp))
+        }
+    }
+}
+
+@Composable
+private fun AvatarStack(members: List<Individual>) {
+    Row(horizontalArrangement = Arrangement.spacedBy((-8).dp)) {
+        members.take(4).forEach { member ->
+            Surface(
+                modifier = Modifier.size(28.dp).border(2.dp, SurfaceWhite, CircleShape),
+                shape = CircleShape,
+                color = BrandAccent
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        "${member.firstName.first()}${member.lastName.first()}".uppercase(),
+                        fontSize = 8.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+            }
+        }
+        if (members.size > 4) {
+            Surface(
+                modifier = Modifier.size(28.dp).border(2.dp, SurfaceWhite, CircleShape),
+                shape = CircleShape,
+                color = TextSecondary
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text("+${members.size - 4}", fontSize = 8.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SearchBar(query: String, onQueryChange: (String) -> Unit, placeholder: String) {
+    OutlinedTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        placeholder = { Text(placeholder, color = TextSecondary) },
+        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = TextSecondary) },
+        shape = RoundedCornerShape(12.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            unfocusedContainerColor = BackgroundGray,
+            focusedContainerColor = BackgroundGray,
+            unfocusedBorderColor = Color.Transparent,
+            focusedBorderColor = BrandAccent
+        ),
+        singleLine = true
+    )
+}
+
+@Composable
+private fun ContextualActionBar(selectedCount: Int, onAddToGroup: () -> Unit) {
+    Surface(
+        color = BrandAccent,
+        shape = RoundedCornerShape(16.dp),
+        shadowElevation = 8.dp,
+        modifier = Modifier.fillMaxWidth().height(64.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Add, contentDescription = null, tint = Color.White)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Add to Group", color = Color.White, fontWeight = FontWeight.Bold)
+            }
+            Surface(
+                color = Color.White.copy(alpha = 0.25f),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text(
+                    "$selectedCount selected",
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            TextButton(onClick = onAddToGroup) {
+                Text("CHOOSE", color = Color.White, fontWeight = FontWeight.ExtraBold)
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddToGroupSelectionSheet(
+    groups: List<Group>,
+    onDismiss: () -> Unit,
+    onGroupSelected: (String) -> Unit,
+    onCreateGroup: () -> Unit
+) {
+    // Basic implementation of group selection for "Add to Group"
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(modifier = Modifier.padding(24.dp).padding(bottom = 32.dp)) {
+            Text("Select Group", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(16.dp))
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(groups) { group ->
+                    Surface(
+                        modifier = Modifier.fillMaxWidth().clickable { onGroupSelected(group.id) },
+                        shape = RoundedCornerShape(12.dp),
+                        color = BackgroundGray
+                    ) {
+                        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text(group.name, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+                item {
+                    TextButton(onClick = onCreateGroup) {
+                        Icon(Icons.Default.Add, contentDescription = null)
+                        Text("Create New Group")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ConfirmationDialog(
+    title: String,
+    message: String,
+    confirmText: String,
+    isDestructive: Boolean,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title, fontWeight = FontWeight.Bold) },
+        text = { Text(message) },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isDestructive) MaterialTheme.colorScheme.error else BrandAccent
+                )
+            ) {
+                Text(confirmText)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }
 
 @Composable
@@ -367,32 +812,6 @@ private fun ErrorState(message: String, onDismiss: () -> Unit) {
         }
     }
 }
-
-@Composable
-private fun EmptyGroupState(onCreateGroup: () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(Icons.Default.Groups, contentDescription = null, modifier = Modifier.size(64.dp), tint = BorderLight)
-        Spacer(modifier = Modifier.height(16.dp))
-        Text("No groups found", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = TextPrimary)
-        Text("Create a group to organise your athletes.", color = TextSecondary, style = MaterialTheme.typography.bodyMedium)
-        Spacer(modifier = Modifier.height(24.dp))
-        Button(
-            onClick = onCreateGroup,
-            colors = ButtonDefaults.buttonColors(containerColor = BrandAccent),
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            Text("Create Group")
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------
-// MODERN BOTTOM SHEETS: (Replacing AlertDialogs for better UX)
-// ---------------------------------------------------------------------------
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -448,145 +867,6 @@ private fun AddGroupSheet(onDismiss: () -> Unit, onConfirm: (String, String?, St
             ) {
                 Text("Create Group", fontWeight = FontWeight.Bold)
             }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun RegisterAthleteSheet(
-    onDismiss: () -> Unit,
-    onConfirm: (String, String, Long, BiologicalSex, String?, String?) -> Unit
-) {
-    var firstName by remember { mutableStateOf("") }
-    var lastName by remember { mutableStateOf("") }
-    var selectedSex by remember { mutableStateOf(BiologicalSex.UNSPECIFIED) }
-    var email by remember { mutableStateOf("") }
-    var medicalAlert by remember { mutableStateOf("") }
-    
-    val datePickerState = rememberDatePickerState()
-    var showDatePicker by remember { mutableStateOf(false) }
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        containerColor = SurfaceWhite,
-        dragHandle = { BottomSheetDefaults.DragHandle(color = BorderLight) }
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp)
-                .padding(bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Text("Register Athlete", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(
-                    value = firstName,
-                    onValueChange = { firstName = it },
-                    label = { Text("First Name *") },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp)
-                )
-                OutlinedTextField(
-                    value = lastName,
-                    onValueChange = { lastName = it },
-                    label = { Text("Last Name *") },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp)
-                )
-            }
-
-            // Date of Birth Trigger
-            OutlinedCard(
-                onClick = { showDatePicker = true },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, BorderLight)
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(Icons.Default.Cake, contentDescription = null, tint = BrandAccent)
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = if (datePickerState.selectedDateMillis != null) {
-                            val date = Date(datePickerState.selectedDateMillis!!)
-                            java.text.SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(date)
-                        } else "Date of Birth *",
-                        color = if (datePickerState.selectedDateMillis != null) TextPrimary else TextSecondary
-                    )
-                }
-            }
-
-            Text("Biological Sex", style = MaterialTheme.typography.labelMedium, color = TextSecondary)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                BiologicalSex.entries.forEach { sex ->
-                    val isSelected = selectedSex == sex
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(if (isSelected) BrandAccent else BackgroundGray)
-                            .clickable { selectedSex = sex }
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
-                    ) {
-                        Text(
-                            sex.name.lowercase().replaceFirstChar { it.uppercase() },
-                            color = if (isSelected) Color.White else TextSecondary,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                        )
-                    }
-                }
-            }
-
-            OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text("Email (Optional)") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
-            )
-
-            OutlinedTextField(
-                value = medicalAlert,
-                onValueChange = { medicalAlert = it },
-                label = { Text("Medical Alert / Restriction") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                placeholder = { Text("e.g. Asthma, Knee injury") }
-            )
-
-            Button(
-                onClick = {
-                    onConfirm(
-                        firstName,
-                        lastName,
-                        datePickerState.selectedDateMillis ?: 0L,
-                        selectedSex,
-                        email.ifBlank { null },
-                        medicalAlert.ifBlank { null }
-                    )
-                },
-                enabled = firstName.isNotBlank() && lastName.isNotBlank() && datePickerState.selectedDateMillis != null,
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = BrandAccent)
-            ) {
-                Text("Register Athlete", fontWeight = FontWeight.Bold)
-            }
-        }
-    }
-
-    if (showDatePicker) {
-        DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            confirmButton = {
-                TextButton(onClick = { showDatePicker = false }) { Text("OK", color = BrandAccent) }
-            }
-        ) {
-            DatePicker(state = datePickerState)
         }
     }
 }

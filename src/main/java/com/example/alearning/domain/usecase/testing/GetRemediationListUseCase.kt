@@ -1,78 +1,90 @@
 package com.example.alearning.domain.usecase.testing
 
+import com.example.alearning.domain.model.analytics.AtRiskAthlete
+import com.example.alearning.domain.model.analytics.DomainPattern
 import com.example.alearning.domain.repository.PeopleRepository
 import com.example.alearning.domain.repository.StandardsRepository
 import com.example.alearning.domain.repository.TestingRepository
 import kotlinx.coroutines.flow.first
+import java.time.Instant
+import java.time.ZoneId
 import javax.inject.Inject
-
-data class RemediationFlag(
-    val individualId: String,
-    val athleteName: String,
-    val testId: String,
-    val testName: String,
-    val categoryName: String,
-    val rawScore: Double,
-    val unit: String,
-    val percentile: Int,
-    val classification: String?
-)
-
-data class RemediationList(
-    val eventId: String,
-    val groupId: String,
-    val thresholdPercentile: Int,
-    val flags: List<RemediationFlag>
-)
 
 class GetRemediationListUseCase @Inject constructor(
     private val testingRepository: TestingRepository,
     private val peopleRepository: PeopleRepository,
     private val standardsRepository: StandardsRepository
 ) {
-    suspend operator fun invoke(
-        eventId: String,
-        groupId: String,
-        thresholdPercentile: Int = 30
-    ): RemediationList? {
-        val individuals = peopleRepository.getIndividualsInGroup(groupId).first()
-        if (individuals.isEmpty()) return null
+    suspend fun getGlobalAtRiskAthletes(): List<AtRiskAthlete> {
+        val athletes = peopleRepository.getAllIndividuals().first()
+        val allGroups = peopleRepository.getAllGroups().first()
+        val categories = standardsRepository.getAllCategories().first().associateBy { it.id }
 
-        val individualIds = individuals.map { it.id }.toSet()
-        val nameMap = individuals.associate { it.id to it.fullName }
+        val atRiskList = mutableListOf<AtRiskAthlete>()
 
-        val categories = standardsRepository.getAllCategories().first()
-        val categoryMap = categories.associateBy { it.id }
+        for (athlete in athletes) {
+            val athleteGroups = peopleRepository.getGroupsForIndividual(athlete.id).first()
+            val groupName = athleteGroups.firstOrNull()?.name ?: "No Group"
 
-        val allEventResults = testingRepository.getEventResults(eventId).first()
-        val groupResults = allEventResults.filter { it.individualId in individualIds }
+            val results = testingRepository.getLatestResultPerTestForIndividual(athlete.id)
+            if (results.isEmpty()) continue
 
-        val flagged = groupResults.filter { it.percentile != null && it.percentile <= thresholdPercentile }
+            val domainScores = mutableMapOf<String, MutableList<Float>>()
+            var lastTestDateLong: Long? = null
 
-        val flags = mutableListOf<RemediationFlag>()
-        for (result in flagged) {
-            val test = standardsRepository.getTestById(result.testId) ?: continue
-            val category = categoryMap[test.categoryId]
-            flags.add(
-                RemediationFlag(
-                    individualId = result.individualId,
-                    athleteName = nameMap[result.individualId] ?: "",
-                    testId = result.testId,
-                    testName = test.name,
-                    categoryName = category?.name ?: "",
-                    rawScore = result.rawScore,
-                    unit = test.unit,
-                    percentile = result.percentile!!,
-                    classification = result.classification
+            for (result in results) {
+                val test = standardsRepository.getTestById(result.testId) ?: continue
+                val category = categories[test.categoryId] ?: continue
+                val axis = category.radarAxis?.name ?: continue
+
+                val score = (result.percentile ?: continue).toFloat() / 100f
+                domainScores.getOrPut(axis) { mutableListOf() }.add(score)
+                
+                if (lastTestDateLong == null || result.createdAt > lastTestDateLong) {
+                    lastTestDateLong = result.createdAt
+                }
+            }
+
+            if (domainScores.isEmpty()) continue
+
+            val overallAvg = domainScores.values.flatten().average().toFloat()
+            val weakDomains = domainScores.filter { it.value.average() < 0.4f }.keys.toList()
+
+            val lastTestDate = lastTestDateLong?.let {
+                Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
+            }
+
+            atRiskList.add(
+                AtRiskAthlete(
+                    athleteId = athlete.id,
+                    athleteName = athlete.fullName,
+                    groupName = groupName,
+                    weakDomains = weakDomains,
+                    avgScore = overallAvg,
+                    lastTestDate = lastTestDate
                 )
             )
         }
 
-        return RemediationList(
-            eventId = eventId,
-            groupId = groupId,
-            thresholdPercentile = thresholdPercentile,
-            flags = flags.sortedBy { it.percentile }
-        )
+        return atRiskList
+    }
+
+    fun calculateDomainPatterns(atRiskAthletes: List<AtRiskAthlete>): List<DomainPattern> {
+        val domainMap = mutableMapOf<String, MutableList<Float>>()
+
+        for (athlete in atRiskAthletes) {
+            for (domain in athlete.weakDomains) {
+                domainMap.getOrPut(domain) { mutableListOf() }.add(athlete.avgScore)
+            }
+        }
+
+        return domainMap.map { (domain, scores) ->
+            DomainPattern(
+                domainName = domain,
+                atRiskCount = scores.size,
+                avgScore = scores.average().toFloat(),
+                isClusterPattern = scores.size >= 3
+            )
+        }.sortedByDescending { it.atRiskCount }
     }
 }

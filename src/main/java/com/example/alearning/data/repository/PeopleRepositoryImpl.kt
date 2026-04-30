@@ -20,6 +20,10 @@ class PeopleRepositoryImpl @Inject constructor(
         return dao.getAllIndividuals().map { list -> list.map { it.toDomain() } }
     }
 
+    override fun getIndividualFlow(id: String): Flow<Individual?> {
+        return dao.getIndividualByIdFlow(id).map { it?.toDomain() }
+    }
+
     override fun searchIndividuals(query: String): Flow<List<Individual>> {
         return dao.searchIndividuals(query).map { list -> list.map { it.toDomain() } }
     }
@@ -39,6 +43,10 @@ class PeopleRepositoryImpl @Inject constructor(
     // --- GROUPS ---
     override fun getAllGroups(): Flow<List<Group>> {
         return dao.getAllGroups().map { list -> list.map { it.toDomain() } }
+    }
+
+    override fun getGroupFlow(id: String): Flow<Group?> {
+        return dao.getGroupByIdFlow(id).map { it?.toDomain() }
     }
 
     override suspend fun getGroupById(id: String): Group? {
@@ -70,5 +78,9 @@ class PeopleRepositoryImpl @Inject constructor(
     override suspend fun removeMemberFromGroup(groupId: String, individualId: String) {
         val crossRef = GroupMemberCrossRef(groupId = groupId, individualId = individualId)
         dao.removeMemberFromGroup(crossRef)
+    }
+
+    override fun getIndividualsByIds(ids: List<String>): Flow<List<Individual>> {
+        return dao.getIndividualsByIds(ids).map { list -> list.map { it.toDomain() } }
     }
 }

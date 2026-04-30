@@ -35,10 +35,11 @@ sealed interface LeaderboardAction {
 class LeaderboardViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val testingRepository: TestingRepository,
+    private val standardsRepository: com.example.alearning.domain.repository.StandardsRepository,
     private val getGroupLeaderboard: GetGroupLeaderboardUseCase
 ) : ViewModel() {
 
-    private val eventId: String = savedStateHandle["eventId"] ?: ""
+    private val eventId: String? = savedStateHandle.get<String>("eventId")?.takeIf { it != "all" && it.isNotEmpty() }
     private val groupId: String = savedStateHandle["groupId"] ?: ""
     private val mode: String = savedStateHandle["mode"] ?: "event"
 
@@ -60,7 +61,11 @@ class LeaderboardViewModel @Inject constructor(
     private fun loadData() {
         viewModelScope.launch {
             try {
-                val tests = testingRepository.getTestsForEvent(eventId).first()
+                val tests = if (eventId != null) {
+                    testingRepository.getTestsForEvent(eventId).first()
+                } else {
+                    standardsRepository.getAllTests().first()
+                }
                 _uiState.update { it.copy(tests = tests, isLoading = false) }
                 if (tests.isNotEmpty()) {
                     loadLeaderboard(tests.first().id)

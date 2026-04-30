@@ -23,8 +23,14 @@ interface PeopleDao {
     @Query("SELECT * FROM individuals WHERE id = :id LIMIT 1")
     suspend fun getIndividualById(id: String): IndividualEntity?
 
+    @Query("SELECT * FROM individuals WHERE id = :id LIMIT 1")
+    fun getIndividualByIdFlow(id: String): Flow<IndividualEntity?>
+
     @Query("SELECT * FROM individuals WHERE isDeleted = 0 ORDER BY firstName ASC")
     fun getAllIndividuals(): Flow<List<IndividualEntity>>
+
+    @Query("SELECT * FROM individuals WHERE id IN (:ids) AND isDeleted = 0")
+    fun getIndividualsByIds(ids: List<String>): Flow<List<IndividualEntity>>
 
     // Feature: Search Bar (Finds students by name)
     @Query("""
@@ -51,6 +57,9 @@ interface PeopleDao {
 
     @Query("SELECT * FROM `groups` WHERE id = :id LIMIT 1")
     suspend fun getGroupById(id: String): GroupEntity?
+
+    @Query("SELECT * FROM `groups` WHERE id = :id LIMIT 1")
+    fun getGroupByIdFlow(id: String): Flow<GroupEntity?>
 
     // --- ROSTERING (Many-to-Many Relationships) ---
 

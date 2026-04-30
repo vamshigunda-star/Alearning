@@ -10,6 +10,8 @@ interface PeopleRepository {
     // --- Individuals ---
     fun getAllIndividuals(): Flow<List<Individual>>
 
+    fun getIndividualFlow(id: String): Flow<Individual?>
+
     fun searchIndividuals(query: String): Flow<List<Individual>>
 
     suspend fun getIndividualById(id: String): Individual?
@@ -20,6 +22,8 @@ interface PeopleRepository {
 
     // --- Groups ---
     fun getAllGroups(): Flow<List<Group>>
+
+    fun getGroupFlow(id: String): Flow<Group?>
 
     suspend fun getGroupById(id: String): Group?
 
@@ -38,4 +42,5 @@ interface PeopleRepository {
     suspend fun addMemberToGroup(groupId: String, individualId: String)
 
     suspend fun removeMemberFromGroup(groupId: String, individualId: String)
+    fun getIndividualsByIds(ids: List<String>): Flow<List<Individual>>
 }
