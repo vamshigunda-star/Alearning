@@ -15,23 +15,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.alearning.domain.model.people.BiologicalSex
 import com.example.alearning.domain.model.people.Individual
+import com.example.alearning.ui.components.AppTopBar
 import com.example.alearning.ui.components.RegisterAthleteSheet
-
-private val BackgroundGray = Color(0xFFF8F9FB)
-private val SurfaceWhite = Color(0xFFFFFFFF)
-private val TextPrimary = Color(0xFF1A1A1A)
-private val TextSecondary = Color(0xFF757575)
-private val BrandAccent = Color(0xFFF97D28) // SportOrange
-private val BorderLight = Color(0xFFE5E7EB)
-private val AvatarBackground = Color(0xFFFFF4EC)
+import com.example.alearning.ui.theme.SportOrange
+import com.example.alearning.ui.theme.SportOrangeContainer
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,20 +35,15 @@ fun AthletesScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
-        containerColor = BackgroundGray,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(
-                title = { Text("Athletes", fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 20.sp) },
+            AppTopBar(
+                title = "Athletes",
                 actions = {
                     IconButton(onClick = { viewModel.onAction(AthletesAction.OnShowRegisterSheet) }) {
-                        Icon(Icons.Default.PersonAdd, contentDescription = "Register Athlete", tint = BrandAccent)
+                        Icon(Icons.Default.PersonAdd, contentDescription = "Register Athlete")
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = SurfaceWhite,
-                    scrolledContainerColor = SurfaceWhite
-                ),
-                modifier = Modifier.border(width = 1.dp, color = BorderLight, shape = RoundedCornerShape(0.dp))
+                }
             )
         }
     ) { paddingValues ->
@@ -63,7 +51,7 @@ fun AthletesScreen(
             when {
                 uiState.isLoading -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = BrandAccent)
+                        CircularProgressIndicator(color = SportOrange)
                     }
                 }
                 uiState.allAthletes.isEmpty() -> {
@@ -72,7 +60,7 @@ fun AthletesScreen(
                 else -> {
                     Column(modifier = Modifier.fillMaxSize()) {
                         // Search & Filter
-                        Surface(color = SurfaceWhite, shadowElevation = 1.dp, modifier = Modifier.fillMaxWidth()) {
+                        Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 1.dp, modifier = Modifier.fillMaxWidth()) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 OutlinedTextField(
                                     value = uiState.searchQuery,
@@ -118,7 +106,7 @@ fun AthletesScreen(
                                 text = "${uiState.filteredAthletes.size} of ${uiState.allAthletes.size} Athletes",
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = TextSecondary
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
 
@@ -177,8 +165,8 @@ private fun AthleteDirectoryRow(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(SurfaceWhite)
-            .border(1.dp, BorderLight, RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
             .clickable { onTap() }
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -187,13 +175,13 @@ private fun AthleteDirectoryRow(
             modifier = Modifier
                 .size(44.dp)
                 .clip(CircleShape)
-                .background(if (isRestricted) MaterialTheme.colorScheme.errorContainer else AvatarBackground),
+                .background(if (isRestricted) MaterialTheme.colorScheme.errorContainer else SportOrangeContainer),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 initials,
                 style = MaterialTheme.typography.titleMedium,
-                color = if (isRestricted) MaterialTheme.colorScheme.onErrorContainer else BrandAccent,
+                color = if (isRestricted) MaterialTheme.colorScheme.onErrorContainer else SportOrange,
                 fontWeight = FontWeight.Bold
             )
         }
@@ -205,14 +193,14 @@ private fun AthleteDirectoryRow(
                 "${athlete.firstName} ${athlete.lastName}",
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.SemiBold,
-                color = TextPrimary
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(2.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     "Age $ageYears • ${athlete.sex.name.lowercase().replaceFirstChar { it.uppercase() }}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 if (isRestricted) {
                     Spacer(modifier = Modifier.width(6.dp))
@@ -221,7 +209,7 @@ private fun AthleteDirectoryRow(
             }
         }
 
-        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = TextSecondary)
+        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -232,14 +220,14 @@ private fun EmptyAthletesState(onRegister: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(Icons.Default.PersonSearch, contentDescription = null, modifier = Modifier.size(64.dp), tint = BorderLight)
+        Icon(Icons.Default.PersonSearch, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
         Spacer(modifier = Modifier.height(16.dp))
-        Text("No athletes found", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = TextPrimary)
-        Text("Register an athlete to get started.", color = TextSecondary, style = MaterialTheme.typography.bodyMedium)
+        Text("No athletes found", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+        Text("Register an athlete to get started.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
         Spacer(modifier = Modifier.height(24.dp))
         Button(
             onClick = onRegister,
-            colors = ButtonDefaults.buttonColors(containerColor = BrandAccent),
+            colors = ButtonDefaults.buttonColors(containerColor = SportOrange),
             shape = RoundedCornerShape(8.dp)
         ) {
             Text("Register Athlete")
