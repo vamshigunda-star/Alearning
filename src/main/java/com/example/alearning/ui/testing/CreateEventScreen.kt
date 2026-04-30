@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.alearning.domain.model.standards.TestPreset
+import com.example.alearning.ui.components.AppTopBar
 import com.example.alearning.ui.theme.*
 
 @Composable
@@ -66,22 +67,13 @@ fun CreateEventContent(
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { 
-                    Text(
-                        "Create Testing Event", 
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    ) 
-                },
+            AppTopBar(
+                title = "Create Testing Event",
                 navigationIcon = {
                     IconButton(onClick = { onAction(CreateEventAction.NavigateBack) }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
+                }
             )
         },
         bottomBar = {
@@ -102,11 +94,11 @@ fun CreateEventContent(
                             !uiState.isCreating,
                     shape = RoundedCornerShape(28.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF0061FF) // Vibrant blue from image
+                        containerColor = MaterialTheme.colorScheme.primary // Vibrant blue from image
                     )
                 ) {
                     if (uiState.isCreating) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)
                     } else {
                         Text(
                             "Start Testing (${uiState.selectedTestIds.size} tests)",
@@ -169,10 +161,10 @@ private fun PresetCard(
     Surface(
         onClick = onApply,
         shape = RoundedCornerShape(16.dp),
-        color = if (isApplied) Color(0xFFF0F6FF) else Color.White,
+        color = if (isApplied) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface,
         border = BorderStroke(
             if (isApplied) 2.dp else 1.dp,
-            if (isApplied) Color(0xFF0061FF) else Color(0xFFEEEEEE)
+            if (isApplied) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
         ),
         modifier = Modifier
             .width(120.dp)
@@ -186,14 +178,14 @@ private fun PresetCard(
             ) {
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = if (isApplied) Color.White else Color(0xFFF8F9FA),
+                    color = if (isApplied) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant,
                     modifier = Modifier.size(36.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             imageVector = icon,
                             contentDescription = null,
-                            tint = Color(0xFF0061FF),
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -205,12 +197,12 @@ private fun PresetCard(
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
-                        color = if (isApplied) Color(0xFF0061FF) else Color.Black
+                        color = if (isApplied) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         "${preset.testIds.size} Tests",
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color.Gray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -226,7 +218,7 @@ private fun PresetCard(
                         Icons.Default.Close,
                         contentDescription = "Delete",
                         modifier = Modifier.size(12.dp),
-                        tint = Color.LightGray
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -243,8 +235,8 @@ private fun SavePresetCard(
         onClick = onClick,
         enabled = enabled,
         shape = RoundedCornerShape(16.dp),
-        color = Color.White,
-        border = BorderStroke(1.dp, Color(0xFF0061FF)),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
         modifier = Modifier
             .width(120.dp)
             .height(120.dp),
@@ -256,14 +248,14 @@ private fun SavePresetCard(
         ) {
             Surface(
                 shape = RoundedCornerShape(8.dp),
-                color = Color(0xFFF0F6FF),
+                color = MaterialTheme.colorScheme.surfaceVariant,
                 modifier = Modifier.size(36.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         Icons.Default.Add,
                         contentDescription = null,
-                        tint = Color(0xFF0061FF),
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -273,7 +265,7 @@ private fun SavePresetCard(
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
                 lineHeight = 14.sp,
-                color = Color(0xFF0061FF)
+                color = MaterialTheme.colorScheme.primary
             )
         }
     }
@@ -404,9 +396,9 @@ private fun CreateEventBody(
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF0061FF),
-                        unfocusedBorderColor = Color(0xFFE0E0E0),
-                        focusedLabelColor = Color(0xFF0061FF)
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                        focusedLabelColor = MaterialTheme.colorScheme.primary
                     )
                 )
 
@@ -429,16 +421,16 @@ private fun CreateEventBody(
                             .fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF0061FF),
-                            unfocusedBorderColor = Color(0xFFE0E0E0),
-                            focusedLabelColor = Color(0xFF0061FF)
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                            focusedLabelColor = MaterialTheme.colorScheme.primary
                         )
                     )
 
                     ExposedDropdownMenu(
                         expanded = expanded,
                         onDismissRequest = { expanded = false },
-                        modifier = Modifier.background(Color.White)
+                        modifier = Modifier.background(MaterialTheme.colorScheme.surface)
                     ) {
                         uiState.groups.forEach { group ->
                             DropdownMenuItem(
@@ -503,7 +495,7 @@ private fun CreateEventBody(
                         if (uiState.selectedTabIndex < tabPositions.size) {
                             TabRowDefaults.SecondaryIndicator(
                                 modifier = Modifier.tabIndicatorOffset(tabPositions[uiState.selectedTabIndex]),
-                                color = Color(0xFF0061FF)
+                                color = MaterialTheme.colorScheme.primary
                             )
                         }
                     }
@@ -517,7 +509,7 @@ private fun CreateEventBody(
                                     category.name, 
                                     maxLines = 1, 
                                     style = MaterialTheme.typography.titleSmall,
-                                    color = if (index == uiState.selectedTabIndex) Color.Black else Color.Gray
+                                    color = if (index == uiState.selectedTabIndex) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
                                 ) 
                             }
                         )
@@ -531,7 +523,7 @@ private fun CreateEventBody(
             Surface(
                 onClick = { onAction(CreateEventAction.ToggleTest(test.id)) },
                 shape = RoundedCornerShape(16.dp),
-                color = Color.White,
+                color = MaterialTheme.colorScheme.surface,
                 modifier = Modifier
                     .fillMaxWidth()
                     .shadow(2.dp, RoundedCornerShape(16.dp))
@@ -546,7 +538,7 @@ private fun CreateEventBody(
                     Checkbox(
                         checked = isSelected,
                         onCheckedChange = { onAction(CreateEventAction.ToggleTest(test.id)) },
-                        colors = CheckboxDefaults.colors(checkedColor = Color(0xFF0061FF))
+                        colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary)
                     )
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
@@ -557,7 +549,7 @@ private fun CreateEventBody(
                         Text(
                             "${test.unit} \u00b7 ${if (test.isHigherBetter) "Higher is better" else "Lower is better"}",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.Gray
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }

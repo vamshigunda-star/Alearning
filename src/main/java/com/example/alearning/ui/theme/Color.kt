@@ -10,6 +10,7 @@ val SportBlue = Color(0xFF0066CC)
 val VibrantBlue = Color(0xFF2196F3)
 val SportOrange = Color(0xFFFF6600) // Energetic CTA
 val SportOrangeVariant = Color(0xFFE65100)
+val SportOrangeContainer = Color(0xFFFFF4EC) // Warm tint for avatar/badge backgrounds
 
 // Neutral Colors
 val SurfaceWhite = Color(0xFFFFFFFF)

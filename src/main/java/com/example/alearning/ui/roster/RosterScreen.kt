@@ -30,17 +30,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.alearning.domain.model.people.BiologicalSex
 import com.example.alearning.domain.model.people.Group
 import com.example.alearning.domain.model.people.Individual
+import com.example.alearning.ui.components.AppTopBar
 import com.example.alearning.ui.components.RegisterAthleteSheet
+import com.example.alearning.ui.theme.SportOrange
+import com.example.alearning.ui.theme.SportOrangeContainer
 import java.util.*
-
-// Modern minimalist color palette
-private val BackgroundGray = Color(0xFFF8F9FB)
-private val SurfaceWhite = Color(0xFFFFFFFF)
-private val TextPrimary = Color(0xFF1A1A1A)
-private val TextSecondary = Color(0xFF757575)
-private val BrandAccent = Color(0xFFF97D28) // Your orange accent
-private val BorderLight = Color(0xFFE5E7EB)
-private val AvatarBackground = Color(0xFFFFF4EC)
 
 @Composable
 fun RosterScreen(
@@ -69,32 +63,20 @@ fun RosterContent(
     onAction: (RosterAction) -> Unit
 ) {
     Scaffold(
-        containerColor = BackgroundGray,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "Roster",
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary,
-                        fontSize = 20.sp
-                    )
-                },
+            AppTopBar(
+                title = "Roster",
                 navigationIcon = {
                     IconButton(onClick = { onAction(RosterAction.OnNavigateBack) }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimary)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
                     IconButton(onClick = { onAction(RosterAction.OnShowRegisterAthleteDialog) }) {
-                        Icon(Icons.Default.PersonAdd, contentDescription = "Register Athlete", tint = BrandAccent)
+                        Icon(Icons.Default.PersonAdd, contentDescription = "Register Athlete")
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = SurfaceWhite,
-                    scrolledContainerColor = SurfaceWhite
-                ),
-                modifier = Modifier.border(width = 1.dp, color = BorderLight, shape = RoundedCornerShape(0.dp))
+                }
             )
         },
         floatingActionButton = {
@@ -107,7 +89,7 @@ fun RosterContent(
                             onAction(RosterAction.OnShowAddGroupDialog)
                         }
                     },
-                    containerColor = BrandAccent,
+                    containerColor = SportOrange,
                     contentColor = Color.White,
                     shape = RoundedCornerShape(16.dp)
                 ) {
@@ -241,7 +223,7 @@ private fun RosterTabRow(
     groupCount: Int
 ) {
     Surface(
-        color = SurfaceWhite,
+        color = MaterialTheme.colorScheme.surface,
         shadowElevation = 1.dp
     ) {
         Row(
@@ -284,11 +266,11 @@ private fun TabItem(
                 text = title,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                color = if (isSelected) BrandAccent else TextSecondary
+                color = if (isSelected) SportOrange else MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.width(6.dp))
             Surface(
-                color = if (isSelected) AvatarBackground else BackgroundGray,
+                color = if (isSelected) SportOrangeContainer else MaterialTheme.colorScheme.background,
                 shape = RoundedCornerShape(10.dp)
             ) {
                 Text(
@@ -296,7 +278,7 @@ private fun TabItem(
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
-                    color = if (isSelected) BrandAccent else TextSecondary
+                    color = if (isSelected) SportOrange else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -305,7 +287,7 @@ private fun TabItem(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(3.dp)
-                .background(if (isSelected) BrandAccent else Color.Transparent)
+                .background(if (isSelected) SportOrange else Color.Transparent)
         )
     }
 }
@@ -346,7 +328,7 @@ private fun AthleteTabContent(
                     modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             item { Spacer(modifier = Modifier.height(80.dp)) }
@@ -416,8 +398,8 @@ private fun ModernAthleteCard(
             .fillMaxWidth()
             .clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
-        color = SurfaceWhite,
-        border = BorderStroke(1.5.dp, if (isSelected) BrandAccent else BorderLight)
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.5.dp, if (isSelected) SportOrange else MaterialTheme.colorScheme.outline)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -428,8 +410,8 @@ private fun ModernAthleteCard(
                 modifier = Modifier
                     .size(24.dp)
                     .clip(RoundedCornerShape(6.dp))
-                    .background(if (isSelected) BrandAccent else BackgroundGray)
-                    .border(1.5.dp, if (isSelected) BrandAccent else BorderLight, RoundedCornerShape(6.dp))
+                    .background(if (isSelected) SportOrange else MaterialTheme.colorScheme.background)
+                    .border(1.5.dp, if (isSelected) SportOrange else MaterialTheme.colorScheme.outline, RoundedCornerShape(6.dp))
                     .clickable { onToggleSelection() },
                 contentAlignment = Alignment.Center
             ) {
@@ -445,13 +427,13 @@ private fun ModernAthleteCard(
                 modifier = Modifier
                     .size(44.dp)
                     .clip(CircleShape)
-                    .background(if (isRestricted) MaterialTheme.colorScheme.errorContainer else AvatarBackground),
+                    .background(if (isRestricted) MaterialTheme.colorScheme.errorContainer else SportOrangeContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     initials, 
                     fontWeight = FontWeight.Bold, 
-                    color = if (isRestricted) MaterialTheme.colorScheme.error else BrandAccent
+                    color = if (isRestricted) MaterialTheme.colorScheme.error else SportOrange
                 )
             }
 
@@ -468,7 +450,7 @@ private fun ModernAthleteCard(
                 Text(
                     "Age ${((System.currentTimeMillis() - athlete.dateOfBirth) / 31_557_600_000L).toInt()} • ${athlete.sex.name.lowercase().replaceFirstChar { it.uppercase() }}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 
                 if (groups.isNotEmpty()) {
@@ -476,14 +458,14 @@ private fun ModernAthleteCard(
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         groups.take(3).forEach { group ->
                             Surface(
-                                color = AvatarBackground,
+                                color = SportOrangeContainer,
                                 shape = RoundedCornerShape(4.dp)
                             ) {
                                 Text(
                                     group.name,
                                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = BrandAccent,
+                                    color = SportOrange,
                                     fontSize = 10.sp
                                 )
                             }
@@ -544,8 +526,8 @@ private fun ModernGroupCard(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
-        color = SurfaceWhite,
-        border = BorderStroke(1.5.dp, if (isExpanded) BrandAccent else BorderLight)
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.5.dp, if (isExpanded) SportOrange else MaterialTheme.colorScheme.outline)
     ) {
         Column {
             Row(
@@ -558,7 +540,7 @@ private fun ModernGroupCard(
                 Surface(
                     modifier = Modifier.size(40.dp),
                     shape = RoundedCornerShape(10.dp),
-                    color = AvatarBackground
+                    color = SportOrangeContainer
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Text("🏃", fontSize = 20.sp)
@@ -569,7 +551,7 @@ private fun ModernGroupCard(
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(group.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
-                    Text("${members.size} athletes", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                    Text("${members.size} athletes", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
 
                 if (!isExpanded) {
@@ -581,14 +563,14 @@ private fun ModernGroupCard(
                         Icons.Default.ChevronRight,
                         contentDescription = null,
                         modifier = Modifier.rotate(rotation),
-                        tint = TextSecondary
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
 
             AnimatedVisibility(visible = isExpanded) {
                 Column {
-                    HorizontalDivider(color = BorderLight.copy(alpha = 0.5f))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
                     members.forEach { member ->
                         MemberRow(member, onRemove = { onRemoveMember(member.id) })
                     }
@@ -601,9 +583,9 @@ private fun ModernGroupCard(
                             .padding(vertical = 4.dp),
                         contentPadding = PaddingValues(16.dp)
                     ) {
-                        Icon(Icons.Default.PersonAdd, contentDescription = null, tint = BrandAccent, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Default.PersonAdd, contentDescription = null, tint = SportOrange, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Add Athlete", color = BrandAccent, fontWeight = FontWeight.Bold)
+                        Text("Add Athlete", color = SportOrange, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -619,10 +601,10 @@ private fun MemberRow(member: Individual, onRemove: () -> Unit) {
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(Icons.Default.Menu, contentDescription = "Drag", tint = BorderLight, modifier = Modifier.size(20.dp))
+        Icon(Icons.Default.Menu, contentDescription = "Drag", tint = MaterialTheme.colorScheme.outline, modifier = Modifier.size(20.dp))
         Spacer(modifier = Modifier.width(12.dp))
         Box(
-            modifier = Modifier.size(32.dp).clip(CircleShape).background(BackgroundGray),
+            modifier = Modifier.size(32.dp).clip(CircleShape).background(MaterialTheme.colorScheme.background),
             contentAlignment = Alignment.Center
         ) {
             Text("${member.firstName.first()}${member.lastName.first()}".uppercase(), fontSize = 10.sp, fontWeight = FontWeight.Bold)
@@ -630,10 +612,10 @@ private fun MemberRow(member: Individual, onRemove: () -> Unit) {
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(member.fullName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-            Text("Age ${((System.currentTimeMillis() - member.dateOfBirth) / 31_557_600_000L).toInt()}", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+            Text("Age ${((System.currentTimeMillis() - member.dateOfBirth) / 31_557_600_000L).toInt()}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         IconButton(onClick = onRemove, modifier = Modifier.size(24.dp)) {
-            Icon(Icons.Default.Close, contentDescription = "Remove", tint = TextSecondary, modifier = Modifier.size(16.dp))
+            Icon(Icons.Default.Close, contentDescription = "Remove", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
         }
     }
 }
@@ -643,9 +625,9 @@ private fun AvatarStack(members: List<Individual>) {
     Row(horizontalArrangement = Arrangement.spacedBy((-8).dp)) {
         members.take(4).forEach { member ->
             Surface(
-                modifier = Modifier.size(28.dp).border(2.dp, SurfaceWhite, CircleShape),
+                modifier = Modifier.size(28.dp).border(2.dp, MaterialTheme.colorScheme.surface, CircleShape),
                 shape = CircleShape,
-                color = BrandAccent
+                color = SportOrange
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
@@ -659,9 +641,9 @@ private fun AvatarStack(members: List<Individual>) {
         }
         if (members.size > 4) {
             Surface(
-                modifier = Modifier.size(28.dp).border(2.dp, SurfaceWhite, CircleShape),
+                modifier = Modifier.size(28.dp).border(2.dp, MaterialTheme.colorScheme.surface, CircleShape),
                 shape = CircleShape,
-                color = TextSecondary
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text("+${members.size - 4}", fontSize = 8.sp, fontWeight = FontWeight.Bold, color = Color.White)
@@ -677,14 +659,14 @@ private fun SearchBar(query: String, onQueryChange: (String) -> Unit, placeholde
         value = query,
         onValueChange = onQueryChange,
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-        placeholder = { Text(placeholder, color = TextSecondary) },
-        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = TextSecondary) },
+        placeholder = { Text(placeholder, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
         shape = RoundedCornerShape(12.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            unfocusedContainerColor = BackgroundGray,
-            focusedContainerColor = BackgroundGray,
+            unfocusedContainerColor = MaterialTheme.colorScheme.background,
+            focusedContainerColor = MaterialTheme.colorScheme.background,
             unfocusedBorderColor = Color.Transparent,
-            focusedBorderColor = BrandAccent
+            focusedBorderColor = SportOrange
         ),
         singleLine = true
     )
@@ -693,7 +675,7 @@ private fun SearchBar(query: String, onQueryChange: (String) -> Unit, placeholde
 @Composable
 private fun ContextualActionBar(selectedCount: Int, onAddToGroup: () -> Unit) {
     Surface(
-        color = BrandAccent,
+        color = SportOrange,
         shape = RoundedCornerShape(16.dp),
         shadowElevation = 8.dp,
         modifier = Modifier.fillMaxWidth().height(64.dp)
@@ -745,7 +727,7 @@ private fun AddToGroupSelectionSheet(
                     Surface(
                         modifier = Modifier.fillMaxWidth().clickable { onGroupSelected(group.id) },
                         shape = RoundedCornerShape(12.dp),
-                        color = BackgroundGray
+                        color = MaterialTheme.colorScheme.background
                     ) {
                         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                             Text(group.name, fontWeight = FontWeight.Bold)
@@ -780,7 +762,7 @@ private fun ConfirmationDialog(
             Button(
                 onClick = onConfirm,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isDestructive) MaterialTheme.colorScheme.error else BrandAccent
+                    containerColor = if (isDestructive) MaterialTheme.colorScheme.error else SportOrange
                 )
             ) {
                 Text(confirmText)
@@ -797,7 +779,7 @@ private fun ConfirmationDialog(
 @Composable
 private fun LoadingState() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator(color = BrandAccent)
+        CircularProgressIndicator(color = SportOrange)
     }
 }
 
@@ -822,8 +804,8 @@ private fun AddGroupSheet(onDismiss: () -> Unit, onConfirm: (String, String?, St
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        containerColor = SurfaceWhite,
-        dragHandle = { BottomSheetDefaults.DragHandle(color = BorderLight) }
+        containerColor = MaterialTheme.colorScheme.surface,
+        dragHandle = { BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.outline) }
     ) {
         Column(
             modifier = Modifier
@@ -863,7 +845,7 @@ private fun AddGroupSheet(onDismiss: () -> Unit, onConfirm: (String, String?, St
                 enabled = name.isNotBlank(),
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = BrandAccent)
+                colors = ButtonDefaults.buttonColors(containerColor = SportOrange)
             ) {
                 Text("Create Group", fontWeight = FontWeight.Bold)
             }
@@ -887,8 +869,8 @@ private fun ManageGroupMembersSheet(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        containerColor = SurfaceWhite,
-        dragHandle = { BottomSheetDefaults.DragHandle(color = BorderLight) }
+        containerColor = MaterialTheme.colorScheme.surface,
+        dragHandle = { BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.outline) }
     ) {
         Column(
             modifier = Modifier
@@ -922,7 +904,7 @@ private fun ManageGroupMembersSheet(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
-                            .background(if (isInGroup) AvatarBackground else Color.Transparent)
+                            .background(if (isInGroup) SportOrangeContainer else Color.Transparent)
                             .padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -930,7 +912,7 @@ private fun ManageGroupMembersSheet(
                             modifier = Modifier
                                 .size(40.dp)
                                 .clip(CircleShape)
-                                .background(if (isInGroup) BrandAccent else BorderLight),
+                                .background(if (isInGroup) SportOrange else MaterialTheme.colorScheme.outline),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
@@ -942,7 +924,7 @@ private fun ManageGroupMembersSheet(
                         
                         Column(modifier = Modifier.weight(1f).padding(horizontal = 12.dp)) {
                             Text(athlete.fullName, fontWeight = FontWeight.SemiBold)
-                            Text(athlete.sex.name, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                            Text(athlete.sex.name, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
 
                         IconButton(
@@ -954,7 +936,7 @@ private fun ManageGroupMembersSheet(
                             Icon(
                                 if (isInGroup) Icons.Default.RemoveCircleOutline else Icons.Default.AddCircleOutline,
                                 contentDescription = null,
-                                tint = if (isInGroup) MaterialTheme.colorScheme.error else BrandAccent
+                                tint = if (isInGroup) MaterialTheme.colorScheme.error else SportOrange
                             )
                         }
                     }
