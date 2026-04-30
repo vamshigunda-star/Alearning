@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roster Screen UX Redesign — Wireframe Comparison</title>
+<style>
+  /* ===== RESET & BASE ===== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: #F0EEEB;
+    color: #2D2D2D;
+    line-height: 1.5;
+    padding: 0;
+  }
+
+  /* ===== PAGE HEADER ===== */
+  .page-header {
+    background: linear-gradient(135deg, #1A1A2E 0%, #16213E 100%);
+    color: #fff;
+    padding: 48px 32px 40px;
+    text-align: center;
+  }
+  .page-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+  }
+  .page-header h1 span { color: #FF6B35; }
+  .page-header p {
+    font-size: 1rem;
+    opacity: 0.7;
+    max-width: 560px;
+    margin: 0 auto;
+    font-weight: 400;
+  }
+  .badge-row {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  .badge--orange { background: rgba(255,107,53,0.2); color: #FF6B35; }
+  .badge--red { background: rgba(220,53,69,0.2); color: #FF6B6B; }
+  .badge--green { background: rgba(40,167,69,0.2); color: #5BD87A; }
+
+  /* ===== COMPARISON LAYOUT ===== */
+  .comparison-wrap {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 24px 60px;
+  }
+  .comparison-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: start;
+  }
+  @media (max-width: 860px) {
+    .comparison-grid { grid-template-columns: 1fr; gap: 40px; }
+  }
+
+  /* ===== SECTION LABEL ===== */
+  .section-label {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .section-label h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+  .section-label h2.before { color: #DC3545; }
+  .section-label h2.after { color: #28A745; }
+  .section-label p {
+    font-size: 0.85rem;
+    color: #888;
+    margin-top: 4px;
+  }
+
+  /* ===== PHONE FRAME ===== */
+  .phone-frame {
+    width: 375px;
+    max-width: 100%;
+    margin: 0 auto;
+    border-radius: 32px;
+    border: 3px solid #C8C8C8;
+    background: #FAFAFA;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .phone-notch {
+    width: 120px;
+    height: 24px;
+    background: #C8C8C8;
+    border-radius: 0 0 14px 14px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 5;
+  }
+  .phone-screen {
+    min-height: 720px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ===== APP HEADER ===== */
+  .app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #fff;
+    border-bottom: 1px solid #E5E5E5;
+  }
+  .app-header h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1A1A2E;
+  }
+  .header-icons {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .icon-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    border: none;
+    cursor: default;
+  }
+  .icon-btn--muted { background: #F0F0F0; color: #666; }
+  .icon-btn--primary { background: #FF6B35; color: #fff; }
+
+  /* ===== TABS ===== */
+  .tab-bar {
+    display: flex;
+    background: #fff;
+    border-bottom: 2px solid #E5E5E5;
+  }
+  .tab {
+    flex: 1;
+    text-align: center;
+    padding: 12px 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #999;
+    border-bottom: 3px solid transparent;
+    cursor: default;
+    position: relative;
+  }
+  .tab--active {
+    color: #FF6B35;
+    border-bottom-color: #FF6B35;
+  }
+  .tab .tab-count {
+    display: inline-block;
+    background: #F0F0F0;
+    color: #999;
+    font-size: 0.7rem;
+    padding: 1px 7px;
+    border-radius: 10px;
+    margin-left: 4px;
+    font-weight: 700;
+  }
+  .tab--active .tab-count {
+    background: rgba(255,107,53,0.15);
+    color: #FF6B35;
+  }
+
+  /* ===== SEARCH BAR ===== */
+  .search-bar {
+    margin: 12px 16px 8px;
+    background: #F0F0F0;
+    border-radius: 12px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #AAA;
+    font-size: 0.85rem;
+  }
+  .search-bar svg { flex-shrink: 0; }
+
+  /* ===== GROUP PILL ===== */
+  .group-pills {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    overflow-x: auto;
+  }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: default;
+  }
+  .pill--active { background: #FF6B35; color: #fff; }
+  .pill--muted { background: #F0F0F0; color: #666; }
+  .pill--add { background: #E8E8E8; color: #999; font-size: 1rem; }
+
+  /* ===== SECTION HEADER ===== */
+  .section-hdr {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px 6px;
+  }
+  .section-hdr h4 {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #555;
+  }
+  .section-hdr button {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #FF6B35;
+    background: rgba(255,107,53,0.1);
+    border: none;
+    padding: 5px 12px;
+    border-radius: 8px;
+    cursor: default;
+  }
+
+  /* ===== ATHLETE CARD (BEFORE) ===== */
+  .athlete-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: #fff;
+    margin: 0 16px 8px;
+    border-radius: 12px;
+    border: 1px solid #EBEBEB;
+    position: relative;
+  }
+  .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #E0DDD8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    color: #999;
+    flex-shrink: 0;
+  }
+  .avatar--orange { background: rgba(255,107,53,0.15); color: #FF6B35; }
+  .athlete-info { flex: 1; min-width: 0; }
+  .athlete-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #1A1A2E;
+  }
+  .athlete-meta {
+    font-size: 0.75rem;
+    color: #999;
+    margin-top: 2px;
+  }
+  .athlete-remove {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #FDEAEA;
+    color: #DC3545;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: default;
+    flex-shrink: 0;
+  }
+  .athlete-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    margin-right: 4px;
+    margin-top: 3px;
+  }
+  .tag--orange { background: rgba(255,107,53,0.12); color: #FF6B35; }
+  .tag--blue { background: rgba(59,130,246,0.12); color: #3B82F6; }
+  .tag--green { background: rgba(34,197,94,0.12); color: #22C55E; }
+
+  /* ===== CHECKBOX CARD (AFTER) ===== */
+  .check-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: #fff;
+    margin: 0 16px 6px;
+    border-radius: 12px;
+    border: 1.5px solid #EBEBEB;
+    transition: border-color 0.2s;
+  }
+  .check-card--selected {
+    border-color: #FF6B35;
+    background: rgba(255,107,53,0.03);
+  }
+  .checkbox {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: 2px solid #CCC;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    color: transparent;
+  }
+  .checkbox--checked {
+    background: #FF6B35;
+    border-color: #FF6B35;
+    color: #fff;
+  }
+
+  /* ===== GROUP CARD (AFTER) ===== */
+  .group-card {
+    background: #fff;
+    border: 1px solid #EBEBEB;
+    border-radius: 14px;
+    margin: 0 16px 10px;
+    padding: 14px 16px;
+    cursor: default;
+  }
+  .group-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .group-card-left { display: flex; align-items: center; gap: 12px; }
+  .group-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+  }
+  .group-icon--orange { background: rgba(255,107,53,0.12); }
+  .group-icon--blue { background: rgba(59,130,246,0.12); }
+  .group-icon--green { background: rgba(34,197,94,0.12); }
+  .group-card-name { font-size: 0.9rem; font-weight: 700; color: #1A1A2E; }
+  .group-card-count { font-size: 0.75rem; color: #999; margin-top: 2px; }
+  .avatar-stack {
+    display: flex;
+    margin-top: 10px;
+  }
+  .avatar-stack .mini-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    margin-left: -8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.55rem;
+    color: #fff;
+    font-weight: 700;
+  }
+  .avatar-stack .mini-avatar:first-child { margin-left: 0; }
+  .ma-1 { background: #FF6B35; }
+  .ma-2 { background: #3B82F6; }
+  .ma-3 { background: #22C55E; }
+  .ma-4 { background: #A855F7; }
+  .ma-5 { background: #999; font-size: 0.5rem; }
+  .group-chevron {
+    color: #CCC;
+    font-size: 0.9rem;
+  }
+
+  /* ===== EXPANDED GROUP DETAIL ===== */
+  .group-detail {
+    margin: 0 16px 10px;
+    background: #fff;
+    border: 2px solid #FF6B35;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .group-detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: rgba(255,107,53,0.06);
+    border-bottom: 1px solid rgba(255,107,53,0.12);
+  }
+  .group-detail-header h4 { font-size: 0.9rem; font-weight: 700; color: #FF6B35; }
+  .group-detail-header span { font-size: 0.75rem; color: #999; }
+  .group-detail .member-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-bottom: 1px solid #F5F5F5;
+  }
+  .group-detail .member-row:last-child { border-bottom: none; }
+  .grip-handle { color: #CCC; font-size: 0.8rem; flex-shrink: 0; }
+
+  /* ===== FLOATING ACTION BAR ===== */
+  .fab-bar {
+    position: absolute;
+    bottom: 70px;
+    left: 16px;
+    right: 16px;
+    background: #FF6B35;
+    color: #fff;
+    border-radius: 16px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    box-shadow: 0 6px 20px rgba(255,107,53,0.35);
+    z-index: 10;
+  }
+  .fab-bar .count-badge {
+    background: rgba(255,255,255,0.25);
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+  }
+
+  /* ===== FAB BUTTON ===== */
+  .fab {
+    position: absolute;
+    bottom: 76px;
+    right: 20px;
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    background: #FF6B35;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    box-shadow: 0 4px 16px rgba(255,107,53,0.3);
+    z-index: 10;
+    border: none;
+  }
+
+  /* ===== BOTTOM NAV ===== */
+  .bottom-nav {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border-top: 1px solid #E5E5E5;
+    display: flex;
+    padding: 8px 0 12px;
+  }
+  .nav-item {
+    flex: 1;
+    text-align: center;
+    cursor: default;
+  }
+  .nav-icon {
+    font-size: 1.2rem;
+    color: #BBB;
+    margin-bottom: 2px;
+  }
+  .nav-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #BBB;
+  }
+  .nav-item--active .nav-icon { color: #FF6B35; }
+  .nav-item--active .nav-label { color: #FF6B35; }
+
+  /* ===== ANNOTATION SYSTEM ===== */
+  .annotation-layer {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 20;
+  }
+  .annotation {
+    position: absolute;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .annotation--right {
+    flex-direction: row;
+  }
+  .annotation--left {
+    flex-direction: row-reverse;
+  }
+  .annotation-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .annotation-dot--red { background: #DC3545; box-shadow: 0 0 0 3px rgba(220,53,69,0.25); }
+  .annotation-dot--green { background: #28A745; box-shadow: 0 0 0 3px rgba(40,167,69,0.25); }
+  .annotation-line {
+    height: 2px;
+    width: 20px;
+    flex-shrink: 0;
+    margin-top: 5px;
+  }
+  .annotation-line--red { background: #DC3545; }
+  .annotation-line--green { background: #28A745; }
+  .annotation-text {
+    font-size: 0.65rem;
+    font-weight: 600;
+    line-height: 1.3;
+    max-width: 110px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+  }
+  .annotation-text--red {
+    background: rgba(220,53,69,0.1);
+    color: #DC3545;
+  }
+  .annotation-text--green {
+    background: rgba(40,167,69,0.1);
+    color: #28A745;
+  }
+
+  /* Problem/Improvement callout boxes outside phone */
+  .callout-list {
+    margin-top: 20px;
+  }
+  .callout {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+  .callout--red { background: rgba(220,53,69,0.07); border-left: 3px solid #DC3545; }
+  .callout--green { background: rgba(40,167,69,0.07); border-left: 3px solid #28A745; }
+  .callout-num {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 0.65rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .callout-num--red { background: #DC3545; color: #fff; }
+  .callout-num--green { background: #28A745; color: #fff; }
+  .callout-text { color: #444; }
+  .callout-text strong { color: #1A1A2E; }
+
+  /* ===== IMPROVEMENTS SUMMARY ===== */
+  .summary-section {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px 60px;
+  }
+  .summary-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+  }
+  .summary-card h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 28px;
+    text-align: center;
+    color: #1A1A2E;
+  }
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+  }
+  .summary-item {
+    display: flex;
+    gap: 14px;
+    padding: 18px;
+    border-radius: 14px;
+    background: #FAFAFA;
+    border: 1px solid #EBEBEB;
+  }
+  .summary-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+  .summary-icon--orange { background: rgba(255,107,53,0.12); }
+  .summary-icon--green { background: rgba(34,197,94,0.12); }
+  .summary-icon--blue { background: rgba(59,130,246,0.12); }
+  .summary-icon--purple { background: rgba(168,85,247,0.12); }
+  .summary-item h4 { font-size: 0.9rem; font-weight: 700; color: #1A1A2E; margin-bottom: 4px; }
+  .summary-item p { font-size: 0.8rem; color: #777; line-height: 1.5; }
+
+  /* ===== SEPARATOR ===== */
+  .comparison-wrap::before {
+    content: 'VS';
+    display: none;
+  }
+  @media (min-width: 861px) {
+    .vs-divider {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: #E0DDD8;
+      color: #999;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+      z-index: 30;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+  }
+
+  .comparison-wrapper {
+    position: relative;
+  }
+
+  /* ===== SWIPE HINT ===== */
+  .swipe-hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: center;
+    padding: 8px;
+    font-size: 0.7rem;
+    color: #BBB;
+    font-weight: 500;
+  }
+  .swipe-hint span {
+    font-size: 1rem;
+  }
+
+  /* ===== EMPTY STATE ===== */
+  .spacer { flex: 1; }
+
+  /* ===== FOOTER ===== */
+  .page-footer {
+    text-align: center;
+    padding: 24px;
+    font-size: 0.75rem;
+    color: #AAA;
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ PAGE HEADER ============ -->
+<div class="page-header">
+  <h1>Roster Screen <span>UX Redesign</span></h1>
+  <p>Wireframe comparison — identifying friction points and proposing a tab-first, context-aware design system</p>
+  <div class="badge-row">
+    <span class="badge badge--orange">Mobile · 375px</span>
+    <span class="badge badge--red">5 Issues Found</span>
+    <span class="badge badge--green">6 Improvements</span>
+  </div>
+</div>
+
+<!-- ============ COMPARISON ============ -->
+<div class="comparison-wrap">
+  <div class="comparison-wrapper">
+    <div class="comparison-grid">
+
+      <!-- ======== BEFORE ======== -->
+      <div>
+        <div class="section-label">
+          <h2 class="before">Before — Current</h2>
+          <p>Confusing actions, unclear hierarchy</p>
+        </div>
+
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+
+            <!-- App Header -->
+            <div class="app-header">
+              <h3>Roster Manager</h3>
+              <div class="header-icons">
+                <div class="icon-btn icon-btn--muted" title="Unlabeled">
+                  <svg width="18" height="18" fill="none" stroke="#666" stroke-width="2"><path d="M4 6h10M9 2v10M6 14h6"/><circle cx="7" cy="16" r="1.5"/><circle cx="11" cy="16" r="1.5"/></svg>
+                </div>
+                <div class="icon-btn icon-btn--muted" title="Unlabeled">
+                  <svg width="18" height="18" fill="none" stroke="#666" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M9 11v5M7 16h4"/></svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- Group pills row -->
+            <div class="group-pills">
+              <span class="pill pill--active">Grade 1 <span style="font-size:1rem">＋</span></span>
+              <span class="pill pill--muted">Grade 2</span>
+              <span class="pill pill--add">＋</span>
+            </div>
+
+            <!-- Section Header -->
+            <div class="section-hdr">
+              <h4>3 Athletes</h4>
+              <button>Add to Group</button>
+            </div>
+
+            <!-- Athlete cards -->
+            <div class="athlete-card">
+              <div class="avatar avatar--orange">JW</div>
+              <div class="athlete-info">
+                <div class="athlete-name">Jamie Wilson</div>
+                <div class="athlete-meta">Age 12 · Female</div>
+              </div>
+              <div class="athlete-remove">✕</div>
+            </div>
+            <div class="athlete-card">
+              <div class="avatar">TC</div>
+              <div class="athlete-info">
+                <div class="athlete-name">Tyler Chen</div>
+                <div class="athlete-meta">Age 11 · Male</div>
+              </div>
+              <div class="athlete-remove">✕</div>
+            </div>
+            <div class="athlete-card">
+              <div class="avatar avatar--orange">SP</div>
+              <div class="athlete-info">
+                <div class="athlete-name">Sofia Patel</div>
+                <div class="athlete-meta">Age 12 · Female</div>
+              </div>
+              <div class="athlete-remove">✕</div>
+            </div>
+
+            <!-- Spacer -->
+            <div class="spacer"></div>
+
+            <!-- Bottom Nav -->
+            <div class="bottom-nav">
+              <div class="nav-item">
+                <div class="nav-icon">🏠</div>
+                <div class="nav-label">Home</div>
+              </div>
+              <div class="nav-item nav-item--active">
+                <div class="nav-icon">📋</div>
+                <div class="nav-label">Roster</div>
+              </div>
+              <div class="nav-item">
+                <div class="nav-icon">🏃</div>
+                <div class="nav-label">Athletes</div>
+              </div>
+              <div class="nav-item">
+                <div class="nav-icon">📊</div>
+                <div class="nav-label">Insights</div>
+              </div>
+            </div>
+
+            <!-- BEFORE Annotations -->
+            <div class="annotation-layer">
+              <!-- #1: Header icons -->
+              <div class="annotation annotation--right" style="top:38px; right:8px;">
+                <div class="annotation-dot annotation-dot--red"></div>
+                <div>
+                  <div class="annotation-line annotation-line--red" style="width:16px; margin-bottom:4px;"></div>
+                  <div class="annotation-text annotation-text--red">Unlabeled icons — what do they do?</div>
+                </div>
+              </div>
+              <!-- #2: Pill + button -->
+              <div class="annotation annotation--right" style="top:74px; right:8px;">
+                <div class="annotation-dot annotation-dot--red"></div>
+                <div>
+                  <div class="annotation-line annotation-line--red" style="width:16px; margin-bottom:4px;"></div>
+                  <div class="annotation-text annotation-text--red">Ambiguous ＋ — add athlete or group?</div>
+                </div>
+              </div>
+              <!-- #3: Add to Group -->
+              <div class="annotation annotation--left" style="top:110px; left:8px;">
+                <div class="annotation-dot annotation-dot--red"></div>
+                <div>
+                  <div class="annotation-line annotation-line--red" style="width:16px; margin-bottom:4px;"></div>
+                  <div class="annotation-text annotation-text--red">No way to select athletes first</div>
+                </div>
+              </div>
+              <!-- #4: X buttons -->
+              <div class="annotation annotation--right" style="top:168px; right:8px;">
+                <div class="annotation-dot annotation-dot--red"></div>
+                <div>
+                  <div class="annotation-line annotation-line--red" style="width:16px; margin-bottom:4px;"></div>
+                  <div class="annotation-text annotation-text--red">No confirmation on remove</div>
+                </div>
+              </div>
+              <!-- #5: No search -->
+              <div class="annotation annotation--left" style="top:140px; left:8px;">
+                <div class="annotation-dot annotation-dot--red"></div>
+                <div>
+                  <div class="annotation-line annotation-line--red" style="width:16px; margin-bottom:4px;"></div>
+                  <div class="annotation-text annotation-text--red">No search or filter</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Problem callouts -->
+        <div class="callout-list">
+          <div class="callout callout--red">
+            <span class="callout-num callout-num--red">1</span>
+            <span class="callout-text"><strong>Unlabeled header icons</strong> — Group+ and Person+ icons have no labels or tooltips, causing confusion about their purpose.</span>
+          </div>
+          <div class="callout callout--red">
+            <span class="callout-num callout-num--red">2</span>
+            <span class="callout-text"><strong>Ambiguous "+" on pill</strong> — The "+" inside "Grade 1" pill could mean "add athlete to group" or "add new group".</span>
+          </div>
+          <div class="callout callout--red">
+            <span class="callout-num callout-num--red">3</span>
+            <span class="callout-text"><strong>"Add to Group" without selection</strong> — Button exists but there's no checkbox or multi-select mechanism for athletes.</span>
+          </div>
+          <div class="callout callout--red">
+            <span class="callout-num callout-num--red">4</span>
+            <span class="callout-text"><strong>Destructive "✕" without confirmation</strong> — Remove buttons on athlete cards trigger immediate deletion.</span>
+          </div>
+          <div class="callout callout--red">
+            <span class="callout-num callout-num--red">5</span>
+            <span class="callout-text"><strong>No search or filter</strong> — With many athletes, finding someone requires endless scrolling.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======== AFTER ======== -->
+      <div>
+        <div class="section-label">
+          <h2 class="after">After — Proposed</h2>
+          <p>Tab-first, context-aware design</p>
+        </div>
+
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+
+            <!-- App Header -->
+            <div class="app-header">
+              <h3>Roster</h3>
+              <div class="header-icons">
+                <div class="icon-btn icon-btn--primary" title="Quick Add Athlete">
+                  <svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2.5"><circle cx="9" cy="7" r="4"/><path d="M9 11v4M7 15h4"/><path d="M2 18h14"/></svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tab-bar">
+              <div class="tab tab--active">Athletes <span class="tab-count">12</span></div>
+              <div class="tab">Groups <span class="tab-count">4</span></div>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="search-bar">
+              <svg width="16" height="16" fill="none" stroke="#AAA" stroke-width="2"><circle cx="7" cy="7" r="5"/><path d="M11 11l4 4"/></svg>
+              Search athletes…
+            </div>
+
+            <!-- Athlete cards with checkboxes -->
+            <div class="check-card check-card--selected">
+              <div class="checkbox checkbox--checked">✓</div>
+              <div class="avatar avatar--orange">JW</div>
+              <div class="athlete-info">
+                <div class="athlete-name">Jamie Wilson</div>
+                <div class="athlete-meta">Age 12 · Female</div>
+                <div><span class="athlete-tag tag--orange">Grade 1</span></div>
+              </div>
+            </div>
+            <div class="check-card check-card--selected">
+              <div class="checkbox checkbox--checked">✓</div>
+              <div class="avatar">TC</div>
+              <div class="athlete-info">
+                <div class="athlete-name">Tyler Chen</div>
+                <div class="athlete-meta">Age 11 · Male</div>
+                <div><span class="athlete-tag tag--orange">Grade 1</span><span class="athlete-tag tag--blue">Sprinters</span></div>
+              </div>
+            </div>
+            <div class="check-card">
+              <div class="checkbox"></div>
+              <div class="avatar avatar--orange">SP</div>
+              <div class="athlete-info">
+                <div class="athlete-name">Sofia Patel</div>
+                <div class="athlete-meta">Age 12 · Female</div>
+                <div><span class="athlete-tag tag--orange">Grade 1</span></div>
+              </div>
+            </div>
+            <div class="check-card">
+              <div class="checkbox"></div>
+              <div class="avatar">MR</div>
+              <div class="athlete-info">
+                <div class="athlete-name">Maya Rodriguez</div>
+                <div class="athlete-meta">Age 13 · Female</div>
+                <div><span class="athlete-tag tag--green">Grade 2</span></div>
+              </div>
+            </div>
+
+            <div class="swipe-hint"><span>←</span> Swipe left to delete</div>
+
+            <div class="spacer"></div>
+
+            <!-- Floating Action Bar (appears on selection) -->
+            <div class="fab-bar">
+              <svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2"><path d="M3 9h12M9 3v12"/></svg>
+              Add to Group
+              <span class="count-badge">2 selected</span>
+            </div>
+
+            <!-- FAB -->
+            <div class="fab">＋</div>
+
+            <!-- Bottom Nav -->
+            <div class="bottom-nav">
+              <div class="nav-item">
+                <div class="nav-icon">🏠</div>
+                <div class="nav-label">Home</div>
+              </div>
+              <div class="nav-item nav-item--active">
+                <div class="nav-icon">📋</div>
+                <div class="nav-label">Roster</div>
+              </div>
+              <div class="nav-item">
+                <div class="nav-icon">🏃</div>
+                <div class="nav-label">Athletes</div>
+              </div>
+              <div class="nav-item">
+                <div class="nav-icon">📊</div>
+                <div class="nav-label">Insights</div>
+              </div>
+            </div>
+
+            <!-- AFTER Annotations -->
+            <div class="annotation-layer">
+              <!-- #1: Single clear icon -->
+              <div class="annotation annotation--right" style="top:36px; right:8px;">
+                <div class="annotation-dot annotation-dot--green"></div>
+                <div>
+                  <div class="annotation-line annotation-line--green" style="width:16px; margin-bottom:4px;"></div>
+                  <div class="annotation-text annotation-text--green">One clear action — quick add athlete</div>
+                </div>
+              </div>
+              <!-- #2: Tabs -->
+              <div class="annotation annotation--left" style="top:74px; left:8px;">
+                <div class="annotation-dot annotation-dot--green"></div>
+                <div>
+                  <div class="annotation-line annotation-line--green" style="width:16px; margin-bottom:4px;"></div>
+                  <div class="annotation-text annotation-text--green">Clear tab separation</div>
+                </div>
+              </div>
+              <!-- #3: Search -->
+              <div class="annotation annotation--right" style="top:108px; right:8px;">
+                <div class="annotation-dot annotation-dot--green"></div>
+                <div>
+                  <div class="annotation-line annotation-line--green" style="width:16px; margin-bottom:4px;"></div>
+                  <div class="annotation-text annotation-text--green">Search & filter athletes</div>
+                </div>
+              </div>
+              <!-- #4: Checkboxes -->
+              <div class="annotation annotation--left" style="top:140px; left:8px;">
+                <div class="annotation-dot annotation-dot--green"></div>
+                <div>
+                  <div class="annotation-line annotation-line--green" style="width:16px; margin-bottom:4px;"></div>
+                  <div class="annotation-text annotation-text--green">Multi-select with checkboxes</div>
+                </div>
+              </div>
+              <!-- #5: Context bar -->
+              <div class="annotation annotation--right" style="top:455px; right:8px;">
+                <div class="annotation-dot annotation-dot--green"></div>
+                <div>
+                  <div class="annotation-line annotation-line--green" style="width:16px; margin-bottom:4px;"></div>
+                  <div class="annotation-text annotation-text--green">Context-aware action bar</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Improvement callouts -->
+        <div class="callout-list">
+          <div class="callout callout--green">
+            <span class="callout-num callout-num--green">1</span>
+            <span class="callout-text"><strong>Single clear "+" icon</strong> — One obvious action in header for quick-add athlete. No ambiguity.</span>
+          </div>
+          <div class="callout callout--green">
+            <span class="callout-num callout-num--green">2</span>
+            <span class="callout-text"><strong>Athletes / Groups tabs</strong> — Clear separation of concerns. Each tab has its own purpose and actions.</span>
+          </div>
+          <div class="callout callout--green">
+            <span class="callout-num callout-num--green">3</span>
+            <span class="callout-text"><strong>Search bar</strong> — Instantly find athletes across all groups. Reduces scrolling and frustration.</span>
+          </div>
+          <div class="callout callout--green">
+            <span class="callout-num callout-num--green">4</span>
+            <span class="callout-text"><strong>Multi-select checkboxes</strong> — Select athletes first, then choose an action. Logical flow.</span>
+          </div>
+          <div class="callout callout--green">
+            <span class="callout-num callout-num--green">5</span>
+            <span class="callout-text"><strong>Context-aware action bar</strong> — "Add to Group" only appears when athletes are selected, with a count badge.</span>
+          </div>
+          <div class="callout callout--green">
+            <span class="callout-num callout-num--green">6</span>
+            <span class="callout-text"><strong>Swipe-to-delete with confirmation</strong> — Safer destructive action. Replaces raw "✕" buttons.</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /comparison-grid -->
+  </div><!-- /comparison-wrapper -->
+</div><!-- /comparison-wrap -->
+
+
+<!-- ============ GROUPS TAB PREVIEW ============ -->
+<div class="comparison-wrap" style="padding-top:0;">
+  <div class="section-label" style="margin-bottom:24px;">
+    <h2 style="color:#1A1A2E; font-size:1.1rem;">Proposed: Groups Tab Detail</h2>
+    <p>The Groups tab shows group cards with expandable member lists</p>
+  </div>
+
+  <div style="display:flex; gap:40px; justify-content:center; flex-wrap:wrap;">
+
+    <!-- Groups Tab - Collapsed -->
+    <div>
+      <p style="text-align:center; font-size:0.75rem; color:#999; margin-bottom:12px; font-weight:600; text-transform:uppercase; letter-spacing:1px;">Collapsed State</p>
+      <div class="phone-frame">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="app-header">
+            <h3>Roster</h3>
+            <div class="header-icons">
+              <div class="icon-btn icon-btn--primary">
+                <svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2.5"><circle cx="9" cy="7" r="4"/><path d="M9 11v4M7 15h4"/><path d="M2 18h14"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="tab-bar">
+            <div class="tab">Athletes <span class="tab-count">12</span></div>
+            <div class="tab tab--active">Groups <span class="tab-count">4</span></div>
+          </div>
+
+          <div class="search-bar">
+            <svg width="16" height="16" fill="none" stroke="#AAA" stroke-width="2"><circle cx="7" cy="7" r="5"/><path d="M11 11l4 4"/></svg>
+            Search groups…
+          </div>
+
+          <div style="padding-top:4px;">
+            <div class="group-card">
+              <div class="group-card-header">
+                <div class="group-card-left">
+                  <div class="group-icon group-icon--orange">🏃</div>
+                  <div>
+                    <div class="group-card-name">Grade 1</div>
+                    <div class="group-card-count">5 athletes</div>
+                  </div>
+                </div>
+                <div class="group-chevron">›</div>
+              </div>
+              <div class="avatar-stack">
+                <div class="mini-avatar ma-1">JW</div>
+                <div class="mini-avatar ma-2">TC</div>
+                <div class="mini-avatar ma-3">SP</div>
+                <div class="mini-avatar ma-4">AK</div>
+                <div class="mini-avatar ma-5">+1</div>
+              </div>
+            </div>
+
+            <div class="group-card">
+              <div class="group-card-header">
+                <div class="group-card-left">
+                  <div class="group-icon group-icon--blue">⚡</div>
+                  <div>
+                    <div class="group-card-name">Sprinters</div>
+                    <div class="group-card-count">3 athletes</div>
+                  </div>
+                </div>
+                <div class="group-chevron">›</div>
+              </div>
+              <div class="avatar-stack">
+                <div class="mini-avatar ma-2">TC</div>
+                <div class="mini-avatar ma-1">MR</div>
+                <div class="mini-avatar ma-3">DL</div>
+              </div>
+            </div>
+
+            <div class="group-card">
+              <div class="group-card-header">
+                <div class="group-card-left">
+                  <div class="group-icon group-icon--green">🎯</div>
+                  <div>
+                    <div class="group-card-name">Grade 2</div>
+                    <div class="group-card-count">4 athletes</div>
+                  </div>
+                </div>
+                <div class="group-chevron">›</div>
+              </div>
+              <div class="avatar-stack">
+                <div class="mini-avatar ma-3">MR</div>
+                <div class="mini-avatar ma-4">KN</div>
+                <div class="mini-avatar ma-1">RJ</div>
+                <div class="mini-avatar ma-2">AS</div>
+              </div>
+            </div>
+
+            <div class="group-card">
+              <div class="group-card-header">
+                <div class="group-card-left">
+                  <div class="group-icon group-icon--blue">🏅</div>
+                  <div>
+                    <div class="group-card-name">Competition Team</div>
+                    <div class="group-card-count">2 athletes</div>
+                  </div>
+                </div>
+                <div class="group-chevron">›</div>
+              </div>
+              <div class="avatar-stack">
+                <div class="mini-avatar ma-1">JW</div>
+                <div class="mini-avatar ma-4">DL</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="spacer"></div>
+          <div class="fab">＋</div>
+          <div class="bottom-nav">
+            <div class="nav-item"><div class="nav-icon">🏠</div><div class="nav-label">Home</div></div>
+            <div class="nav-item nav-item--active"><div class="nav-icon">📋</div><div class="nav-label">Roster</div></div>
+            <div class="nav-item"><div class="nav-icon">🏃</div><div class="nav-label">Athletes</div></div>
+            <div class="nav-item"><div class="nav-icon">📊</div><div class="nav-label">Insights</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Groups Tab - Expanded -->
+    <div>
+      <p style="text-align:center; font-size:0.75rem; color:#999; margin-bottom:12px; font-weight:600; text-transform:uppercase; letter-spacing:1px;">Expanded State (Tap Group)</p>
+      <div class="phone-frame">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="app-header">
+            <h3>Roster</h3>
+            <div class="header-icons">
+              <div class="icon-btn icon-btn--primary">
+                <svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2.5"><circle cx="9" cy="7" r="4"/><path d="M9 11v4M7 15h4"/><path d="M2 18h14"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="tab-bar">
+            <div class="tab">Athletes <span class="tab-count">12</span></div>
+            <div class="tab tab--active">Groups <span class="tab-count">4</span></div>
+          </div>
+
+          <div class="search-bar">
+            <svg width="16" height="16" fill="none" stroke="#AAA" stroke-width="2"><circle cx="7" cy="7" r="5"/><path d="M11 11l4 4"/></svg>
+            Search groups…
+          </div>
+
+          <div style="padding-top:4px;">
+            <!-- Expanded Group Detail -->
+            <div class="group-detail">
+              <div class="group-detail-header">
+                <h4>🏃 Grade 1</h4>
+                <span>5 athletes</span>
+              </div>
+              <div class="member-row">
+                <span class="grip-handle">⠿</span>
+                <div class="avatar avatar--orange" style="width:32px;height:32px;font-size:0.7rem;">JW</div>
+                <div class="athlete-info">
+                  <div class="athlete-name" style="font-size:0.85rem;">Jamie Wilson</div>
+                  <div class="athlete-meta">Age 12 · Female</div>
+                </div>
+                <div class="athlete-remove" style="width:24px;height:24px;font-size:0.65rem;">✕</div>
+              </div>
+              <div class="member-row">
+                <span class="grip-handle">⠿</span>
+                <div class="avatar" style="width:32px;height:32px;font-size:0.7rem;">TC</div>
+                <div class="athlete-info">
+                  <div class="athlete-name" style="font-size:0.85rem;">Tyler Chen</div>
+                  <div class="athlete-meta">Age 11 · Male</div>
+                </div>
+                <div class="athlete-remove" style="width:24px;height:24px;font-size:0.65rem;">✕</div>
+              </div>
+              <div class="member-row">
+                <span class="grip-handle">⠿</span>
+                <div class="avatar avatar--orange" style="width:32px;height:32px;font-size:0.7rem;">SP</div>
+                <div class="athlete-info">
+                  <div class="athlete-name" style="font-size:0.85rem;">Sofia Patel</div>
+                  <div class="athlete-meta">Age 12 · Female</div>
+                </div>
+                <div class="athlete-remove" style="width:24px;height:24px;font-size:0.65rem;">✕</div>
+              </div>
+              <div class="member-row">
+                <span class="grip-handle">⠿</span>
+                <div class="avatar" style="width:32px;height:32px;font-size:0.7rem;">AK</div>
+                <div class="athlete-info">
+                  <div class="athlete-name" style="font-size:0.85rem;">Alex Kim</div>
+                  <div class="athlete-meta">Age 11 · Male</div>
+                </div>
+                <div class="athlete-remove" style="width:24px;height:24px;font-size:0.65rem;">✕</div>
+              </div>
+              <div class="member-row">
+                <span class="grip-handle">⠿</span>
+                <div class="avatar" style="width:32px;height:32px;font-size:0.7rem;">RJ</div>
+                <div class="athlete-info">
+                  <div class="athlete-name" style="font-size:0.85rem;">Riley Jones</div>
+                  <div class="athlete-meta">Age 12 · Male</div>
+                </div>
+                <div class="athlete-remove" style="width:24px;height:24px;font-size:0.65rem;">✕</div>
+              </div>
+            </div>
+
+            <!-- Collapsed cards below -->
+            <div class="group-card" style="opacity:0.5;">
+              <div class="group-card-header">
+                <div class="group-card-left">
+                  <div class="group-icon group-icon--blue">⚡</div>
+                  <div>
+                    <div class="group-card-name">Sprinters</div>
+                    <div class="group-card-count">3 athletes</div>
+                  </div>
+                </div>
+                <div class="group-chevron">›</div>
+              </div>
+            </div>
+
+            <div class="group-card" style="opacity:0.5;">
+              <div class="group-card-header">
+                <div class="group-card-left">
+                  <div class="group-icon group-icon--green">🎯</div>
+                  <div>
+                    <div class="group-card-name">Grade 2</div>
+                    <div class="group-card-count">4 athletes</div>
+                  </div>
+                </div>
+                <div class="group-chevron">›</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="spacer"></div>
+
+          <!-- Annotation for drag-and-drop -->
+          <div class="annotation-layer">
+            <div class="annotation annotation--left" style="top:170px; left:8px;">
+              <div class="annotation-dot annotation-dot--green"></div>
+              <div>
+                <div class="annotation-line annotation-line--green" style="width:16px; margin-bottom:4px;"></div>
+                <div class="annotation-text annotation-text--green">Drag to reorder members</div>
+              </div>
+            </div>
+            <div class="annotation annotation--right" style="top:170px; right:8px;">
+              <div class="annotation-dot annotation-dot--green"></div>
+              <div>
+                <div class="annotation-line annotation-line--green" style="width:16px; margin-bottom:4px;"></div>
+                <div class="annotation-text annotation-text--green">Remove with confirmation</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="fab">＋</div>
+          <div class="bottom-nav">
+            <div class="nav-item"><div class="nav-icon">🏠</div><div class="nav-label">Home</div></div>
+            <div class="nav-item nav-item--active"><div class="nav-icon">📋</div><div class="nav-label">Roster</div></div>
+            <div class="nav-item"><div class="nav-icon">🏃</div><div class="nav-label">Athletes</div></div>
+            <div class="nav-item"><div class="nav-icon">📊</div><div class="nav-label">Insights</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============ KEY IMPROVEMENTS SUMMARY ============ -->
+<div class="summary-section">
+  <div class="summary-card">
+    <h2>Key Improvements Summary</h2>
+    <div class="summary-grid">
+
+      <div class="summary-item">
+        <div class="summary-icon summary-icon--orange">🗂️</div>
+        <div>
+          <h4>Tab-First Navigation</h4>
+          <p>Athletes and Groups are separated into dedicated tabs, eliminating the jumbled single-screen layout and creating clear mental models.</p>
+        </div>
+      </div>
+
+      <div class="summary-item">
+        <div class="summary-icon summary-icon--green">☑️</div>
+        <div>
+          <h4>Multi-Select + Context Actions</h4>
+          <p>Checkboxes enable selecting athletes before choosing an action. The floating "Add to Group" bar appears only when needed, reducing clutter.</p>
+        </div>
+      </div>
+
+      <div class="summary-item">
+        <div class="summary-icon summary-icon--blue">🔍</div>
+        <div>
+          <h4>Search & Filter</h4>
+          <p>A search bar in both tabs allows instant filtering. No more endless scrolling to find an athlete or group.</p>
+        </div>
+      </div>
+
+      <div class="summary-item">
+        <div class="summary-icon summary-icon--purple">🛡️</div>
+        <div>
+          <h4>Safe Destructive Actions</h4>
+          <p>Swipe-to-delete with confirmation replaces raw "✕" buttons. Inside groups, remove actions show a confirmation dialog.</p>
+        </div>
+      </div>
+
+      <div class="summary-item">
+        <div class="summary-icon summary-icon--orange">📌</div>
+        <div>
+          <h4>Single Clear Entry Point</h4>
+          <p>One "+" icon in the header (quick-add athlete) and one FAB per tab. No more ambiguous unlabeled icons or confusing pill buttons.</p>
+        </div>
+      </div>
+
+      <div class="summary-item">
+        <div class="summary-icon summary-icon--green">👥</div>
+        <div>
+          <h4>Expandable Group Detail</h4>
+          <p>Tap a group card to expand inline. See members, drag-to-reorder, and manage — all without navigating to a separate screen.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="page-footer">
+  Roster Screen UX Redesign · Wireframe Comparison · Sports App
+</div>
+
+</body>
+</html>

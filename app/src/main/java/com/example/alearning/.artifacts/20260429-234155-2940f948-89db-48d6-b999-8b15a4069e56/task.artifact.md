@@ -1,0 +1,34 @@
+# Roster Screen Redesign Task List
+
+- [x] Research and Planning
+    - [x] Read wireframe HTML
+    - [x] Analyze current implementation
+    - [x] Create implementation plan
+- [x] Update Domain/Repository (if needed)
+    - [x] Added `getIndividualsByIds` (done in previous step)
+- [x] Refactor `RosterViewModel`
+    - [x] Update `RosterUiState` and `RosterAction`
+    - [x] Implement search and filter logic
+    - [x] Implement multi-select logic
+    - [x] Implement group expansion logic
+- [x] Refactor `RosterScreen`
+    - [x] Implement Tab layout
+    - [x] Implement Athletes Tab
+        - [x] Search bar
+        - [x] Athlete list with checkboxes
+        - [x] Swipe-to-delete
+        - [x] Contextual Action Bar
+    - [x] Implement Groups Tab
+        - [x] Search bar
+        - [x] Expandable Group cards
+        - [x] Avatar stacks
+    - [x] Add confirmation dialogs
+- [/] Add "Add Athletes" to Groups Tab
+    - [ ] Update `RosterViewModel` state and actions
+    - [ ] Update `ModernGroupCard` with Add button
+    - [ ] Implement `ManageGroupMembersSheet`
+    - [ ] Wire up the sheet in `RosterContent`
+- [ ] Verification
+    - [ ] Build and run
+    - [x] Manual testing of previous features
+    - [ ] Manual testing of new "Add Athletes" feature

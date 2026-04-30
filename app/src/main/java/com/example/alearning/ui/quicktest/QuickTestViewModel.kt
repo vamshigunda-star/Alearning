@@ -1,5 +1,6 @@
 package com.example.alearning.ui.quicktest
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.alearning.domain.model.people.BiologicalSex
@@ -46,6 +47,8 @@ data class QuickTestUiState(
     val lastRecordedPercentile: Int? = null,
     val isSaving: Boolean = false,
     val isLoading: Boolean = true,
+    val isDeleting: Boolean = false,
+    val showDeleteConfirmation: Boolean = false,
     val errorMessage: String? = null
 )
 
@@ -60,24 +63,39 @@ sealed interface QuickTestAction {
     data object OnConfirmSetup : QuickTestAction
     data class OnSaveScore(val rawScore: Double) : QuickTestAction
     data object OnSkipTest : QuickTestAction
+    data object OnRequestDelete : QuickTestAction
+    data object OnConfirmDelete : QuickTestAction
+    data object OnDismissDelete : QuickTestAction
     data object OnNavigateBack : QuickTestAction
     data object OnDismissError : QuickTestAction
 }
 
 @HiltViewModel
 class QuickTestViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
     private val peopleRepository: PeopleRepository,
     private val getTestLibrary: GetTestLibraryUseCase,
     private val createEventUseCase: CreateEventUseCase,
     private val recordResult: RecordTestResultUseCase,
-    private val calculatePercentile: CalculatePercentileUseCase // Injected for live feedback
+    private val calculatePercentile: CalculatePercentileUseCase,
+    private val testingRepository: com.example.alearning.domain.repository.TestingRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(QuickTestUiState())
+    private val athleteId: String? = savedStateHandle["athleteId"]
+    private val initialTestIds: Set<String> = savedStateHandle.get<String>("testIds")
+        ?.split(",")
+        ?.mapNotNull { it.trim().takeIf { s -> s.isNotEmpty() } }
+        ?.toSet()
+        ?: emptySet()
+
+    private val _uiState = MutableStateFlow(
+        QuickTestUiState(selectedTestIds = initialTestIds)
+    )
     val uiState: StateFlow<QuickTestUiState> = _uiState.asStateFlow()
 
     // Added for live calculation
     private var calculationJob: Job? = null
+    private var hasInitializedAthlete: Boolean = false
 
     init {
         loadData()
@@ -90,6 +108,9 @@ class QuickTestViewModel @Inject constructor(
                 // Load Categories
                 getTestLibrary.getCategories().collect { categories ->
                     _uiState.update { it.copy(categories = categories) }
+
+                    // If we have a testId, we might need to find which category it belongs to
+                    // but for simplicity, let's just make sure it's selected if found in loaded tests.
                     if (categories.isNotEmpty()) {
                         loadTests(categories.first().id)
                     }
@@ -100,9 +121,23 @@ class QuickTestViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            // Load Athletes for Search
+            // Load Athletes for Search. Only seed selectedAthlete / search query / preselected tests
+            // on the FIRST emission — subsequent emissions must not wipe user toggles.
             peopleRepository.getAllIndividuals().collect { athletes ->
-                _uiState.update { it.copy(allAthletes = athletes, isLoading = false) }
+                if (!hasInitializedAthlete) {
+                    val selectedAthlete = athleteId?.let { id -> athletes.find { it.id == id } }
+                    _uiState.update {
+                        it.copy(
+                            allAthletes = athletes,
+                            isLoading = false,
+                            selectedAthlete = selectedAthlete,
+                            athleteSearchQuery = selectedAthlete?.fullName ?: ""
+                        )
+                    }
+                    hasInitializedAthlete = true
+                } else {
+                    _uiState.update { it.copy(allAthletes = athletes) }
+                }
             }
         }
     }
@@ -155,8 +190,28 @@ class QuickTestViewModel @Inject constructor(
             }
             is QuickTestAction.OnSaveScore -> saveScoreAndAdvance(action.rawScore)
             is QuickTestAction.OnSkipTest -> skipTest()
+            is QuickTestAction.OnRequestDelete -> _uiState.update { it.copy(showDeleteConfirmation = true) }
+            is QuickTestAction.OnConfirmDelete -> confirmDelete()
+            is QuickTestAction.OnDismissDelete -> _uiState.update { it.copy(showDeleteConfirmation = false) }
             is QuickTestAction.OnDismissError -> _uiState.update { it.copy(errorMessage = null) }
             is QuickTestAction.OnNavigateBack -> Unit
+        }
+    }
+
+    private fun confirmDelete() {
+        val eventId = createdEventId ?: return
+        _uiState.update { it.copy(isDeleting = true, showDeleteConfirmation = false) }
+        viewModelScope.launch {
+            try {
+                val results = testingRepository.getEventResults(eventId).first()
+                for (res in results) {
+                    testingRepository.deleteResultById(res.id)
+                }
+                _uiState.update { it.copy(isDeleting = false, step = QuickTestStep.SETUP, selectedTestIds = emptySet()) }
+                createdEventId = null
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Delete failed: ${e.message}", isDeleting = false) }
+            }
         }
     }
 

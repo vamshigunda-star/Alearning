@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
@@ -76,6 +77,11 @@ fun QuickTestContent(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
+                actions = {
+                    if (uiState.isDeleting) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp, color = Color.White)
+                    }
+                },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = NavyPrimary,
                     titleContentColor = Color.White,
@@ -117,7 +123,7 @@ fun QuickTestContent(
                     when (uiState.step) {
                         QuickTestStep.SETUP -> SetupStep(uiState, onAction)
                         QuickTestStep.ENTER_SCORES -> EnterScoresStep(uiState, onAction, onLiveScoreChange)
-                        QuickTestStep.COMPLETE -> CompleteStep(onAction)
+                        QuickTestStep.COMPLETE -> CompleteStep(uiState, onAction)
                     }
 
                     // Floating error message if any
@@ -136,6 +142,27 @@ fun QuickTestContent(
                 }
             }
         }
+    }
+
+    if (uiState.showDeleteConfirmation) {
+        AlertDialog(
+            onDismissRequest = { onAction(QuickTestAction.OnDismissDelete) },
+            title = { Text("Delete Recorded Scores?") },
+            text = { Text("This will permanently remove all scores recorded in this quick test session. This action cannot be undone.") },
+            confirmButton = {
+                Button(
+                    onClick = { onAction(QuickTestAction.OnConfirmDelete) },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Delete All")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { onAction(QuickTestAction.OnDismissDelete) }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 
@@ -507,15 +534,50 @@ private fun EnterScoresStep(
 
 @Composable
 private fun CompleteStep(
+    uiState: QuickTestUiState,
     onAction: (QuickTestAction) -> Unit
 ) {
-    EmptyState(
-        icon = Icons.Default.CheckCircle,
-        title = "Quick Test Complete",
-        message = "All scores have been recorded to the event.",
-        actionLabel = "Back to Dashboard",
-        onAction = { onAction(QuickTestAction.OnNavigateBack) }
-    )
+    Column(
+        modifier = Modifier.fillMaxSize().padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(80.dp), tint = PerformanceGreen)
+        Spacer(Modifier.height(24.dp))
+        Text("Quick Test Complete", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(12.dp))
+        Text(
+            if (uiState.isGuest) "Scores have been calculated for the guest athlete."
+            else "All scores have been recorded to the athlete's history.",
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        
+        Spacer(Modifier.height(48.dp))
+        
+        Button(
+            onClick = { onAction(QuickTestAction.OnNavigateBack) },
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            shape = MaterialTheme.shapes.large
+        ) {
+            Text("Back to Dashboard", style = MaterialTheme.typography.titleMedium)
+        }
+        
+        if (!uiState.isGuest) {
+            Spacer(Modifier.height(16.dp))
+            OutlinedButton(
+                onClick = { onAction(QuickTestAction.OnRequestDelete) },
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = MaterialTheme.shapes.large,
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+            ) {
+                Icon(Icons.Default.Delete, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Delete These Results", style = MaterialTheme.typography.titleMedium)
+            }
+        }
+    }
 }
 
 @Composable

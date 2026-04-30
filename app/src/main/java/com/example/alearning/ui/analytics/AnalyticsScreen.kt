@@ -2,118 +2,147 @@ package com.example.alearning.ui.analytics
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.alearning.ui.components.charts.RadarChart
+import androidx.navigation.NavController
+import com.example.alearning.ui.analytics.tabs.InsightsTab
+import com.example.alearning.ui.analytics.tabs.OverviewTab
+import com.example.alearning.ui.analytics.tabs.RemediationTab
+import com.example.alearning.ui.analytics.tabs.TrendsTab
+import com.example.alearning.ui.theme.BackgroundLight
 import com.example.alearning.ui.theme.NavyPrimary
+import com.example.alearning.ui.theme.NavyVariant
 import com.example.alearning.ui.theme.SportOrange
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnalyticsScreen(
+    navController: NavController? = null,
     viewModel: AnalyticsViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-
+    val selectedTab by viewModel.selectedTab.collectAsState()
     Scaffold(
+        containerColor = BackgroundLight,
         topBar = {
-            TopAppBar(
-                title = { Text("Analytics", fontWeight = FontWeight.Bold) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
-            )
+            Column {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            Brush.verticalGradient(listOf(NavyPrimary, NavyVariant))
+                        )
+                        .padding(horizontal = 20.dp)
+                        .padding(top = 16.dp, bottom = 8.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(SportOrange.copy(alpha = 0.18f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Insights,
+                                contentDescription = null,
+                                tint = SportOrange
+                            )
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                "Analytics",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                            Text(
+                                "Roster-wide performance insights",
+                                color = Color.White.copy(alpha = 0.7f),
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
+                    }
+                }
+                AnalyticsTabBar(
+                    selectedTab = selectedTab,
+                    onTabSelected = viewModel::selectTab
+                )
+            }
         }
     ) { padding ->
-        if (uiState.isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
-            ) {
-                // Global Profile
-                item {
-                    Text("Roster Fitness Profile", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Card(modifier = Modifier.fillMaxWidth()) {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            if (uiState.rosterRadarData != null) {
-                                RadarChart(
-                                    data = uiState.rosterRadarData!!,
-                                    modifier = Modifier.height(300.dp),
-                                    color = SportOrange
-                                )
-                                Text(
-                                    "Average performance across all active athletes",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color.Gray
-                                )
-                            } else {
-                                Box(modifier = Modifier.height(200.dp), contentAlignment = Alignment.Center) {
-                                    Text("No data available yet", style = MaterialTheme.typography.bodyMedium)
-                                }
-                            }
-                        }
-                    }
-                }
+        Box(modifier = Modifier.padding(padding).fillMaxSize().background(BackgroundLight)) {
+            AnalyticsContent(navController, viewModel)
+        }
+    }
+}
 
-                // Distribution
-                item {
-                    Text("Score Distribution", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Card(modifier = Modifier.fillMaxWidth()) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            if (uiState.scoreDistribution.isEmpty()) {
-                                Text("No scores recorded", style = MaterialTheme.typography.bodyMedium)
-                            } else {
-                                uiState.scoreDistribution.forEach { (classification, count) ->
-                                    DistributionRow(label = classification, count = count, total = uiState.scoreDistribution.values.sum())
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AnalyticsTabBar(
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit
+) {
+    SecondaryScrollableTabRow(
+        selectedTabIndex = selectedTab,
+        containerColor = NavyVariant,
+        contentColor = Color.White,
+        edgePadding = 12.dp,
+        indicator = {
+            TabRowDefaults.SecondaryIndicator(
+                Modifier.tabIndicatorOffset(selectedTab),
+                color = SportOrange,
+                height = 3.dp
+            )
+        },
+        divider = {}
+    ) {
+        AnalyticsTab.entries.forEach { tab ->
+            val selected = selectedTab == tab.index
+            Tab(
+                selected = selected,
+                onClick = { onTabSelected(tab.index) },
+                text = {
+                    Text(
+                        tab.label,
+                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
+                    )
+                },
+                icon = { Icon(tab.icon, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                selectedContentColor = SportOrange,
+                unselectedContentColor = Color.White.copy(alpha = 0.6f)
+            )
         }
     }
 }
 
 @Composable
-private fun DistributionRow(label: String, count: Int, total: Int) {
-    val fraction = count.toFloat() / total
-    Column {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(label, style = MaterialTheme.typography.bodySmall)
-            Text("$count (${(fraction * 100).toInt()}%)", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+fun AnalyticsContent(
+    navController: NavController? = null,
+    viewModel: AnalyticsViewModel = hiltViewModel()
+) {
+    val state by viewModel.uiState.collectAsState()
+    val selectedTab by viewModel.selectedTab.collectAsState()
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        when (selectedTab) {
+            0 -> OverviewTab(state)
+            1 -> TrendsTab(state, viewModel)
+            2 -> RemediationTab(state, navController, viewModel)
+            3 -> InsightsTab(state)
         }
-        Spacer(modifier = Modifier.height(4.dp))
-        LinearProgressIndicator(
-            progress = { fraction },
-            modifier = Modifier.fillMaxWidth().height(8.dp),
-            color = NavyPrimary,
-            trackColor = Color.LightGray.copy(alpha = 0.3f)
-        )
     }
 }

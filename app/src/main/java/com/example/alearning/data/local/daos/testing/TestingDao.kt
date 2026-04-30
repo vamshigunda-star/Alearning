@@ -25,9 +25,15 @@ interface TestingDao {
     @Query("SELECT * FROM testing_events WHERE id = :eventId LIMIT 1")
     suspend fun getEventById(eventId: String): TestingEventEntity?
 
+    @Query("SELECT * FROM testing_events WHERE id = :eventId LIMIT 1")
+    fun getEventByIdFlow(eventId: String): Flow<TestingEventEntity?>
+
     // Feature: Show only events for a specific group (e.g., "Varsity History")
     @Query("SELECT * FROM testing_events WHERE groupId = :groupId ORDER BY date DESC")
     fun getEventsForGroup(groupId: String): Flow<List<TestingEventEntity>>
+
+    @Query("DELETE FROM testing_events WHERE id = :eventId")
+    suspend fun deleteEventById(eventId: String)
 
     // --- MENU BUILDING (Linking Tests to Events) ---
 
@@ -62,6 +68,9 @@ interface TestingDao {
     // Feature: Leaderboard (All results for a specific event)
     @Query("SELECT * FROM test_results WHERE eventId = :eventId")
     fun getEventResults(eventId: String): Flow<List<TestResultEntity>>
+
+    @Query("SELECT * FROM test_results")
+    fun getAllResults(): Flow<List<TestResultEntity>>
 
     @Query("""
     SELECT * FROM test_results 

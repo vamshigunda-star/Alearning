@@ -34,12 +34,19 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.alearning.domain.model.standards.TimingMode
 import com.example.alearning.ui.theme.*
 
+import androidx.activity.compose.BackHandler
+
 @Composable
 fun StopwatchScreen(
     onNavigateBack: () -> Unit,
     viewModel: StopwatchViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    // Intercept back button if there are pending changes
+    BackHandler(enabled = uiState.hasPendingChanges) {
+        onNavigateBack()
+    }
 
     StopwatchContent(
         uiState = uiState,
@@ -90,6 +97,15 @@ private fun StopwatchContent(
                     )
                 }
             )
+        },
+        bottomBar = {
+            if (uiState.hasPendingChanges) {
+                SubmitBar(
+                    pendingCount = uiState.pendingResults.size,
+                    isSubmitting = uiState.isSubmitting,
+                    onSubmit = { onAction(StopwatchAction.OnSubmitPending) }
+                )
+            }
         }
     ) { padding ->
         when {
@@ -98,6 +114,54 @@ private fun StopwatchContent(
             uiState.isSessionComplete -> SessionCompleteContent(uiState, onAction, padding)
             uiState.mode == TimingMode.INDIVIDUAL -> IndividualModeContent(uiState, allAthletes, onAction, padding)
             uiState.mode == TimingMode.GROUP_START -> GroupStartModeContent(uiState, onAction, padding)
+        }
+    }
+}
+
+@Composable
+private fun SubmitBar(pendingCount: Int, isSubmitting: Boolean, onSubmit: () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = NavyPrimary,
+        shadowElevation = 8.dp
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "$pendingCount unsaved score${if (pendingCount == 1) "" else "s"}",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    "Tap submit to save to the database",
+                    color = Color.White.copy(alpha = 0.75f),
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+            Button(
+                onClick = onSubmit,
+                enabled = !isSubmitting,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.White,
+                    contentColor = NavyPrimary
+                )
+            ) {
+                if (isSubmitting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        color = NavyPrimary,
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text("Saving…", fontWeight = FontWeight.Bold)
+                } else {
+                    Text("Submit All", fontWeight = FontWeight.Bold)
+                }
+            }
         }
     }
 }
@@ -323,18 +387,20 @@ private fun ConfirmationFlash(
     nextAthleteName: String?,
     onResetAthlete: (() -> Unit)? = null
 ) {
-    Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp), colors = CardDefaults.cardColors(containerColor = PerformanceGreen.copy(alpha = 0.15f)), shape = RoundedCornerShape(16.dp)) {
+    Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp), colors = CardDefaults.cardColors(containerColor = PerformanceYellow.copy(alpha = 0.15f)), shape = RoundedCornerShape(16.dp)) {
         Column(modifier = Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(text = formatTimeDisplay(data.timeMs), fontSize = 48.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace, color = PerformanceGreenText)
+            Text(text = formatTimeDisplay(data.timeMs), fontSize = 48.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace, color = PerformanceYellowText)
             Spacer(Modifier.height(4.dp))
-            Text(text = "saved for ${data.athleteName}", style = MaterialTheme.typography.bodyLarge, color = PerformanceGreenText, textAlign = TextAlign.Center)
+            Text(text = "staged for ${data.athleteName}", style = MaterialTheme.typography.bodyLarge, color = PerformanceYellowText, textAlign = TextAlign.Center)
+            Spacer(Modifier.height(8.dp))
+            Text(text = "(Not saved until you tap Submit below)", style = MaterialTheme.typography.labelSmall, color = PerformanceYellowText.copy(alpha = 0.7f))
             Spacer(Modifier.height(24.dp))
             
             // First row of buttons: Undo & Reset
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 if (canUndo) {
                     OutlinedButton(onClick = onUndo, modifier = Modifier.weight(1f), colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)) {
-                        Icon(Icons.Default.Undo, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(4.dp)); Text("Undo")
+                        Icon(Icons.Default.Undo, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(4.dp)); Text("Clear")
                     }
                 }
                 if (onResetAthlete != null) {

@@ -28,8 +28,16 @@ class TestingRepositoryImpl @Inject constructor(
         return dao.getEventsForGroup(groupId).map { list -> list.map { it.toDomain() } }
     }
 
+    override fun getEventFlow(id: String): Flow<TestingEvent?> {
+        return dao.getEventByIdFlow(id).map { it?.toDomain() }
+    }
+
     override suspend fun getEventById(eventId: String): TestingEvent? {
         return dao.getEventById(eventId)?.toDomain()
+    }
+
+    override suspend fun deleteEventById(eventId: String) {
+        dao.deleteEventById(eventId)
     }
 
     override suspend fun createEvent(event: TestingEvent, testIds: List<String>) {
@@ -63,6 +71,10 @@ class TestingRepositoryImpl @Inject constructor(
 
     override fun getEventResults(eventId: String): Flow<List<TestResult>> {
         return dao.getEventResults(eventId).map { list -> list.map { it.toDomain() } }
+    }
+
+    override fun getAllResults(): Flow<List<TestResult>> {
+        return dao.getAllResults().map { list -> list.map { it.toDomain() } }
     }
 
     override fun getAllResultsForIndividual(individualId: String): Flow<List<TestResult>> {

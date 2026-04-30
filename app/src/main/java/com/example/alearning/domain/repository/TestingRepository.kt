@@ -13,7 +13,11 @@ interface TestingRepository {
 
     fun getEventsForGroup(groupId: String): Flow<List<TestingEvent>>
 
+    fun getEventFlow(id: String): Flow<TestingEvent?>
+
     suspend fun getEventById(eventId: String): TestingEvent?
+
+    suspend fun deleteEventById(eventId: String)
 
     /**
      * Creates an event and automatically sets up the "Menu" of tests for it.
@@ -31,6 +35,8 @@ interface TestingRepository {
     fun getHistoryForTest(individualId: String, testId: String): Flow<List<TestResult>>
 
     fun getEventResults(eventId: String): Flow<List<TestResult>>
+
+    fun getAllResults(): Flow<List<TestResult>>
 
     fun getAllResultsForIndividual(individualId: String): Flow<List<TestResult>>
 
