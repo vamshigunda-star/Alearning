@@ -31,7 +31,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -42,6 +41,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.alearning.ui.components.AppTopBar
+import com.example.alearning.ui.components.AppTopBarSubtitleColor
 import com.example.alearning.reports.AttemptRow
 import com.example.alearning.reports.LeaderboardRow
 import com.example.alearning.reports.components.ChartPoint
@@ -111,12 +112,12 @@ fun AthleteTestDetailContent(
     val data = uiState.data
     Scaffold(
         topBar = {
-            TopAppBar(
+            AppTopBar(
                 title = {
                     Column {
-                        Text(data?.test?.name ?: "Test", fontWeight = FontWeight.Bold)
+                        Text(data?.test?.name ?: "Test", style = MaterialTheme.typography.titleLarge)
                         data?.athlete?.fullName?.let {
-                            Text(it, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                            Text(it, style = MaterialTheme.typography.labelSmall, color = AppTopBarSubtitleColor)
                         }
                     }
                 },
@@ -133,7 +134,7 @@ fun AthleteTestDetailContent(
                 CircularProgressIndicator()
             }
             data == null -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text("No data", color = Color.Gray)
+                Text("No data", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             else -> DetailBody(uiState = uiState, padding = padding, onAction = onAction)
         }
@@ -196,13 +197,13 @@ private fun DetailBody(
         }
 
         item {
-            Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White)) {
+            Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
                 Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
                     Text("History", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                     Spacer(Modifier.height(8.dp))
                     if (data.attempts.size < 2) {
                         Box(modifier = Modifier.fillMaxWidth().height(160.dp), contentAlignment = Alignment.Center) {
-                            Text("Need 2+ attempts to chart", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+                            Text("Need 2+ attempts to chart", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                         }
                     } else {
                         NormBandLineChart(
@@ -235,7 +236,7 @@ private fun DetailBody(
         if (data.attempts.isEmpty()) {
             item {
                 Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                    Text("No attempts yet.", color = Color.Gray)
+                    Text("No attempts yet.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         } else {
@@ -253,19 +254,19 @@ private fun DetailBody(
 @Composable
 private fun AttemptRowView(row: AttemptRow, unit: String, onDelete: () -> Unit) {
     val df = remember { SimpleDateFormat("MMM d, yyyy", Locale.getDefault()) }
-    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White)) {
+    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
         Row(modifier = Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(df.format(Date(row.date)), style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                Text(df.format(Date(row.date)), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text("${formatScore(row.rawScore)} $unit", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
-                row.classificationLabel?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = Color.Gray) }
+                row.classificationLabel?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     ZoneChip(classification = row.classification)
                     Spacer(Modifier.width(8.dp))
                     IconButton(onClick = onDelete, modifier = Modifier.size(24.dp)) {
-                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Gray.copy(alpha = 0.6f), modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.size(18.dp))
                     }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -283,18 +284,18 @@ private fun PeerSheet(rows: List<LeaderboardRow>, highlightId: String, title: St
         Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(8.dp))
         if (rows.isEmpty()) {
-            Text("No peer results for this session.", color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
+            Text("No peer results for this session.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
         }
         rows.forEach { r ->
             val highlight = r.individualId == highlightId
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(if (highlight) Color(0xFFE3F2FD) else Color.Transparent, RoundedCornerShape(6.dp))
+                    .background(if (highlight) MaterialTheme.colorScheme.primaryContainer else Color.Transparent, RoundedCornerShape(6.dp))
                     .padding(vertical = 8.dp, horizontal = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("${r.rank}", style = MaterialTheme.typography.labelMedium, color = Color.Gray, modifier = Modifier.width(28.dp))
+                Text("${r.rank}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(28.dp))
                 Text(r.athleteName, modifier = Modifier.weight(1f), fontWeight = if (highlight) FontWeight.Bold else FontWeight.Normal)
                 Text(r.rawScore?.let { formatScore(it) } ?: "—", style = MaterialTheme.typography.bodyMedium)
                 Spacer(Modifier.width(8.dp))
@@ -318,7 +319,7 @@ private fun LegendRow() {
 private fun LegendDot(color: Color, label: String) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         Box(modifier = Modifier.width(10.dp).height(10.dp).background(color, RoundedCornerShape(2.dp)))
-        Text(label, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

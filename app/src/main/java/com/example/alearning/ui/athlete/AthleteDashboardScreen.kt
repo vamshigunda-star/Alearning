@@ -31,7 +31,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -55,9 +54,15 @@ import com.example.alearning.reports.components.ZoneChip
 import com.example.alearning.reports.components.zoneColors
 import com.example.alearning.interpretation.Classification
 import com.example.alearning.interpretation.FlagType
+import com.example.alearning.ui.components.AppTopBar
+import com.example.alearning.ui.components.AppTopBarSubtitleColor
 import com.example.alearning.ui.components.charts.RadarChart
 import com.example.alearning.ui.theme.NavyPrimary
+import com.example.alearning.ui.theme.PerformanceRed
 import com.example.alearning.ui.theme.PerformanceRedText
+import com.example.alearning.ui.theme.SportOrange
+import com.example.alearning.ui.theme.SportOrangeContainer
+import com.example.alearning.ui.theme.SportOrangeVariant
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -111,15 +116,15 @@ fun AthleteDashboardContent(
     val data = uiState.data
     Scaffold(
         topBar = {
-            TopAppBar(
+            AppTopBar(
                 title = {
                     Column {
-                        Text(data?.athlete?.fullName ?: "Athlete", fontWeight = FontWeight.Bold)
+                        Text(data?.athlete?.fullName ?: "Athlete", style = MaterialTheme.typography.titleLarge)
                         data?.athlete?.let { ind ->
                             val grp = data.groups.firstOrNull()?.name?.let { " · $it" } ?: ""
                             Text(
                                 "${ind.currentAge}y · ${ind.sex.name.lowercase().replaceFirstChar { it.uppercase() }}$grp",
-                                style = MaterialTheme.typography.labelSmall, color = Color.Gray
+                                style = MaterialTheme.typography.labelSmall, color = AppTopBarSubtitleColor
                             )
                         }
                     }
@@ -132,7 +137,7 @@ fun AthleteDashboardContent(
                 actions = {
                     if (data != null) {
                         if (uiState.isExporting) {
-                            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp, color = Color.White)
                         } else {
                             IconButton(onClick = { onAction(AthleteDashboardAction.OnExportCsv) }) {
                                 Icon(Icons.Default.Download, contentDescription = "Export CSV")
@@ -148,7 +153,7 @@ fun AthleteDashboardContent(
                 CircularProgressIndicator()
             }
             data == null -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text("Athlete not found", color = Color.Gray)
+                Text("Athlete not found", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             else -> AthleteBody(uiState = uiState, padding = padding, onAction = onAction)
         }
@@ -189,11 +194,11 @@ private fun AthleteBody(
 
         if (data.tiles.isEmpty()) {
             item {
-                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFFFAFAFA))) {
+                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                     Column(modifier = Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("No test results yet for ${data.athlete.fullName}.", style = MaterialTheme.typography.bodyMedium)
                         Spacer(Modifier.height(6.dp))
-                        Text("Add results from a session to populate this view.", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                        Text("Add results from a session to populate this view.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -255,7 +260,7 @@ private fun AthleteBody(
 @Composable
 private fun AthleteAlertCard(athlete: Individual) {
     if (athlete.medicalAlert == null && !athlete.isRestricted) return
-    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE))) {
+    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = PerformanceRed)) {
         Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Default.Warning, contentDescription = null, tint = PerformanceRedText)
             Spacer(Modifier.width(8.dp))
@@ -301,7 +306,7 @@ private fun TestTile(tile: AthleteTestTile, onClick: () -> Unit) {
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth().height(140.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.SpaceBetween) {
             Column {
@@ -322,7 +327,7 @@ private fun TestTile(tile: AthleteTestTile, onClick: () -> Unit) {
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 PercentileChip(percentile = tile.latestResult?.percentile)
-                Text("${tile.rawSparkline.size} attempt${if (tile.rawSparkline.size == 1) "" else "s"}", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                Text("${tile.rawSparkline.size} attempt${if (tile.rawSparkline.size == 1) "" else "s"}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
@@ -334,31 +339,31 @@ private fun FlagListRow(flag: AthleteFlag, onClick: () -> Unit) {
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0)),
+        colors = CardDefaults.cardColors(containerColor = SportOrangeContainer),
         enabled = isActionable
     ) {
         Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.Warning, contentDescription = null, tint = Color(0xFFE65100))
+            Icon(Icons.Default.Warning, contentDescription = null, tint = SportOrangeVariant)
             Spacer(Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(flag.type.name.replace('_', ' ').lowercase().replaceFirstChar { it.uppercase() }, fontWeight = FontWeight.SemiBold)
-                Text(flag.message, style = MaterialTheme.typography.bodySmall, color = Color(0xFFBF360C))
+                Text(flag.message, style = MaterialTheme.typography.bodySmall, color = SportOrangeVariant)
                 if (flag.type == FlagType.MISSING_DATA && flag.testNames.isNotEmpty()) {
                     Spacer(Modifier.height(4.dp))
                     flag.testNames.forEach { name ->
-                        Text("• $name", style = MaterialTheme.typography.labelSmall, color = Color(0xFFBF360C))
+                        Text("• $name", style = MaterialTheme.typography.labelSmall, color = SportOrangeVariant)
                     }
                     Spacer(Modifier.height(4.dp))
                     Text(
                         "Tap to complete in Quick Test",
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFFE65100)
+                        color = SportOrangeVariant
                     )
                 }
             }
             if (isActionable) {
-                Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color(0xFFE65100))
+                Icon(Icons.Default.ChevronRight, contentDescription = null, tint = SportOrangeVariant)
             }
         }
     }
@@ -367,7 +372,7 @@ private fun FlagListRow(flag: AthleteFlag, onClick: () -> Unit) {
 @Composable
 private fun OutstandingTestsCard(tests: List<FitnessTest>, onTestClick: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
-    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFFF4F6F8))) {
+    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background)) {
         Column(modifier = Modifier.fillMaxWidth().padding(14.dp)) {
             Row(modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded }, verticalAlignment = Alignment.CenterVertically) {
                 Text("Outstanding tests (${tests.size})", fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
@@ -396,7 +401,7 @@ private fun OutstandingTestsCard(tests: List<FitnessTest>, onTestClick: (String)
 
 @Composable
 private fun CategoryRadarCard(radarData: AthleteRadarData?, hasResults: Boolean) {
-    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White)) {
+    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -418,7 +423,7 @@ private fun CategoryRadarCard(radarData: AthleteRadarData?, hasResults: Boolean)
                 Text(
                     "Average percentile per fitness category. Larger area = stronger overall profile.",
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else {
                 Box(
@@ -429,7 +434,7 @@ private fun CategoryRadarCard(radarData: AthleteRadarData?, hasResults: Boolean)
                         if (hasResults) "Not enough percentile data to chart yet."
                         else "Record results to see a category profile.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -442,7 +447,7 @@ private fun PerTestHeader(testCount: Int, expanded: Boolean, onToggle: () -> Uni
     Card(
         onClick = onToggle,
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -453,13 +458,13 @@ private fun PerTestHeader(testCount: Int, expanded: Boolean, onToggle: () -> Uni
                 Text(
                     "$testCount test${if (testCount == 1) "" else "s"} · ${if (expanded) "tap to collapse" else "tap to view trends"}",
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             Icon(
                 imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                 contentDescription = if (expanded) "Collapse" else "Expand",
-                tint = Color.Gray
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

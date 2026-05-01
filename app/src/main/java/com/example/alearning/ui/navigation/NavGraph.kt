@@ -42,7 +42,8 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
                 onNavigateToLeaderboard = {
                     // Navigate to a default or global leaderboard if applicable, 
                     // or this could be handled by passing specific IDs if the UI provided them.
-                }
+                },
+                onNavigateToReports = { navController.navigate(BottomNavItem.Reports.route) }
             )
         }
 

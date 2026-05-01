@@ -33,6 +33,7 @@ sealed interface DashboardAction {
     data object OnDismissError : DashboardAction
     data object OnLeaderboardClick : DashboardAction
     data object OnAnalyticsClick : DashboardAction
+    data object OnSeeAllEventsClick : DashboardAction
 }
 
 @HiltViewModel
