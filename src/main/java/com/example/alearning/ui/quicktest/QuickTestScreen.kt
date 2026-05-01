@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.alearning.ui.components.AppTopBar
 import com.example.alearning.ui.theme.*
 import com.example.alearning.ui.components.testing.PercentileGauge
 import com.example.alearning.ui.components.testing.TestInputSwitcher
@@ -61,16 +62,11 @@ fun QuickTestContent(
 ) {
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        when (uiState.step) {
-                            QuickTestStep.SETUP -> "Quick Test Setup"
-                            QuickTestStep.ENTER_SCORES -> "Enter Scores"
-                            QuickTestStep.COMPLETE -> "Complete"
-                        },
-                        style = MaterialTheme.typography.titleLarge
-                    )
+            AppTopBar(
+                title = when (uiState.step) {
+                    QuickTestStep.SETUP -> "Quick Test Setup"
+                    QuickTestStep.ENTER_SCORES -> "Enter Scores"
+                    QuickTestStep.COMPLETE -> "Complete"
                 },
                 navigationIcon = {
                     IconButton(onClick = { onAction(QuickTestAction.OnNavigateBack) }) {
@@ -81,12 +77,7 @@ fun QuickTestContent(
                     if (uiState.isDeleting) {
                         CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp, color = Color.White)
                     }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = NavyPrimary,
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
-                )
+                }
             )
         },
         bottomBar = {

@@ -25,8 +25,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -37,6 +35,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.alearning.ui.components.AppTopBar
+import com.example.alearning.ui.components.AppTopBarSubtitleColor
+import com.example.alearning.ui.theme.NavyPrimary
+import com.example.alearning.ui.theme.PerformanceGreen
+import com.example.alearning.ui.theme.PerformanceGreenBorder
+import com.example.alearning.ui.theme.PerformanceGreenText
+import com.example.alearning.ui.theme.PerformanceRed
+import com.example.alearning.ui.theme.PerformanceRedBorder
+import com.example.alearning.ui.theme.PerformanceRedText
+import com.example.alearning.ui.theme.PerformanceYellow
+import com.example.alearning.ui.theme.PerformanceYellowText
+import com.example.alearning.ui.theme.SportOrange
 import com.example.alearning.interpretation.AthleteFlag
 import com.example.alearning.interpretation.FlagType
 import com.example.alearning.reports.GroupCardData
@@ -54,13 +64,14 @@ fun ReportScreen(
 ) {
     Scaffold(
         topBar = {
-            @OptIn(ExperimentalMaterial3Api::class)
-            TopAppBar(title = {
-                Column {
-                    Text("Reports", fontWeight = FontWeight.Bold)
-                    Text("Across all groups", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+            AppTopBar(
+                title = {
+                    Column {
+                        Text("Reports", style = MaterialTheme.typography.titleLarge)
+                        Text("Across all groups", style = MaterialTheme.typography.labelSmall, color = AppTopBarSubtitleColor)
+                    }
                 }
-            })
+            )
         }
     ) { padding ->
         Box(modifier = Modifier.padding(padding)) {
@@ -92,7 +103,7 @@ fun ReportContent(
             CircularProgressIndicator()
         }
         uiState.data == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No reports yet", color = Color.Gray)
+            Text("No reports yet", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         else -> ReportBody(
             uiState = uiState,
@@ -134,9 +145,9 @@ private fun ReportBody(
         }
         if (data.flags.isEmpty()) {
             item {
-                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9))) {
+                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = PerformanceGreen)) {
                     Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                        Text("No athletes flagged. ", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF1B5E20))
+                        Text("No athletes flagged. ", style = MaterialTheme.typography.bodyMedium, color = PerformanceGreenText)
                     }
                 }
             }
@@ -150,7 +161,7 @@ private fun ReportBody(
             Text("Browse by Group", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         }
         if (data.groups.isEmpty()) {
-            item { Text("No groups yet.", color = Color.Gray, style = MaterialTheme.typography.bodyMedium) }
+            item { Text("No groups yet.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium) }
         } else {
             items(data.groups, key = { it.group.id }) { card ->
                 GroupCard(card = card, onClick = { onAction(ReportAction.OnNavigateToGroup(card.group.id)) })
@@ -164,7 +175,7 @@ private fun ReportBody(
             item {
                 Text(
                     "No sessions yet — start a testing session to populate reports.",
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
@@ -180,10 +191,10 @@ private fun ReportBody(
 
 @Composable
 private fun HeroStats(healthy: Int, flagged: Int, sessionsThisMonth: Int) {
-    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFF0D1B2A))) {
+    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = NavyPrimary)) {
         Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-            HeroStat(label = "Healthy", value = healthy.toString(), color = Color(0xFFA5D6A7))
-            HeroStat(label = "Flagged", value = flagged.toString(), color = Color(0xFFEF9A9A))
+            HeroStat(label = "Healthy", value = healthy.toString(), color = PerformanceGreenBorder)
+            HeroStat(label = "Flagged", value = flagged.toString(), color = PerformanceRedBorder)
             HeroStat(label = "Sessions this month", value = sessionsThisMonth.toString(), color = Color.White)
         }
     }
@@ -200,15 +211,15 @@ private fun HeroStat(label: String, value: String, color: Color) {
 @Composable
 private fun FlagRow(flag: AthleteFlag, onClick: () -> Unit) {
     val (chipBg, chipFg) = when (flag.type) {
-        FlagType.BELOW_HEALTHY -> Color(0xFFFFEBEE) to Color(0xFFB71C1C)
-        FlagType.REGRESSION -> Color(0xFFFFF3E0) to Color(0xFFE65100)
-        FlagType.ABSENT -> Color(0xFFECEFF1) to Color(0xFF455A64)
-        FlagType.MISSING_DATA -> Color(0xFFFFFDE7) to Color(0xFFF57F17)
+        FlagType.BELOW_HEALTHY -> PerformanceRed to PerformanceRedText
+        FlagType.REGRESSION -> MaterialTheme.colorScheme.surfaceVariant to SportOrange
+        FlagType.ABSENT -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
+        FlagType.MISSING_DATA -> PerformanceYellow to PerformanceYellowText
     }
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
@@ -216,12 +227,12 @@ private fun FlagRow(flag: AthleteFlag, onClick: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Box(modifier = Modifier.size(32.dp).background(Color(0xFFECEFF1), CircleShape), contentAlignment = Alignment.Center) {
+            Box(modifier = Modifier.size(32.dp).background(MaterialTheme.colorScheme.surfaceVariant, CircleShape), contentAlignment = Alignment.Center) {
                 Text(flag.athleteName.firstOrNull()?.uppercaseChar()?.toString() ?: "?", style = MaterialTheme.typography.labelMedium)
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(flag.athleteName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
-                Text(flag.groupName, style = MaterialTheme.typography.labelSmall, color = Color.Gray, maxLines = 1)
+                Text(flag.groupName, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
             }
             Box(modifier = Modifier.background(chipBg, RoundedCornerShape(999.dp)).padding(horizontal = 8.dp, vertical = 4.dp)) {
                 Text(
@@ -236,7 +247,7 @@ private fun FlagRow(flag: AthleteFlag, onClick: () -> Unit) {
                     fontWeight = FontWeight.SemiBold
                 )
             }
-            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color(0xFFB0BEC5), modifier = Modifier.size(20.dp))
+            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), modifier = Modifier.size(20.dp))
         }
     }
 }
@@ -247,7 +258,7 @@ private fun GroupCard(card: GroupCardData, onClick: () -> Unit) {
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -258,7 +269,7 @@ private fun GroupCard(card: GroupCardData, onClick: () -> Unit) {
                         "${card.size} athlete${if (card.size == 1) "" else "s"}" +
                             (card.lastSessionDate?.let { " · last session ${df.format(Date(it))}" } ?: ""),
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color.Gray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -272,7 +283,7 @@ private fun RecentSessionCard(row: RecentSessionRow, onClick: () -> Unit) {
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
@@ -280,16 +291,16 @@ private fun RecentSessionCard(row: RecentSessionRow, onClick: () -> Unit) {
                 Text(
                     text = (row.groupName?.plus(" · ") ?: "") + df.format(Date(row.event.date)),
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
                     "${row.testCount} test${if (row.testCount == 1) "" else "s"} · ${row.athleteTestedCount} athletes tested",
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color(0xFFB0BEC5))
+            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
         }
     }
 }

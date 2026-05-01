@@ -32,6 +32,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.alearning.domain.model.standards.TimingMode
+import com.example.alearning.ui.components.AppTopBar
+import com.example.alearning.ui.components.AppTopBarSubtitleColor
 import com.example.alearning.ui.theme.*
 
 import androidx.activity.compose.BackHandler
@@ -69,15 +71,15 @@ private fun StopwatchContent(
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
+            AppTopBar(
                 title = {
                     Column {
-                        Text(uiState.testName, style = MaterialTheme.typography.titleMedium)
+                        Text(uiState.testName, style = MaterialTheme.typography.titleLarge)
                         if (uiState.eventName.isNotEmpty()) {
                             Text(
                                 uiState.eventName,
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = AppTopBarSubtitleColor
                             )
                         }
                     }

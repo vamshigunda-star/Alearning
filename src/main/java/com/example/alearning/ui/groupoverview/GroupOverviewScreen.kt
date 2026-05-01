@@ -29,7 +29,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -46,10 +45,13 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.Canvas
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.alearning.ui.components.AppTopBar
 import com.example.alearning.reports.SessionRow
 import com.example.alearning.reports.TestTrendStrip
 import com.example.alearning.reports.components.DistributionBar
 import com.example.alearning.reports.components.MiniSparkline
+import com.example.alearning.ui.theme.PerformanceRed
+import com.example.alearning.ui.theme.PerformanceRedText
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -84,8 +86,8 @@ fun GroupOverviewContent(
     val data = uiState.data
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(data?.group?.name ?: "Group", fontWeight = FontWeight.Bold) },
+            AppTopBar(
+                title = data?.group?.name ?: "Group",
                 navigationIcon = {
                     IconButton(onClick = { onAction(GroupOverviewAction.OnNavigateBack) }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -99,7 +101,7 @@ fun GroupOverviewContent(
                 CircularProgressIndicator()
             }
             data == null -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text("Group not found", color = Color.Gray)
+                Text("Group not found", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             else -> GroupOverviewBody(uiState = uiState, padding = padding, onAction = onAction)
         }
@@ -140,7 +142,7 @@ private fun GroupOverviewBody(
 
         if (data.sessions.isEmpty()) {
             item {
-                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFFF4F6F8))) {
+                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background)) {
                     Column(modifier = Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("No sessions for this group yet.", style = MaterialTheme.typography.bodyMedium)
                         Spacer(Modifier.height(12.dp))
@@ -164,7 +166,7 @@ private fun GroupOverviewBody(
             item {
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
-                        Text("No data yet", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+                        Text("No data yet", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
@@ -181,11 +183,11 @@ private fun GroupOverviewBody(
 
 @Composable
 private fun GroupHealthSnapshot(memberCount: Int, distribution: com.example.alearning.interpretation.Distribution) {
-    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White)) {
+    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                 Text("Group health", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                Text("$memberCount athletes", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                Text("$memberCount athletes", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             DistributionBar(distribution = distribution)
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -212,23 +214,23 @@ private fun SessionListRow(row: SessionRow, onClick: () -> Unit) {
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(row.event.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                Text(df.format(Date(row.event.date)), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                Text(df.format(Date(row.event.date)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(4.dp))
                 Text(
                     "${row.testCount} test${if (row.testCount == 1) "" else "s"} · ${row.athletesTested}/${row.totalAthletes} tested",
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             if (row.flagCount > 0) {
-                Box(modifier = Modifier.background(Color(0xFFFFEBEE), RoundedCornerShape(999.dp)).padding(horizontal = 10.dp, vertical = 4.dp)) {
-                    Text("${row.flagCount} flag${if (row.flagCount == 1) "" else "s"}", style = MaterialTheme.typography.labelSmall, color = Color(0xFFB71C1C), fontWeight = FontWeight.SemiBold)
+                Box(modifier = Modifier.background(PerformanceRed, RoundedCornerShape(999.dp)).padding(horizontal = 10.dp, vertical = 4.dp)) {
+                    Text("${row.flagCount} flag${if (row.flagCount == 1) "" else "s"}", style = MaterialTheme.typography.labelSmall, color = PerformanceRedText, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -242,12 +244,12 @@ private fun TestTrendChartSheet(trend: TestTrendStrip) {
         Text(
             "Group avg percentile across ${trend.points.size} session${if (trend.points.size == 1) "" else "s"}",
             style = MaterialTheme.typography.labelSmall,
-            color = Color.Gray
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(Modifier.height(16.dp))
         if (trend.points.isEmpty()) {
             Box(modifier = Modifier.fillMaxWidth().height(180.dp), contentAlignment = Alignment.Center) {
-                Text("No data yet", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+                Text("No data yet", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
             }
         } else {
             TrendLineChart(points = trend.points, modifier = Modifier.fillMaxWidth().height(240.dp))
@@ -354,12 +356,12 @@ private fun TestTrendRow(trend: TestTrendStrip, onClick: () -> Unit) {
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(trend.test.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                Text("${trend.points.size} session${if (trend.points.size == 1) "" else "s"}", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                Text("${trend.points.size} session${if (trend.points.size == 1) "" else "s"}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             val normalized = remember(trend.points) {
                 val pts = trend.points.map { it.second }

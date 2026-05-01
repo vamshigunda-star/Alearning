@@ -43,8 +43,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -68,6 +66,8 @@ import com.example.alearning.domain.model.people.Individual
 import com.example.alearning.domain.model.standards.FitnessTest
 import com.example.alearning.domain.model.standards.TimingMode
 import com.example.alearning.domain.model.testing.TestResult
+import com.example.alearning.ui.components.AppTopBar
+import com.example.alearning.ui.components.AppTopBarSubtitleColor
 import com.example.alearning.ui.theme.*
 import com.example.alearning.ui.components.testing.TestInputSwitcher
 import kotlinx.coroutines.delay
@@ -160,14 +160,14 @@ private fun TestingGridContent(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            AppTopBar(
                 title = {
                     when (uiState.phase) {
                         TestingPhase.LIVE_ENTRY -> Column {
-                            Text("Live Testing", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            Text(sessionTimeStr, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("Live Testing", style = MaterialTheme.typography.titleLarge)
+                            Text(sessionTimeStr, style = MaterialTheme.typography.labelSmall, color = AppTopBarSubtitleColor)
                         }
-                        TestingPhase.EVENT_DETAIL -> Text("Testing Event", fontWeight = FontWeight.Bold)
+                        TestingPhase.EVENT_DETAIL -> Text("Testing Event", style = MaterialTheme.typography.titleLarge)
                     }
                 },
                 navigationIcon = {
@@ -184,8 +184,7 @@ private fun TestingGridContent(
                             Icon(Icons.Default.Assessment, contentDescription = "Session Report")
                         }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                }
             )
         },
         bottomBar = {

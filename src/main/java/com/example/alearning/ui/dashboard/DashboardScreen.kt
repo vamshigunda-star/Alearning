@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.alearning.domain.model.testing.TestingEvent
+import com.example.alearning.ui.components.AppTopBar
 import com.example.alearning.ui.theme.*
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
@@ -58,6 +59,7 @@ fun DashboardScreen(
     onNavigateToTestingGrid: (String, String) -> Unit,
     onNavigateToLeaderboard: () -> Unit,
     onNavigateToAnalytics: () -> Unit,
+    onNavigateToReports: () -> Unit,
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -74,6 +76,7 @@ fun DashboardScreen(
                 is DashboardAction.OnEventClick -> onNavigateToTestingGrid(it.eventId, it.groupId)
                 DashboardAction.OnLeaderboardClick -> onNavigateToLeaderboard()
                 DashboardAction.OnAnalyticsClick -> onNavigateToAnalytics()
+                DashboardAction.OnSeeAllEventsClick -> onNavigateToReports()
                 else -> viewModel.onAction(it)
             }
         }
@@ -89,22 +92,7 @@ fun DashboardContent(
 ) {
     Scaffold(
         modifier = modifier,
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        "ALearning",
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = NavyPrimary,
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White,
-                    actionIconContentColor = Color.White
-                )
-            )
-        },
+        topBar = { AppTopBar(title = "ALearning") },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         LazyColumn(
@@ -147,7 +135,7 @@ fun DashboardContent(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
-                    TextButton(onClick = {}, enabled = false) {
+                    TextButton(onClick = { onAction(DashboardAction.OnSeeAllEventsClick) }) {
                         Text("See All")
                     }
                 }

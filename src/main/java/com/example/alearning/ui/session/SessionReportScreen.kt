@@ -33,7 +33,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -50,6 +49,8 @@ import com.example.alearning.reports.components.SessionPill
 import com.example.alearning.reports.components.SessionSwitcherSheet
 import com.example.alearning.reports.components.ZoneChip
 import com.example.alearning.interpretation.Classification
+import com.example.alearning.ui.components.AppTopBar
+import com.example.alearning.ui.components.AppTopBarSubtitleColor
 import com.example.alearning.ui.theme.PerformanceRed
 import com.example.alearning.ui.theme.PerformanceRedText
 import java.text.SimpleDateFormat
@@ -139,16 +140,15 @@ fun SessionReportContent(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            AppTopBar(
                 title = {
                     Column {
                         Text(
                             data?.event?.let { df.format(Date(it.date)) } ?: "Session",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            style = MaterialTheme.typography.titleLarge
                         )
                         data?.group?.name?.let {
-                            Text(it, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                            Text(it, style = MaterialTheme.typography.labelSmall, color = AppTopBarSubtitleColor)
                         }
                     }
                 },
@@ -160,10 +160,10 @@ fun SessionReportContent(
                 actions = {
                     if (data != null) {
                         IconButton(onClick = { onAction(SessionReportAction.OnRequestDelete) }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete Event", tint = MaterialTheme.colorScheme.error)
+                            Icon(Icons.Default.Delete, contentDescription = "Delete Event")
                         }
                         if (uiState.isExporting) {
-                            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp, color = Color.White)
                         } else {
                             IconButton(onClick = { onAction(SessionReportAction.OnExportCsv) }) {
                                 Icon(Icons.Default.Download, contentDescription = "Export CSV")
@@ -177,7 +177,7 @@ fun SessionReportContent(
         when {
             uiState.isLoading -> CenterSpinner()
             data == null -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text("Session not found", color = Color.Gray)
+                Text("Session not found", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             else -> SessionReportBody(uiState = uiState, padding = padding, onAction = onAction)
         }
@@ -257,7 +257,7 @@ private fun SessionReportBody(
             if (activeRows.isEmpty()) {
                 item {
                     Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                        Text("No results recorded for this test yet.", color = Color.Gray)
+                        Text("No results recorded for this test yet.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             } else {
@@ -291,10 +291,10 @@ private fun SessionReportBody(
             }
             item {
                 val trend = activeTestId?.let { data.groupTrendByTest[it] }.orEmpty()
-                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White)) {
+                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
                     Box(modifier = Modifier.fillMaxWidth().height(160.dp).padding(16.dp), contentAlignment = Alignment.Center) {
                         if (trend.size < 2) {
-                            Text("Need 2+ sessions for trend", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+                            Text("Need 2+ sessions for trend", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                         } else {
                             TrendBars(points = trend)
                         }
@@ -315,7 +315,7 @@ private fun SessionReportBody(
         } else {
             item {
                 Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
-                    Text("No tests in this session.", color = Color.Gray)
+                    Text("No tests in this session.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -338,7 +338,7 @@ private fun AbsentAthleteRow(row: LeaderboardRow, onClick: () -> Unit) {
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFFAFAFA))
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
@@ -396,7 +396,7 @@ private fun TrendBars(points: List<Pair<Long, Float>>) {
                         .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
                 )
                 Spacer(Modifier.height(4.dp))
-                Text("${v.toInt()}", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                Text("${v.toInt()}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
