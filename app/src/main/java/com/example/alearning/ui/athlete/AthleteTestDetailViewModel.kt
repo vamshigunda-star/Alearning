@@ -3,8 +3,8 @@ package com.example.alearning.ui.athlete
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.alearning.reports.AthleteTestDetailData
-import com.example.alearning.reports.ReportsRepository
+import com.example.alearning.domain.model.reports.AthleteTestDetailData
+import com.example.alearning.domain.repository.ReportsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 import com.example.alearning.domain.repository.TestingRepository
-import com.example.alearning.reports.AttemptRow
+import com.example.alearning.domain.model.reports.AttemptRow
 
 data class AthleteTestDetailUiState(
     val data: AthleteTestDetailData? = null,
@@ -43,15 +43,24 @@ class AthleteTestDetailViewModel @Inject constructor(
     private val testingRepository: TestingRepository
 ) : ViewModel() {
 
-    val athleteId: String = savedStateHandle["athleteId"] ?: ""
-    val testId: String = savedStateHandle["testId"] ?: ""
-    val contextSessionId: String? = savedStateHandle["contextSessionId"]
+    var athleteId: String = ""
+        private set
+    var testId: String = ""
+        private set
+    var contextSessionId: String? = null
+        private set
 
     private val _uiState = MutableStateFlow(AthleteTestDetailUiState())
     val uiState: StateFlow<AthleteTestDetailUiState> = _uiState.asStateFlow()
 
-    init {
-        viewModelScope.launch {
+    private var loadJob: kotlinx.coroutines.Job? = null
+
+    fun loadDetail(athleteId: String, testId: String, contextSessionId: String?) {
+        this.athleteId = athleteId
+        this.testId = testId
+        this.contextSessionId = contextSessionId
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             reports.observeAthleteTestDetail(athleteId, testId, contextSessionId)
                 .catch { e -> _uiState.update { it.copy(errorMessage = e.message, isLoading = false) } }
                 .collect { d -> _uiState.update { it.copy(data = d, isLoading = false) } }

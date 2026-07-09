@@ -40,7 +40,8 @@ interface StandardsDao {
         WHERE testId = :testId 
         AND sex = :sex 
         AND :age BETWEEN ageMin AND ageMax 
-        AND :score BETWEEN minScore AND maxScore
+        AND :score >= MIN(minScore, maxScore) 
+        AND :score <= MAX(minScore, maxScore)
         LIMIT 1
     """)
     suspend fun findNormResult(

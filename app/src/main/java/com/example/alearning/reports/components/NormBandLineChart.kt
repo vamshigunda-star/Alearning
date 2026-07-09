@@ -16,7 +16,7 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.alearning.reports.NormBandsForAge
+import com.example.alearning.domain.model.reports.NormBandsForAge
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

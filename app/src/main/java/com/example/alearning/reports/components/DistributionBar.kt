@@ -12,7 +12,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.example.alearning.interpretation.Distribution
+import com.example.alearning.domain.model.reports.Distribution
 
 @Composable
 fun DistributionBar(

@@ -22,7 +22,8 @@ data class StopwatchUiState(
     val isSessionComplete: Boolean = false,
     val selectedAthleteId: String? = null,
     val pendingResults: Map<String, Double> = emptyMap(), // athleteId -> rawScore
-    val isSubmitting: Boolean = false
+    val isSubmitting: Boolean = false,
+    val showDiscardDialog: Boolean = false
 ) {
     val hasPendingChanges: Boolean get() = pendingResults.isNotEmpty()
 }
@@ -53,6 +54,9 @@ sealed interface StopwatchAction {
     data object OnUndo : StopwatchAction
     data object OnDismissError : StopwatchAction
     data object OnNavigateBack : StopwatchAction
+    data object OnRequestBack : StopwatchAction
+    data object OnConfirmDiscard : StopwatchAction
+    data object OnDismissDiscard : StopwatchAction
     data object OnNext : StopwatchAction
     data class OnSelectAthlete(val athleteId: String) : StopwatchAction
     data object OnResetHeat : StopwatchAction

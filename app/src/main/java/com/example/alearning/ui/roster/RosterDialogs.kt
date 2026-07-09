@@ -1,0 +1,87 @@
+package com.example.alearning.ui.roster
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import com.example.alearning.domain.model.people.Individual
+import com.example.alearning.ui.components.RegisterAthleteSheet
+import com.example.alearning.ui.theme.SportOrange
+
+@Composable
+fun RosterDialogs(
+    uiState: RosterUiState,
+    onAction: (RosterAction) -> Unit
+) {
+    // Modern Bottom Sheets
+    if (uiState.showAddGroupDialog) {
+        AddGroupSheet(
+            onDismiss = { onAction(RosterAction.OnDismissAddGroupDialog) },
+            onConfirm = { name, location, cycle -> onAction(RosterAction.OnCreateGroup(name, location, cycle)) }
+        )
+    }
+
+    if (uiState.showRegisterAthleteDialog) {
+        RegisterAthleteSheet(
+            onDismiss = { onAction(RosterAction.OnDismissRegisterAthleteDialog) },
+            onConfirm = { first, last, dob, sex, email, med -> 
+                onAction(RosterAction.OnRegisterAthlete(first, last, dob, sex, email, med)) 
+            }
+        )
+    }
+
+    if (uiState.showAddToGroupDialog) {
+        AddToGroupSelectionSheet(
+            groups = uiState.groups,
+            onDismiss = { onAction(RosterAction.OnDismissAddToGroupDialog) },
+            onGroupSelected = { onAction(RosterAction.OnAddSelectedToGroup(it)) },
+            onCreateGroup = { onAction(RosterAction.OnShowAddGroupDialog) }
+        )
+    }
+
+    uiState.showManageMembersDialog?.let { groupId ->
+        val members = uiState.groupMembers[groupId] ?: emptyList()
+        ManageGroupMembersSheet(
+            allAthletes = uiState.allAthletes,
+            currentAthleteIds = members.map { it.id }.toSet(),
+            onDismiss = { onAction(RosterAction.OnDismissManageMembersDialog) },
+            onAddAthlete = { id -> onAction(RosterAction.OnAddAthleteToGroup(groupId, id)) },
+            onRemoveAthlete = { id -> onAction(RosterAction.OnRemoveAthleteFromGroup(groupId, id)) }
+        )
+    }
+
+    // Confirmation Dialogs
+    uiState.showDeleteAthleteConfirmation?.let { id ->
+        val athlete = uiState.allAthletes.find { it.id == id }
+        ConfirmationDialog(
+            title = "Delete Athlete",
+            message = "Are you sure you want to delete ${athlete?.fullName}? This action cannot be undone.",
+            confirmText = "Delete",
+            isDestructive = true,
+            onConfirm = { onAction(RosterAction.OnConfirmDeleteAthlete(id)) },
+            onDismiss = { onAction(RosterAction.OnDismissDeleteConfirmation) }
+        )
+    }
+
+    uiState.showRemoveMemberConfirmation?.let { (groupId, individualId) ->
+        val athlete = uiState.allAthletes.find { it.id == individualId }
+        val group = uiState.groups.find { it.id == groupId }
+        ConfirmationDialog(
+            title = "Remove from Group",
+            message = "Remove ${athlete?.fullName} from ${group?.name}?",
+            confirmText = "Remove",
+            isDestructive = true,
+            onConfirm = { onAction(RosterAction.OnConfirmRemoveMember(groupId, individualId)) },
+            onDismiss = { onAction(RosterAction.OnDismissRemoveMemberConfirmation) }
+        )
+    }
+}

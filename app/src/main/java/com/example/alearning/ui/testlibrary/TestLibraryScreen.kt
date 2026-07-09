@@ -1,23 +1,39 @@
 package com.example.alearning.ui.testlibrary
 
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material3.*
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.layout.AnimatedPane
+import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
+import androidx.compose.material3.adaptive.navigation.NavigableListDetailPaneScaffold
+import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.example.alearning.domain.model.standards.FitnessTest
 
 @Composable
@@ -132,48 +148,79 @@ private fun ErrorState(
     }
 }
 
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 private fun TestLibraryBody(
     uiState: TestLibraryUiState,
     onAction: (TestLibraryAction) -> Unit,
     padding: PaddingValues
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(padding)
-    ) {
-        ScrollableTabRow(
-            selectedTabIndex = uiState.categories.indexOf(uiState.selectedCategory).coerceAtLeast(0)
-        ) {
-            uiState.categories.forEach { category ->
-                Tab(
-                    selected = category == uiState.selectedCategory,
-                    onClick = { onAction(TestLibraryAction.OnSelectCategory(category)) },
-                    text = { Text(category.name, maxLines = 1) }
-                )
-            }
-        }
+    val navigator = rememberListDetailPaneScaffoldNavigator<Any>()
 
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(uiState.testsForCategory) { test ->
-                TestCard(test = test)
+    BackHandler(navigator.canNavigateBack()) {
+        navigator.navigateBack()
+    }
+
+    NavigableListDetailPaneScaffold(
+        modifier = Modifier.padding(padding),
+        navigator = navigator,
+        listPane = {
+            AnimatedPane {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    ScrollableTabRow(
+                        selectedTabIndex = uiState.categories.indexOf(uiState.selectedCategory).coerceAtLeast(0)
+                    ) {
+                        uiState.categories.forEach { category ->
+                            Tab(
+                                selected = category == uiState.selectedCategory,
+                                onClick = {
+                                    onAction(TestLibraryAction.OnSelectCategory(category))
+                                    if (navigator.canNavigateBack()) {
+                                        navigator.navigateBack()
+                                    }
+                                },
+                                text = { Text(category.name, maxLines = 1) }
+                            )
+                        }
+                    }
+
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(uiState.testsForCategory) { test ->
+                            TestListCard(
+                                test = test,
+                                onClick = { navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, test.id as Any) }
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        detailPane = {
+            AnimatedPane {
+                val testId = navigator.currentDestination?.content as? String
+                val selectedTest = uiState.testsForCategory.find { it.id == testId }
+                if (selectedTest != null) {
+                    TestDetailPane(test = selectedTest)
+                } else {
+                    EmptyDetailPane()
+                }
             }
         }
-    }
+    )
 }
 
 @Composable
-private fun TestCard(test: FitnessTest) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+private fun TestListCard(test: FitnessTest, onClick: () -> Unit) {
+    Card(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     test.name,
@@ -194,14 +241,67 @@ private fun TestCard(test: FitnessTest) {
                     }
                 )
             }
-            test.description?.let { desc ->
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    desc,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
         }
+    }
+}
+
+@Composable
+private fun TestDetailPane(test: FitnessTest) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp)
+    ) {
+        Text(
+            text = test.name,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        test.description?.let { desc ->
+            Text(
+                text = desc,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        test.youtubeId?.let { youtubeId ->
+            val context = LocalContext.current
+            AsyncImage(
+                model = "https://img.youtube.com/vi/$youtubeId/hqdefault.jpg",
+                contentDescription = "Watch ${test.name} demonstration",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:$youtubeId"))
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        try {
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            try {
+                                val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=$youtubeId"))
+                                webIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                context.startActivity(webIntent)
+                            } catch (e2: Exception) {
+                                android.widget.Toast.makeText(context, "No app available to play video", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+            )
+        }
+    }
+}
+
+@Composable
+private fun EmptyDetailPane() {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text("Select a test to view details", color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

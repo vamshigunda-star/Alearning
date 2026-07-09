@@ -163,7 +163,31 @@ class StopwatchViewModel @Inject constructor(
             is StopwatchAction.OnResetAthlete -> handleResetAthlete()
             is StopwatchAction.OnSubmitPending -> submitPending()
             is StopwatchAction.OnDismissError -> _uiState.update { it.copy(errorMessage = null) }
-            is StopwatchAction.OnNavigateBack -> Unit 
+            is StopwatchAction.OnRequestBack -> {
+                if (_uiState.value.hasPendingChanges) {
+                    _uiState.update { it.copy(showDiscardDialog = true) }
+                }
+            }
+            is StopwatchAction.OnConfirmDiscard -> {
+                tickerJob?.cancel()
+                _uiState.update {
+                    it.copy(
+                        showDiscardDialog = false,
+                        pendingResults = emptyMap(),
+                        confirmationData = null,
+                        canUndo = false,
+                        stopwatchPhase = StopwatchPhase.READY,
+                        elapsedMs = 0L,
+                        heatAthletes = it.heatAthletes.map { a ->
+                            if (a.status == AthleteStatus.CAPTURED) a.copy(status = AthleteStatus.WAITING, capturedTimeMs = null) else a
+                        }
+                    )
+                }
+            }
+            is StopwatchAction.OnDismissDiscard -> {
+                _uiState.update { it.copy(showDiscardDialog = false) }
+            }
+            is StopwatchAction.OnNavigateBack -> Unit
         }
     }
 
@@ -305,7 +329,16 @@ class StopwatchViewModel @Inject constructor(
     private fun handleNext() {
         if (_uiState.value.mode == TimingMode.INDIVIDUAL) {
             val all = getAllAthletes()
-            val nextAthlete = all.find { it.status == AthleteStatus.WAITING }
+            val currentId = _uiState.value.selectedAthleteId
+            val currentIndex = all.indexOfFirst { it.athleteId == currentId }
+            
+            // Sequential search for the next waiting athlete
+            val nextAthlete = if (currentIndex != -1) {
+                all.drop(currentIndex + 1).find { it.status == AthleteStatus.WAITING }
+                    ?: all.take(currentIndex).find { it.status == AthleteStatus.WAITING }
+            } else {
+                all.find { it.status == AthleteStatus.WAITING }
+            }
             
             _uiState.update { state ->
                 state.copy(
@@ -388,15 +421,27 @@ class StopwatchViewModel @Inject constructor(
     fun getAllAthletes(): List<AthleteQueueItem> {
         val count = athletes.size
         if (count == 0) return emptyList()
-        val totalTrialsPerAthlete = _uiState.value.totalCount / count
+        val totalTrialsPerAthlete = if (count > 0) _uiState.value.totalCount / count else 0
+        val pendingResults = _uiState.value.pendingResults
+        
         return athletes.map { athlete ->
             val done = completionState[athlete.id] ?: 0
+            val pendingScore = pendingResults[athlete.id]
+            val isPending = pendingScore != null
+            
+            val status = when {
+                done >= totalTrialsPerAthlete -> AthleteStatus.COMPLETED
+                isPending -> AthleteStatus.CAPTURED
+                else -> AthleteStatus.WAITING
+            }
+            
             AthleteQueueItem(
                 athleteId = athlete.id,
                 name = athlete.fullName,
-                currentTrial = done + 1,
+                currentTrial = done + (if (isPending) 1 else 0) + 1,
                 totalTrials = totalTrialsPerAthlete,
-                status = if (done >= totalTrialsPerAthlete) AthleteStatus.COMPLETED else AthleteStatus.WAITING
+                status = status,
+                capturedTimeMs = if (isPending) (pendingScore!! * 1000).toLong() else null
             )
         }
     }

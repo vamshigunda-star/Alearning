@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.alearning.domain.usecase.testing.LeaderboardEntry
+import com.example.alearning.ui.components.AppTopBar
 import com.example.alearning.ui.theme.*
 
 @Composable
@@ -42,7 +43,6 @@ fun LeaderboardScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LeaderboardContent(
     uiState: LeaderboardUiState,
@@ -50,12 +50,8 @@ fun LeaderboardContent(
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        if (uiState.mode == "event") "Event Leaderboard" else "All-Time Leaderboard"
-                    )
-                },
+            AppTopBar(
+                title = if (uiState.mode == "event") "Event Leaderboard" else "All-Time Leaderboard",
                 navigationIcon = {
                     IconButton(onClick = { onAction(LeaderboardAction.OnNavigateBack) }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")

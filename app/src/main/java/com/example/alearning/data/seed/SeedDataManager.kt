@@ -6,22 +6,27 @@ import com.example.alearning.data.local.entities.standards.NormReferenceEntity
 import com.example.alearning.data.local.entities.standards.TestCategoryEntity
 import com.example.alearning.data.mapper.standards.toDomain
 import com.example.alearning.domain.model.people.BiologicalSex
-import com.example.alearning.domain.usecase.people.RegisterAthleteUseCase
 import com.example.alearning.domain.usecase.standards.ImportStandardsUseCase
+import com.example.alearning.data.local.entities.people.IndividualEntity
+import com.example.alearning.data.local.entities.people.GroupEntity
+import com.example.alearning.data.local.entities.people.GroupMemberCrossRef
+import com.example.alearning.data.local.entities.testing.TestingEventEntity
+import com.example.alearning.data.local.entities.testing.TestResultEntity
+import com.example.alearning.data.local.entities.testing.EventTestCrossRef
+import java.util.Calendar
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
-import java.util.Calendar
 
 @Singleton
 class SeedDataManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val importStandardsUseCase: ImportStandardsUseCase,
-    private val registerAthleteUseCase: RegisterAthleteUseCase
+    private val database: com.example.alearning.data.AppDatabase
 ) {
     companion object {
         private const val PREFS_NAME = "alearning_prefs"
-        private const val KEY_DATA_SEEDED = "data_seeded_csv_v6" // Bumped version for added norms
+        private const val KEY_DATA_SEEDED = "data_seeded_csv_v11" // Bumped for reports hub
     }
 
     suspend fun seedIfNeeded() {
@@ -50,6 +55,16 @@ class SeedDataManager @Inject constructor(
             }
 
             val tests = testMaps.map { row ->
+                val rawYoutubeId = row["youtube_id"]?.trim()
+                val validatedYoutubeId = if (!rawYoutubeId.isNullOrEmpty()) {
+                    if (rawYoutubeId.length == 11 && rawYoutubeId.matches(Regex("^[a-zA-Z0-9_-]{11}$"))) {
+                        rawYoutubeId
+                    } else {
+                        android.util.Log.w("SeedDataManager", "Invalid youtube_id '${rawYoutubeId}' for test ${row["id"]}. Must be exactly 11 characters. Nullifying.")
+                        null
+                    }
+                } else null
+
                 FitnessTestEntity(
                     id = row["id"]!!,
                     categoryId = row["categoryId"]!!,
@@ -64,7 +79,8 @@ class SeedDataManager @Inject constructor(
                     validMin = row["validMin"]?.toDoubleOrNull(),
                     validMax = row["validMax"]?.toDoubleOrNull(),
                     interpretationStrategy = row["interpretationStrategy"] ?: "NORM_LOOKUP",
-                    calculationConfig = row["calculationConfig"]
+                    calculationConfig = row["calculationConfig"],
+                    youtubeId = validatedYoutubeId
                 )
             }
 
@@ -89,37 +105,170 @@ class SeedDataManager @Inject constructor(
                 clearExisting = true
             )
             android.util.Log.d("SeedDataManager", "Successfully imported standards into database")
+
+            // --- Seed Dummy Athletes & Results ---
+            val cursor = database.query("SELECT COUNT(*) FROM individuals", null)
+            var count = 0
+            if (cursor.moveToFirst()) {
+                count = cursor.getInt(0)
+            }
+            cursor.close()
+            if (count == 0) {
+                android.util.Log.d("SeedDataManager", "Seeding dummy athletes, groups, events, and results...")
+                val peopleDao = database.peopleDao()
+                val testingDao = database.testingDao()
+
+                // 1. Groups
+                val varsityGroup = GroupEntity(
+                    id = "group_varsity_id",
+                    name = "Varsity Football",
+                    location = "Main Field",
+                    cycle = "Fall 2026",
+                    category = "TEAM"
+                )
+                val juniorGroup = GroupEntity(
+                    id = "group_junior_id",
+                    name = "Junior Basketball",
+                    location = "Gymnasium",
+                    cycle = "Winter 2026",
+                    category = "TEAM"
+                )
+                peopleDao.insertGroup(varsityGroup)
+                peopleDao.insertGroup(juniorGroup)
+
+                // 2. Individuals (Athletes)
+                val athletes = listOf(
+                    IndividualEntity(
+                        id = "athlete_alex",
+                        firstName = "Alex",
+                        lastName = "Mercer",
+                        dateOfBirth = Calendar.getInstance().apply { set(2008, 0, 1) }.timeInMillis,
+                        sex = BiologicalSex.MALE,
+                        medicalAlert = null,
+                        isRestricted = false
+                    ),
+                    IndividualEntity(
+                        id = "athlete_sarah",
+                        firstName = "Sarah",
+                        lastName = "Connor",
+                        dateOfBirth = Calendar.getInstance().apply { set(2009, 5, 12) }.timeInMillis,
+                        sex = BiologicalSex.FEMALE,
+                        medicalAlert = "Asthma",
+                        isRestricted = false
+                    ),
+                    IndividualEntity(
+                        id = "athlete_marcus",
+                        firstName = "Marcus",
+                        lastName = "Fenix",
+                        dateOfBirth = Calendar.getInstance().apply { set(2007, 10, 20) }.timeInMillis,
+                        sex = BiologicalSex.MALE,
+                        medicalAlert = "Previous ACL Sprain",
+                        isRestricted = false
+                    ),
+                    IndividualEntity(
+                        id = "athlete_lara",
+                        firstName = "Lara",
+                        lastName = "Croft",
+                        dateOfBirth = Calendar.getInstance().apply { set(2009, 2, 14) }.timeInMillis,
+                        sex = BiologicalSex.FEMALE,
+                        medicalAlert = null,
+                        isRestricted = false
+                    ),
+                    IndividualEntity(
+                        id = "athlete_john",
+                        firstName = "John",
+                        lastName = "Doe",
+                        dateOfBirth = Calendar.getInstance().apply { set(2008, 11, 25) }.timeInMillis,
+                        sex = BiologicalSex.MALE,
+                        medicalAlert = null,
+                        isRestricted = false
+                    )
+                )
+                for (athlete in athletes) {
+                    peopleDao.insertIndividual(athlete)
+                }
+
+                // 3. Group Memberships
+                peopleDao.addMemberToGroup(GroupMemberCrossRef("group_varsity_id", "athlete_alex"))
+                peopleDao.addMemberToGroup(GroupMemberCrossRef("group_varsity_id", "athlete_sarah"))
+                peopleDao.addMemberToGroup(GroupMemberCrossRef("group_varsity_id", "athlete_marcus"))
+                peopleDao.addMemberToGroup(GroupMemberCrossRef("group_varsity_id", "athlete_lara"))
+
+                peopleDao.addMemberToGroup(GroupMemberCrossRef("group_junior_id", "athlete_lara"))
+                peopleDao.addMemberToGroup(GroupMemberCrossRef("group_junior_id", "athlete_john"))
+
+                // 4. Events
+                val event1 = TestingEventEntity(
+                    id = "event_benchmark_1",
+                    groupId = "group_varsity_id",
+                    name = "Summer Benchmark Testing",
+                    date = System.currentTimeMillis() - 86400000L * 10L, // 10 days ago
+                    location = "Main Field"
+                )
+                val event2 = TestingEventEntity(
+                    id = "event_benchmark_2",
+                    groupId = "group_varsity_id",
+                    name = "Winter Combine Trials",
+                    date = System.currentTimeMillis() - 86400000L * 30L, // 30 days ago
+                    location = "Main Gym"
+                )
+                testingDao.insertEvent(event1)
+                testingDao.insertEvent(event2)
+
+                // 5. Link tests to events
+                val testIds = listOf(
+                    "standard_vertical_jump",
+                    "standard_40m_sprint",
+                    "standard_beep_test",
+                    "standard_1rm_squat",
+                    "standard_pro_agility"
+                )
+                for (testId in testIds) {
+                    testingDao.addTestToEvent(EventTestCrossRef("event_benchmark_1", testId))
+                    testingDao.addTestToEvent(EventTestCrossRef("event_benchmark_2", testId))
+                }
+
+                // 6. Test Results
+                val results = listOf(
+                    // Alex Mercer
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_alex", testId = "standard_vertical_jump", rawScore = 65.0, ageAtTime = 18f, percentile = 85, classification = "SUPERIOR"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_alex", testId = "standard_40m_sprint", rawScore = 4.75, ageAtTime = 18f, percentile = 90, classification = "SUPERIOR"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_alex", testId = "standard_beep_test", rawScore = 12.5, ageAtTime = 18f, percentile = 75, classification = "HEALTHY"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_alex", testId = "standard_1rm_squat", rawScore = 140.0, ageAtTime = 18f, percentile = 80, classification = "HEALTHY"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_alex", testId = "standard_pro_agility", rawScore = 4.25, ageAtTime = 18f, percentile = 88, classification = "SUPERIOR"),
+
+                    // Sarah Connor
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_sarah", testId = "standard_vertical_jump", rawScore = 48.0, ageAtTime = 17f, percentile = 78, classification = "HEALTHY"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_sarah", testId = "standard_40m_sprint", rawScore = 5.25, ageAtTime = 17f, percentile = 65, classification = "HEALTHY"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_sarah", testId = "standard_beep_test", rawScore = 10.2, ageAtTime = 17f, percentile = 82, classification = "SUPERIOR"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_sarah", testId = "standard_1rm_squat", rawScore = 95.0, ageAtTime = 17f, percentile = 72, classification = "HEALTHY"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_sarah", testId = "standard_pro_agility", rawScore = 4.60, ageAtTime = 17f, percentile = 74, classification = "HEALTHY"),
+
+                    // Marcus Fenix
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_marcus", testId = "standard_vertical_jump", rawScore = 32.0, ageAtTime = 19f, percentile = 25, classification = "NEEDS_IMPROVEMENT"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_marcus", testId = "standard_40m_sprint", rawScore = 5.95, ageAtTime = 19f, percentile = 20, classification = "NEEDS_IMPROVEMENT"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_marcus", testId = "standard_beep_test", rawScore = 6.4, ageAtTime = 19f, percentile = 28, classification = "NEEDS_IMPROVEMENT"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_marcus", testId = "standard_1rm_squat", rawScore = 165.0, ageAtTime = 19f, percentile = 95, classification = "SUPERIOR"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_marcus", testId = "standard_pro_agility", rawScore = 5.15, ageAtTime = 19f, percentile = 22, classification = "NEEDS_IMPROVEMENT"),
+
+                    // Lara Croft
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_lara", testId = "standard_vertical_jump", rawScore = 58.0, ageAtTime = 17f, percentile = 94, classification = "SUPERIOR"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_lara", testId = "standard_40m_sprint", rawScore = 4.98, ageAtTime = 17f, percentile = 92, classification = "SUPERIOR"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_lara", testId = "standard_beep_test", rawScore = 11.8, ageAtTime = 17f, percentile = 96, classification = "SUPERIOR"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_lara", testId = "standard_1rm_squat", rawScore = 110.0, ageAtTime = 17f, percentile = 90, classification = "SUPERIOR"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_lara", testId = "standard_pro_agility", rawScore = 4.12, ageAtTime = 17f, percentile = 95, classification = "SUPERIOR")
+                )
+                for (res in results) {
+                    testingDao.insertResult(res)
+                }
+                android.util.Log.d("SeedDataManager", "Successfully seeded dummy athletes, groups, events, and results!")
+            }
         } catch (e: Exception) {
             android.util.Log.e("SeedDataManager", "Error seeding from CSV", e)
             e.printStackTrace()
         }
 
-        // 2. Seed Dummy Athletes
-        seedAthletes()
-        android.util.Log.d("SeedDataManager", "Successfully seeded athletes")
-
         prefs.edit().putBoolean(KEY_DATA_SEEDED, true).apply()
         android.util.Log.d("SeedDataManager", "Seeding complete")
     }
-
-    private suspend fun seedAthletes() {
-        val athletes = listOf(
-            AthleteSeed("John", "Doe", 2010, BiologicalSex.MALE),
-            AthleteSeed("Jane", "Smith", 2012, BiologicalSex.FEMALE),
-            AthleteSeed("Sam", "Rivera", 2011, BiologicalSex.MALE)
-        )
-
-        athletes.forEach { 
-            val cal = Calendar.getInstance()
-            cal.set(it.birthYear, 0, 1)
-            registerAthleteUseCase(
-                firstName = it.firstName,
-                lastName = it.lastName,
-                dateOfBirth = cal.timeInMillis,
-                sex = it.sex
-            )
-        }
-    }
-
-    private data class AthleteSeed(val firstName: String, val lastName: String, val birthYear: Int, val sex: BiologicalSex)
 }

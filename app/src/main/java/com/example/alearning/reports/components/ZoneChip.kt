@@ -10,7 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.alearning.interpretation.Classification
+import com.example.alearning.domain.model.reports.Classification
 import com.example.alearning.ui.theme.PerformanceGreen
 import com.example.alearning.ui.theme.PerformanceGreenText
 import com.example.alearning.ui.theme.PerformanceGrey
@@ -22,9 +22,11 @@ import com.example.alearning.ui.theme.PerformanceYellowText
 
 data class ZoneColors(val bg: Color, val fg: Color)
 
+// Maps engine Classification onto the four-zone color contract documented in CLAUDE.md.
+// HEALTHY is the mid (Yellow 30–59) zone — never blue.
 fun zoneColors(c: Classification): ZoneColors = when (c) {
     Classification.SUPERIOR -> ZoneColors(PerformanceGreen, PerformanceGreenText)
-    Classification.HEALTHY -> ZoneColors(Color(0xFFE3F2FD), Color(0xFF0D47A1))
+    Classification.HEALTHY -> ZoneColors(PerformanceYellow, PerformanceYellowText)
     Classification.NEEDS_IMPROVEMENT -> ZoneColors(PerformanceRed, PerformanceRedText)
     Classification.NO_DATA -> ZoneColors(PerformanceGrey, PerformanceGreyText)
 }

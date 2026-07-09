@@ -7,20 +7,67 @@ test_pacer,Default,MALE,10.0,10.99,61.0,100.0,90,Superior
 test_pacer,Default,FEMALE,10.0,10.99,1.0,9.0,10,Needs Improvement
 test_pacer,Default,FEMALE,10.0,10.99,10.0,14.0,25,Needs Improvement
 test_pacer,Default,FEMALE,10.0,10.99,15.0,31.0,50,Healthy Fitness Zone
-test_pushup,Default,MALE,13.0,13.99,0.0,9.0,10,Needs Improvement
-test_pushup,Default,MALE,13.0,13.99,10.0,17.0,30,Healthy Fitness Zone
-test_pushup,Default,MALE,13.0,13.99,18.0,24.0,55,Healthy Fitness Zone
-test_pushup,Elite,MALE,13.0,13.99,35.0,45.0,50,Average
-test_pushup,Elite,MALE,13.0,13.99,46.0,999.0,90,Excellent
-test_1rm_bench,Default,FEMALE,14.0,14.99,0.0,40.0,10,Needs Improvement
-test_1rm_bench,Default,FEMALE,14.0,14.99,41.0,60.0,40,Healthy Fitness Zone
-test_1rm_bench,Default,FEMALE,14.0,14.99,61.0,80.0,70,Healthy Fitness Zone
-test_1rm_bench,Default,FEMALE,14.0,14.99,81.0,999.0,95,Superior
-test_1rm_squat,Default,FEMALE,14.0,14.99,0.0,50.0,10,Needs Improvement
-test_1rm_squat,Default,FEMALE,14.0,14.99,51.0,80.0,40,Healthy Fitness Zone
-test_1rm_squat,Default,FEMALE,14.0,14.99,81.0,110.0,70,Healthy Fitness Zone
-test_1rm_squat,Default,FEMALE,14.0,14.99,111.0,999.0,95,Superior
-test_1_5_mile_run,Default,FEMALE,14.0,14.99,900.0,9999.0,10,Needs Improvement
-test_1_5_mile_run,Default,FEMALE,14.0,14.99,750.0,899.0,40,Healthy Fitness Zone
-test_1_5_mile_run,Default,FEMALE,14.0,14.99,600.0,749.0,70,Healthy Fitness Zone
-test_1_5_mile_run,Default,FEMALE,14.0,14.99,0.0,599.0,95,Superior
+test_pushup,Default,MALE,1.0,99.0,0.0,9.0,10,Needs Improvement
+test_pushup,Default,MALE,1.0,99.0,10.0,17.0,30,Healthy Fitness Zone
+test_pushup,Default,MALE,1.0,99.0,18.0,24.0,55,Healthy Fitness Zone
+test_pushup,Default,MALE,1.0,99.0,25.0,999.0,90,Superior
+test_pushup,Default,FEMALE,1.0,99.0,0.0,5.0,10,Needs Improvement
+test_pushup,Default,FEMALE,1.0,99.0,6.0,12.0,30,Healthy Fitness Zone
+test_pushup,Default,FEMALE,1.0,99.0,13.0,20.0,55,Healthy Fitness Zone
+test_pushup,Default,FEMALE,1.0,99.0,21.0,999.0,90,Superior
+test_1rm_bench,Default,MALE,1.0,99.0,0.0,100.0,10,Needs Improvement
+test_1rm_bench,Default,MALE,1.0,99.0,101.0,150.0,40,Healthy Fitness Zone
+test_1rm_bench,Default,MALE,1.0,99.0,151.0,200.0,70,Healthy Fitness Zone
+test_1rm_bench,Default,MALE,1.0,99.0,201.0,999.0,95,Superior
+test_1rm_bench,Default,FEMALE,1.0,99.0,0.0,40.0,10,Needs Improvement
+test_1rm_bench,Default,FEMALE,1.0,99.0,41.0,60.0,40,Healthy Fitness Zone
+test_1rm_bench,Default,FEMALE,1.0,99.0,61.0,80.0,70,Healthy Fitness Zone
+test_1rm_bench,Default,FEMALE,1.0,99.0,81.0,999.0,95,Superior
+test_1rm_squat,Default,MALE,1.0,99.0,0.0,100.0,10,Needs Improvement
+test_1rm_squat,Default,MALE,1.0,99.0,101.0,180.0,40,Healthy Fitness Zone
+test_1rm_squat,Default,MALE,1.0,99.0,181.0,250.0,70,Healthy Fitness Zone
+test_1rm_squat,Default,MALE,1.0,99.0,251.0,999.0,95,Superior
+test_1rm_squat,Default,FEMALE,1.0,99.0,0.0,50.0,10,Needs Improvement
+test_1rm_squat,Default,FEMALE,1.0,99.0,51.0,80.0,40,Healthy Fitness Zone
+test_1rm_squat,Default,FEMALE,1.0,99.0,81.0,110.0,70,Healthy Fitness Zone
+test_1rm_squat,Default,FEMALE,1.0,99.0,111.0,999.0,95,Superior
+test_1_5_mile_run,Default,MALE,1.0,99.0,900.0,9999.0,10,Needs Improvement
+test_1_5_mile_run,Default,MALE,1.0,99.0,700.0,899.0,40,Healthy Fitness Zone
+test_1_5_mile_run,Default,MALE,1.0,99.0,500.0,699.0,70,Healthy Fitness Zone
+test_1_5_mile_run,Default,MALE,1.0,99.0,0.0,499.0,95,Superior
+test_1_5_mile_run,Default,FEMALE,1.0,99.0,1000.0,9999.0,10,Needs Improvement
+test_1_5_mile_run,Default,FEMALE,1.0,99.0,800.0,999.0,40,Healthy Fitness Zone
+test_1_5_mile_run,Default,FEMALE,1.0,99.0,650.0,799.0,70,Healthy Fitness Zone
+test_1_5_mile_run,Default,FEMALE,1.0,99.0,0.0,649.0,95,Superior
+test_t_test,Default,MALE,1.0,99.0,15.0,60.0,10,Needs Improvement
+test_t_test,Default,MALE,1.0,99.0,12.0,14.9,40,Healthy Fitness Zone
+test_t_test,Default,MALE,1.0,99.0,10.0,11.9,70,Healthy Fitness Zone
+test_t_test,Default,MALE,1.0,99.0,0.0,9.9,95,Superior
+test_t_test,Default,FEMALE,1.0,99.0,18.0,60.0,10,Needs Improvement
+test_t_test,Default,FEMALE,1.0,99.0,14.0,17.9,40,Healthy Fitness Zone
+test_t_test,Default,FEMALE,1.0,99.0,11.0,13.9,70,Healthy Fitness Zone
+test_t_test,Default,FEMALE,1.0,99.0,0.0,10.9,95,Superior
+test_flexed_arm_hang,Default,MALE,1.0,99.0,0.0,5.0,10,Needs Improvement
+test_flexed_arm_hang,Default,MALE,1.0,99.0,6.0,15.0,40,Healthy Fitness Zone
+test_flexed_arm_hang,Default,MALE,1.0,99.0,16.0,30.0,70,Healthy Fitness Zone
+test_flexed_arm_hang,Default,MALE,1.0,99.0,31.0,999.0,95,Superior
+test_flexed_arm_hang,Default,FEMALE,1.0,99.0,0.0,3.0,10,Needs Improvement
+test_flexed_arm_hang,Default,FEMALE,1.0,99.0,4.0,10.0,40,Healthy Fitness Zone
+test_flexed_arm_hang,Default,FEMALE,1.0,99.0,11.0,20.0,70,Healthy Fitness Zone
+test_flexed_arm_hang,Default,FEMALE,1.0,99.0,21.0,999.0,95,Superior
+test_skinfold_3site,Default,MALE,1.0,99.0,30.0,150.0,10,Needs Improvement
+test_skinfold_3site,Default,MALE,1.0,99.0,20.0,29.0,40,Healthy Fitness Zone
+test_skinfold_3site,Default,MALE,1.0,99.0,10.0,19.0,70,Healthy Fitness Zone
+test_skinfold_3site,Default,MALE,1.0,99.0,0.0,9.0,95,Superior
+test_skinfold_3site,Default,FEMALE,1.0,99.0,40.0,150.0,10,Needs Improvement
+test_skinfold_3site,Default,FEMALE,1.0,99.0,25.0,39.0,40,Healthy Fitness Zone
+test_skinfold_3site,Default,FEMALE,1.0,99.0,15.0,24.0,70,Healthy Fitness Zone
+test_skinfold_3site,Default,FEMALE,1.0,99.0,0.0,14.0,95,Superior
+test_ymca_sit_reach,Default,MALE,1.0,99.0,0.0,5.0,10,Needs Improvement
+test_ymca_sit_reach,Default,MALE,1.0,99.0,6.0,12.0,40,Healthy Fitness Zone
+test_ymca_sit_reach,Default,MALE,1.0,99.0,13.0,18.0,70,Healthy Fitness Zone
+test_ymca_sit_reach,Default,MALE,1.0,99.0,19.0,99.0,95,Superior
+test_ymca_sit_reach,Default,FEMALE,1.0,99.0,0.0,8.0,10,Needs Improvement
+test_ymca_sit_reach,Default,FEMALE,1.0,99.0,9.0,15.0,40,Healthy Fitness Zone
+test_ymca_sit_reach,Default,FEMALE,1.0,99.0,16.0,22.0,70,Healthy Fitness Zone
+test_ymca_sit_reach,Default,FEMALE,1.0,99.0,23.0,99.0,95,Superior

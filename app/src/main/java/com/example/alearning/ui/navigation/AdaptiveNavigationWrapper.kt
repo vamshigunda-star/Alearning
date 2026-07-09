@@ -1,0 +1,131 @@
+package com.example.alearning.ui.navigation
+
+import android.app.Activity
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.NavigationRailItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.navigation.NavController
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.alearning.ui.theme.SportOrange
+
+@OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
+@Composable
+fun AdaptiveNavigationWrapper(
+    navController: NavController,
+    content: @Composable (Modifier) -> Unit
+) {
+    val context = LocalContext.current as Activity
+    val windowSizeClass = calculateWindowSizeClass(context)
+    val useNavRail = windowSizeClass.widthSizeClass != WindowWidthSizeClass.Compact
+
+    val items = listOf(
+        BottomNavItem.Home,
+        BottomNavItem.Roster,
+        BottomNavItem.Athletes,
+        BottomNavItem.Reports
+    )
+
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
+    val currentRoute = currentDestination?.route
+
+    // Check if the current route is one of the main tabs
+    val isMainTab = items.any { it.route == currentRoute }
+
+    if (!isMainTab) {
+        // Hide nav bar entirely
+        Scaffold { innerPadding ->
+            content(Modifier.padding(innerPadding))
+        }
+    } else {
+        if (useNavRail) {
+            Row(modifier = Modifier.fillMaxSize()) {
+                NavigationRail(
+                    containerColor = Color.White,
+                    contentColor = Color.Gray
+                ) {
+                    items.forEach { screen ->
+                        val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true
+                        NavigationRailItem(
+                            icon = { Icon(screen.icon, contentDescription = screen.title) },
+                            label = { Text(screen.title) },
+                            selected = selected,
+                            onClick = {
+                                if (currentRoute != screen.route) {
+                                    navController.navigate(screen.route) {
+                                        popUpTo(navController.graph.findStartDestination().id)
+                                        launchSingleTop = true
+                                    }
+                                }
+                            },
+                            colors = NavigationRailItemDefaults.colors(
+                                selectedIconColor = SportOrange,
+                                selectedTextColor = SportOrange,
+                                unselectedIconColor = Color.Gray,
+                                unselectedTextColor = Color.Gray,
+                                indicatorColor = Color.Transparent
+                            )
+                        )
+                    }
+                }
+                Scaffold { innerPadding ->
+                    content(Modifier.padding(innerPadding))
+                }
+            }
+        } else {
+            Scaffold(
+                bottomBar = {
+                    NavigationBar(
+                        containerColor = Color.White,
+                        contentColor = Color.Gray
+                    ) {
+                        items.forEach { screen ->
+                            val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true
+                            NavigationBarItem(
+                                icon = { Icon(screen.icon, contentDescription = screen.title) },
+                                label = { Text(screen.title) },
+                                selected = selected,
+                                onClick = {
+                                    if (currentRoute != screen.route) {
+                                        navController.navigate(screen.route) {
+                                            popUpTo(navController.graph.findStartDestination().id)
+                                            launchSingleTop = true
+                                        }
+                                    }
+                                },
+                                colors = NavigationBarItemDefaults.colors(
+                                    selectedIconColor = SportOrange,
+                                    selectedTextColor = SportOrange,
+                                    unselectedIconColor = Color.Gray,
+                                    unselectedTextColor = Color.Gray,
+                                    indicatorColor = Color.Transparent
+                                )
+                            )
+                        }
+                    }
+                }
+            ) { innerPadding ->
+                content(Modifier.padding(innerPadding))
+            }
+        }
+    }
+}

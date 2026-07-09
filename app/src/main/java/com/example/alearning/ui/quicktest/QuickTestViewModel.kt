@@ -28,6 +28,16 @@ import kotlinx.coroutines.delay
 
 enum class QuickTestStep { SETUP, ENTER_SCORES, COMPLETE }
 
+data class RecordedTestResult(
+    val testId: String,
+    val testName: String,
+    val unit: String,
+    val isHigherBetter: Boolean,
+    val rawScore: Double,
+    val percentile: Int?,
+    val classification: String?
+)
+
 data class QuickTestUiState(
     val step: QuickTestStep = QuickTestStep.SETUP,
     val eventName: String = "",
@@ -45,6 +55,7 @@ data class QuickTestUiState(
     val selectedTests: List<FitnessTest> = emptyList(),
     val currentTestIndex: Int = 0,
     val lastRecordedPercentile: Int? = null,
+    val recordedResults: List<RecordedTestResult> = emptyList(),
     val isSaving: Boolean = false,
     val isLoading: Boolean = true,
     val isDeleting: Boolean = false,
@@ -207,7 +218,14 @@ class QuickTestViewModel @Inject constructor(
                 for (res in results) {
                     testingRepository.deleteResultById(res.id)
                 }
-                _uiState.update { it.copy(isDeleting = false, step = QuickTestStep.SETUP, selectedTestIds = emptySet()) }
+                _uiState.update {
+                    it.copy(
+                        isDeleting = false,
+                        step = QuickTestStep.SETUP,
+                        selectedTestIds = emptySet(),
+                        recordedResults = emptyList()
+                    )
+                }
                 createdEventId = null
             } catch (e: Exception) {
                 _uiState.update { it.copy(errorMessage = "Delete failed: ${e.message}", isDeleting = false) }
@@ -271,7 +289,7 @@ class QuickTestViewModel @Inject constructor(
         _uiState.update { it.copy(isSaving = true) }
         viewModelScope.launch {
             try {
-                if (state.selectedAthlete != null) {
+                val recorded: RecordedTestResult = if (state.selectedAthlete != null) {
                     val athlete = state.selectedAthlete
                     val eventId = ensureEventExists()
                     val ageMillis = System.currentTimeMillis() - athlete.dateOfBirth
@@ -285,14 +303,36 @@ class QuickTestViewModel @Inject constructor(
                         ageAtTime = ageYears,
                         sex = athlete.sex
                     )
-                    _uiState.update { it.copy(lastRecordedPercentile = result.percentile) }
+                    RecordedTestResult(
+                        testId = test.id,
+                        testName = test.name,
+                        unit = test.unit,
+                        isHigherBetter = test.isHigherBetter,
+                        rawScore = rawScore,
+                        percentile = result.percentile,
+                        classification = result.classification
+                    )
                 } else {
-                    // Guest logic: We don't save to DB, but we could still show a percentile
-                    // if we wanted to call calculatePercentile directly here.
-                    // For now, just advance.
-                    _uiState.update { it.copy(lastRecordedPercentile = null) }
+                    // Guest: compute percentile directly without persisting.
+                    val age = state.guestAge.toDoubleOrNull() ?: 18.0
+                    val pr = calculatePercentile(test.id, rawScore, age, state.guestSex)
+                    RecordedTestResult(
+                        testId = test.id,
+                        testName = test.name,
+                        unit = test.unit,
+                        isHigherBetter = test.isHigherBetter,
+                        rawScore = rawScore,
+                        percentile = pr?.percentile,
+                        classification = pr?.classification
+                    )
                 }
 
+                _uiState.update {
+                    it.copy(
+                        lastRecordedPercentile = recorded.percentile,
+                        recordedResults = it.recordedResults + recorded
+                    )
+                }
                 advanceToNextTest()
             } catch (e: Exception) {
                 _uiState.update { it.copy(errorMessage = e.message, isSaving = false) }

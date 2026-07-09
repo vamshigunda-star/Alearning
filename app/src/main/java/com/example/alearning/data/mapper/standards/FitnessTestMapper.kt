@@ -23,7 +23,8 @@ fun FitnessTestEntity.toDomain(): FitnessTest {
         interpretationStrategy = try {
             InterpretationStrategy.valueOf(this.interpretationStrategy)
         } catch (_: Exception) { InterpretationStrategy.NORM_LOOKUP },
-        calculationConfig = this.calculationConfig
+        calculationConfig = this.calculationConfig,
+        youtubeId = this.youtubeId
     )
 }
 
@@ -45,6 +46,7 @@ fun FitnessTest.toEntity(
         validMax = this.validMax,
         interpretationStrategy = this.interpretationStrategy.name,
         calculationConfig = this.calculationConfig,
+        youtubeId = this.youtubeId,
         createdAt = createdAt,
         updatedAt = System.currentTimeMillis(),
         isDeleted = false

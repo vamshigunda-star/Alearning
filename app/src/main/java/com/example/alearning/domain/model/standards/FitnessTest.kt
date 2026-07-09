@@ -28,5 +28,6 @@ data class FitnessTest(
     val validMin: Double? = null,
     val validMax: Double? = null,
     val interpretationStrategy: InterpretationStrategy = InterpretationStrategy.NORM_LOOKUP,
-    val calculationConfig: String? = null
+    val calculationConfig: String? = null,
+    val youtubeId: String? = null
 )

@@ -43,12 +43,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.alearning.reports.LeaderboardRow
+import com.example.alearning.domain.model.reports.LeaderboardRow
 import com.example.alearning.reports.components.AthleteLeaderRow
 import com.example.alearning.reports.components.SessionPill
 import com.example.alearning.reports.components.SessionSwitcherSheet
 import com.example.alearning.reports.components.ZoneChip
-import com.example.alearning.interpretation.Classification
+import com.example.alearning.domain.model.reports.Classification
 import com.example.alearning.ui.components.AppTopBar
 import com.example.alearning.ui.components.AppTopBarSubtitleColor
 import com.example.alearning.ui.theme.PerformanceRed
@@ -62,17 +62,28 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
+import androidx.compose.foundation.border
+import com.example.alearning.ui.components.charts.HorizontalBarChart
+
+import com.example.alearning.ui.aicoach.AiCoachViewModel
+import com.example.alearning.domain.repository.AiCoachStatus
+import com.example.alearning.ui.aicoach.components.AiFloatingActionButton
 
 @Composable
 fun SessionReportScreen(
     onNavigateBack: () -> Unit,
     onNavigateToAthlete: (String, String) -> Unit,
     onResumeTesting: (String, String) -> Unit,
-    viewModel: SessionReportViewModel = hiltViewModel()
+    onNavigateToAiCoach: () -> Unit,
+    viewModel: SessionReportViewModel = hiltViewModel(),
+    aiCoachViewModel: AiCoachViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val aiCoachState by aiCoachViewModel.uiState.collectAsState()
+    val isAiCoachVisible = aiCoachState.status != AiCoachStatus.UNSUPPORTED
     val context = LocalContext.current
     val sessionId = uiState.data?.event?.id ?: ""
     val groupId = uiState.data?.group?.id ?: ""
@@ -107,7 +118,9 @@ fun SessionReportScreen(
                 }
                 else -> viewModel.onAction(action)
             }
-        }
+        },
+        isAiCoachVisible = isAiCoachVisible,
+        onNavigateToAiCoach = onNavigateToAiCoach
     )
 
     if (uiState.showDeleteDialog) {
@@ -133,6 +146,8 @@ fun SessionReportScreen(
 @Composable
 fun SessionReportContent(
     uiState: SessionReportUiState,
+    isAiCoachVisible: Boolean = false,
+    onNavigateToAiCoach: () -> Unit = {},
     onAction: (SessionReportAction) -> Unit
 ) {
     val data = uiState.data
@@ -171,6 +186,12 @@ fun SessionReportContent(
                         }
                     }
                 }
+            )
+        },
+        floatingActionButton = {
+            AiFloatingActionButton(
+                isVisible = isAiCoachVisible,
+                onClick = { onNavigateToAiCoach() }
             )
         }
     ) { padding ->
@@ -241,6 +262,119 @@ private fun SessionReportBody(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
+                }
+            }
+
+            // 1. Horizontal Bar Chart (Roster Comparison)
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                        Text("Roster Comparison", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.height(12.dp))
+                        HorizontalBarChart(rows = activeRows)
+                    }
+                }
+            }
+
+            // 2. Stats Summary
+            val validScores = activeRows.mapNotNull { it.rawScore }
+            val maxVal = if (validScores.isNotEmpty()) validScores.maxOrNull() ?: 0.0 else 0.0
+            val minVal = if (validScores.isNotEmpty()) validScores.minOrNull() ?: 0.0 else 0.0
+            val avgVal = if (validScores.isNotEmpty()) validScores.average() else 0.0
+            val unit = activeRows.firstOrNull()?.unit ?: ""
+
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                        Text("Stats Summary", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.height(12.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            StatSummaryItem("Max", maxVal, unit, modifier = Modifier.weight(1f))
+                            StatSummaryItem("Avg", avgVal, unit, modifier = Modifier.weight(1f))
+                            StatSummaryItem("Min", minVal, unit, modifier = Modifier.weight(1f))
+                        }
+                    }
+                }
+            }
+
+            // 3. Coaching Interpretation & Remediation Card
+            val activeTest = data.tests.find { it.id == activeTestId }
+            val interpretationText = when {
+                activeTest == null -> "Select a test to view coaching tips."
+                activeTest.name.contains("Jump", ignoreCase = true) || activeTest.categoryId.contains("power", ignoreCase = true) ->
+                    "Vertical jump is a primary indicator of lower-body explosive power. Training should focus on plyometrics, Olympic lifting, and power cleans. Athletes in the Red zone need core strength and landing mechanics coaching."
+                activeTest.name.contains("Sprint", ignoreCase = true) || activeTest.categoryId.contains("speed", ignoreCase = true) ->
+                    "40m sprint tests acceleration and top-end speed. Focus on sprint mechanics, drive phase alignment, and hamstring strength. Red zone athletes require stride frequency and acceleration work."
+                activeTest.name.contains("Squat", ignoreCase = true) || activeTest.categoryId.contains("strength", ignoreCase = true) ->
+                    "1RM Squat is the baseline test for lower body absolute strength. Focus on progressive overload in squat variations. Red zone athletes need technique check and core stabilization before heavy lifting."
+                activeTest.name.contains("Beep", ignoreCase = true) || activeTest.categoryId.contains("endurance", ignoreCase = true) || activeTest.name.contains("PACER", ignoreCase = true) ->
+                    "Beep test measures aerobic capacity and fatigue resistance. Focus on high-intensity interval training (HIIT) and aerobic base building. Red zone athletes require low-intensity steady-state (LISS) conditioning."
+                activeTest.name.contains("Agility", ignoreCase = true) || activeTest.categoryId.contains("agility", ignoreCase = true) ->
+                    "Pro Agility (5-10-5) shuttle tests lateral acceleration, change of direction speed, and deceleration. Focus on center of gravity control and footwork. Red zone athletes should focus on deceleration mechanics and deceleration drills."
+                else -> "Assessment benchmarks fitness standards. Performance is mapped to age-and-sex norms. Athletes in needs-improvement zones require foundational corrective training."
+            }
+            val redZoneAthletes = activeRows.filter { it.percentile != null && it.percentile < 30 }
+
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                        Text("Coaching Interpretation", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = interpretationText,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        
+                        if (redZoneAthletes.isNotEmpty()) {
+                            Spacer(Modifier.height(16.dp))
+                            Card(
+                                colors = CardDefaults.cardColors(containerColor = PerformanceRed.copy(alpha = 0.12f)),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .border(1.dp, PerformanceRed, RoundedCornerShape(8.dp))
+                            ) {
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            imageVector = Icons.Default.Warning,
+                                            contentDescription = null,
+                                            tint = PerformanceRedText
+                                        )
+                                        Spacer(Modifier.width(8.dp))
+                                        Text(
+                                            text = "Remediation Required (<30%ile)",
+                                            color = PerformanceRedText,
+                                            fontWeight = FontWeight.Bold,
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                    }
+                                    Spacer(Modifier.height(6.dp))
+                                    val names = redZoneAthletes.joinToString(", ") { 
+                                        val valStr = if (it.rawScore != null && it.rawScore % 1.0 == 0.0) it.rawScore.toInt().toString() else String.format("%.1f", it.rawScore)
+                                        "${it.athleteName} ($valStr ${it.unit})" 
+                                    }
+                                    Text(
+                                        text = "Coaches need to customize training for: $names. Focus on foundational corrective drills.",
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -398,6 +532,29 @@ private fun TrendBars(points: List<Pair<Long, Float>>) {
                 Spacer(Modifier.height(4.dp))
                 Text("${v.toInt()}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
+        }
+    }
+}
+
+@Composable
+private fun StatSummaryItem(
+    label: String,
+    value: Double,
+    unit: String,
+    modifier: Modifier = Modifier
+) {
+    val valueStr = if (value % 1.0 == 0.0) value.toInt().toString() else String.format("%.1f", value)
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(4.dp))
+            Text("$valueStr $unit", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         }
     }
 }

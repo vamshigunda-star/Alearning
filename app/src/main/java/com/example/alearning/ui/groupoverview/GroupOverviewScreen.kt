@@ -1,6 +1,7 @@
 package com.example.alearning.ui.groupoverview
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,8 +47,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.Canvas
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.alearning.ui.components.AppTopBar
-import com.example.alearning.reports.SessionRow
-import com.example.alearning.reports.TestTrendStrip
+import com.example.alearning.domain.model.reports.Distribution
+import com.example.alearning.domain.model.reports.SessionRow
+import com.example.alearning.domain.model.reports.TestTrendStrip
 import com.example.alearning.reports.components.DistributionBar
 import com.example.alearning.reports.components.MiniSparkline
 import com.example.alearning.ui.theme.PerformanceRed
@@ -182,7 +184,7 @@ private fun GroupOverviewBody(
 }
 
 @Composable
-private fun GroupHealthSnapshot(memberCount: Int, distribution: com.example.alearning.interpretation.Distribution) {
+private fun GroupHealthSnapshot(memberCount: Int, distribution: Distribution) {
     Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
@@ -354,11 +356,10 @@ private fun TrendLineChart(points: List<Pair<Long, Float>>, modifier: Modifier =
 @Composable
 private fun TestTrendRow(trend: TestTrendStrip, onClick: () -> Unit) {
     Card(
-        onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
-        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(modifier = Modifier.fillMaxWidth().clickable { onClick() }.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(trend.test.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
                 Text("${trend.points.size} session${if (trend.points.size == 1) "" else "s"}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

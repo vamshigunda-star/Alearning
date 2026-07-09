@@ -1,18 +1,29 @@
 package com.example.alearning.ui.navigation
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.example.alearning.ui.athlete.AthleteTestDetailScreen
+import com.example.alearning.ui.aicoach.AiCoachScreen
 import com.example.alearning.ui.athlete.AthleteDashboardScreen
 import com.example.alearning.ui.athletes.AthletesScreen
+import com.example.alearning.ui.auth.AuthGateState
+import com.example.alearning.ui.auth.AuthGateViewModel
+import com.example.alearning.ui.auth.reset.ResetPasswordScreen
+import com.example.alearning.ui.auth.signin.SignInScreen
+import com.example.alearning.ui.auth.signup.SignUpScreen
 import com.example.alearning.ui.dashboard.DashboardScreen
 import com.example.alearning.ui.groupoverview.GroupOverviewScreen
-
 import com.example.alearning.ui.leaderboard.LeaderboardScreen
 import com.example.alearning.ui.quicktest.QuickTestScreen
 import com.example.alearning.ui.roster.RosterScreen
@@ -24,15 +35,79 @@ import com.example.alearning.ui.testing.stopwatch.StopwatchScreen
 
 @Composable
 fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
+    val authGateViewModel: AuthGateViewModel = hiltViewModel()
+    val authGateState by authGateViewModel.state.collectAsState()
+
+    // While the auth gate is resolving, show a full-screen spinner so we never
+    // briefly flash the wrong destination.
+    if (authGateState == AuthGateState.Loading) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+    val startDestination = when (authGateState) {
+        AuthGateState.Authenticated -> Screen.Dashboard.route
+        AuthGateState.UnauthenticatedHasUsers -> Screen.SignIn.route
+        AuthGateState.UnauthenticatedNoUsers -> Screen.SignUp.route
+        AuthGateState.Loading -> Screen.SignIn.route // unreachable — handled above
+    }
+
     NavHost(
         navController = navController,
-        startDestination = Screen.Dashboard.route,
+        startDestination = startDestination,
         modifier = modifier
     ) {
+        // ───── Auth screens ─────
+
+        composable(Screen.SignIn.route) {
+            SignInScreen(
+                onSignInSuccess = {
+                    navController.navigate(Screen.Dashboard.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onNavigateToSignUp = {
+                    navController.navigate(Screen.SignUp.route)
+                },
+                onNavigateToResetPassword = {
+                    navController.navigate(Screen.ResetPassword.route)
+                }
+            )
+        }
+
+        composable(Screen.SignUp.route) {
+            SignUpScreen(
+                onSignUpSuccess = {
+                    navController.navigate(Screen.Dashboard.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onNavigateToSignIn = {
+                    navController.navigate(Screen.SignIn.route) {
+                        popUpTo(Screen.SignUp.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.ResetPassword.route) {
+            ResetPasswordScreen(
+                onBack = { navController.popBackStack() },
+                onResetSuccess = {
+                    navController.navigate(Screen.SignIn.route) {
+                        popUpTo(Screen.ResetPassword.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // ───── Main app screens ─────
+
         composable(Screen.Dashboard.route) {
             DashboardScreen(
                 onNavigateToRoster = { navController.navigate(BottomNavItem.Roster.route) },
-                onNavigateToAnalytics = { navController.navigate(BottomNavItem.Analytics.route) },
                 onNavigateToTestLibrary = { navController.navigate(Screen.TestLibrary.route) },
                 onNavigateToCreateEvent = { navController.navigate(Screen.CreateEvent.route) },
                 onNavigateToQuickTest = { navController.navigate(Screen.QuickTest.createRoute()) },
@@ -40,10 +115,15 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
                     navController.navigate(Screen.TestingGrid.createRoute(eventId, groupId))
                 },
                 onNavigateToLeaderboard = {
-                    // Navigate to a default or global leaderboard if applicable, 
+                    // Navigate to a default or global leaderboard if applicable,
                     // or this could be handled by passing specific IDs if the UI provided them.
                 },
-                onNavigateToReports = { navController.navigate(BottomNavItem.Reports.route) }
+                onNavigateToReports = { navController.navigate(Screen.Report.route) },
+                onNavigateToSignIn = {
+                    navController.navigate(Screen.SignIn.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
             )
         }
 
@@ -58,7 +138,7 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
 
         composable(Screen.Athletes.route) {
             AthletesScreen(
-                onNavigateToAthleteReport = { athleteId ->
+                onNavigateToAthleteReport = { athleteId: String ->
                     navController.navigate(Screen.AthleteDashboard.createRoute(athleteId))
                 }
             )
@@ -107,10 +187,6 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
             )
         }
 
-        composable(Screen.Analytics.route) {
-            com.example.alearning.ui.analytics.AnalyticsScreen()
-        }
-
         composable(
             route = Screen.GroupOverview.route,
             arguments = listOf(navArgument("groupId") { type = NavType.StringType })
@@ -138,7 +214,8 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
                 },
                 onResumeTesting = { eventId, groupId ->
                     navController.navigate(Screen.TestingGrid.createRoute(eventId, groupId))
-                }
+                },
+                onNavigateToAiCoach = { navController.navigate(Screen.AiCoach.route) }
             )
         }
 
@@ -148,28 +225,17 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
                 navArgument("athleteId") { type = NavType.StringType },
                 navArgument("contextSessionId") { type = NavType.StringType; nullable = true }
             )
-        ) {
+        ) { backStackEntry ->
+            val athleteId = backStackEntry.arguments?.getString("athleteId") ?: ""
+            val contextSessionId = backStackEntry.arguments?.getString("contextSessionId")
             AthleteDashboardScreen(
+                athleteId = athleteId,
+                contextSessionId = contextSessionId,
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToTest = { athleteId, testId, contextSessionId ->
-                    navController.navigate(Screen.AthleteTestDetail.createRoute(athleteId, testId, contextSessionId))
+                onStartQuickTest = { aid, testIds ->
+                    navController.navigate(Screen.QuickTest.createRoute(aid, testIds))
                 },
-                onStartQuickTest = { athleteId, testIds ->
-                    navController.navigate(Screen.QuickTest.createRoute(athleteId, testIds))
-                }
-            )
-        }
-
-        composable(
-            route = Screen.AthleteTestDetail.route,
-            arguments = listOf(
-                navArgument("athleteId") { type = NavType.StringType },
-                navArgument("testId") { type = NavType.StringType },
-                navArgument("contextSessionId") { type = NavType.StringType; nullable = true }
-            )
-        ) {
-            AthleteTestDetailScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateToAiCoach = { navController.navigate(Screen.AiCoach.route) }
             )
         }
 
@@ -225,5 +291,10 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
                 onNavigateBack = { navController.popBackStack() }
             )
         }
+
+        composable(Screen.AiCoach.route) {
+            AiCoachScreen(viewModel = hiltViewModel())
+        }
+
     }
 }

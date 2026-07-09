@@ -43,14 +43,16 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.alearning.ui.components.AppTopBar
 import com.example.alearning.ui.components.AppTopBarSubtitleColor
-import com.example.alearning.reports.AttemptRow
-import com.example.alearning.reports.LeaderboardRow
+import com.example.alearning.domain.model.reports.Classification
+import com.example.alearning.domain.model.reports.AttemptRow
+import com.example.alearning.domain.model.reports.LeaderboardRow
 import com.example.alearning.reports.components.ChartPoint
 import com.example.alearning.reports.components.DeltaArrow
 import com.example.alearning.reports.components.NormBandLineChart
 import com.example.alearning.reports.components.PercentileChip
 import com.example.alearning.reports.components.ZoneChip
 import com.example.alearning.reports.components.zoneColors
+import com.example.alearning.reports.components.zoneLabel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -59,13 +61,21 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.LaunchedEffect
 
 @Composable
 fun AthleteTestDetailScreen(
+    athleteId: String,
+    testId: String,
+    contextSessionId: String? = null,
     onNavigateBack: () -> Unit,
     viewModel: AthleteTestDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    
+    LaunchedEffect(athleteId, testId, contextSessionId) {
+        viewModel.loadDetail(athleteId, testId, contextSessionId)
+    }
     
     AthleteTestDetailContent(
         uiState = uiState,
@@ -167,7 +177,7 @@ private fun DetailBody(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
-            val cls = latest?.classification ?: com.example.alearning.interpretation.Classification.NO_DATA
+            val cls = latest?.classification ?: Classification.NO_DATA
             val colors = zoneColors(cls)
             Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = colors.bg)) {
                 Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -186,11 +196,11 @@ private fun DetailBody(
                         Text(data.test.unit, style = MaterialTheme.typography.titleMedium, color = colors.fg, modifier = Modifier.padding(bottom = 6.dp))
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        ZoneChip(classification = cls)
+                        // Prefer the data-driven label (norm CSV) over the generic zone label.
+                        val latestLabel = latest?.classificationLabel?.takeIf { it.isNotBlank() }
+                            ?: zoneLabel(cls)
+                        ZoneChip(classification = cls, label = latestLabel)
                         PercentileChip(percentile = latest?.percentile)
-                        latest?.classificationLabel?.let {
-                            Text(it, style = MaterialTheme.typography.labelSmall, color = colors.fg)
-                        }
                     }
                 }
             }
@@ -259,11 +269,12 @@ private fun AttemptRowView(row: AttemptRow, unit: String, onDelete: () -> Unit) 
             Column(modifier = Modifier.weight(1f)) {
                 Text(df.format(Date(row.date)), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text("${formatScore(row.rawScore)} $unit", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
-                row.classificationLabel?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    ZoneChip(classification = row.classification)
+                    val attemptLabel = row.classificationLabel?.takeIf { it.isNotBlank() }
+                        ?: zoneLabel(row.classification)
+                    ZoneChip(classification = row.classification, label = attemptLabel)
                     Spacer(Modifier.width(8.dp))
                     IconButton(onClick = onDelete, modifier = Modifier.size(24.dp)) {
                         Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.size(18.dp))
@@ -299,7 +310,9 @@ private fun PeerSheet(rows: List<LeaderboardRow>, highlightId: String, title: St
                 Text(r.athleteName, modifier = Modifier.weight(1f), fontWeight = if (highlight) FontWeight.Bold else FontWeight.Normal)
                 Text(r.rawScore?.let { formatScore(it) } ?: "—", style = MaterialTheme.typography.bodyMedium)
                 Spacer(Modifier.width(8.dp))
-                ZoneChip(classification = r.classification)
+                val peerLabel = r.classificationLabel?.takeIf { it.isNotBlank() }
+                    ?: zoneLabel(r.classification)
+                ZoneChip(classification = r.classification, label = peerLabel)
             }
         }
         Spacer(Modifier.height(8.dp))

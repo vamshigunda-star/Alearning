@@ -2,6 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- aicore declares minSdk 31; we guard AI features at runtime so override is safe -->
+    <uses-sdk tools:overrideLibrary="com.google.ai.edge.aicore" />
+
     <application
         android:name=".AlearningApplication"
         android:allowBackup="true"

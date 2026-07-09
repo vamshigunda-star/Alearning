@@ -14,15 +14,17 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material.icons.automirrored.filled.LibraryBooks
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -58,11 +60,18 @@ fun DashboardScreen(
     onNavigateToQuickTest: () -> Unit,
     onNavigateToTestingGrid: (String, String) -> Unit,
     onNavigateToLeaderboard: () -> Unit,
-    onNavigateToAnalytics: () -> Unit,
     onNavigateToReports: () -> Unit,
+    onNavigateToSignIn: () -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(uiState.navigateToSignIn) {
+        if (uiState.navigateToSignIn) {
+            viewModel.onAction(DashboardAction.NavigationConsumed)
+            onNavigateToSignIn()
+        }
+    }
 
     DashboardContent(
         modifier = modifier,
@@ -75,7 +84,7 @@ fun DashboardScreen(
                 DashboardAction.OnTestLibraryClick -> onNavigateToTestLibrary()
                 is DashboardAction.OnEventClick -> onNavigateToTestingGrid(it.eventId, it.groupId)
                 DashboardAction.OnLeaderboardClick -> onNavigateToLeaderboard()
-                DashboardAction.OnAnalyticsClick -> onNavigateToAnalytics()
+                DashboardAction.OnAnalyticsClick -> onNavigateToReports()
                 DashboardAction.OnSeeAllEventsClick -> onNavigateToReports()
                 else -> viewModel.onAction(it)
             }
@@ -92,10 +101,23 @@ fun DashboardContent(
 ) {
     Scaffold(
         modifier = modifier,
-        topBar = { AppTopBar(title = "ALearning") },
+        topBar = {
+            AppTopBar(
+                title = "ALearning",
+                actions = {
+                    IconButton(onClick = { onAction(DashboardAction.OnSignOutClick) }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Logout,
+                            contentDescription = "Sign out"
+                        )
+                    }
+                }
+            )
+        },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-        LazyColumn(
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 150.dp),
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues),
@@ -105,28 +127,61 @@ fun DashboardContent(
                 top = 16.dp,
                 bottom = 80.dp
             ),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            item {
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 ContextHeaderCard(
                     athleteCount = uiState.activeAthletes,
-                    groupCount = uiState.scheduledTestCount // Mapping scheduled tests as group count temporarily, or omit? Spec just asks for group count but UI state has scheduledTestCount. I'll pass scheduledTestCount.
+                    eventCount = uiState.scheduledTestCount,
+                    coachFirstName = uiState.coachFirstName,
+                    coachLastName = uiState.coachLastName
                 )
             }
 
-            item {
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 HeroCard {
                     onAction(DashboardAction.OnCreateEventClick)
                 }
             }
 
-            item {
-                QuickActionsSection(onAction = onAction)
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Text(
+                    "Quick Actions",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
             }
 
             item {
+                QuickActionCard(
+                    icon = Icons.Default.Bolt,
+                    label = "Quick Test",
+                    tint = SportOrange,
+                    onClick = { onAction(DashboardAction.OnQuickTestClick) }
+                )
+            }
+            item {
+                QuickActionCard(
+                    icon = Icons.Default.Group,
+                    label = "Roster",
+                    tint = SportBlue,
+                    onClick = { onAction(DashboardAction.OnRosterClick) }
+                )
+            }
+            item {
+                QuickActionCard(
+                    icon = Icons.AutoMirrored.Filled.LibraryBooks,
+                    label = "Tests",
+                    tint = MaterialTheme.colorScheme.primary,
+                    onClick = { onAction(DashboardAction.OnTestLibraryClick) }
+                )
+            }
+
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -142,7 +197,7 @@ fun DashboardContent(
             }
 
             if (uiState.recentEvents.isEmpty()) {
-                item {
+                item(span = { GridItemSpan(maxLineSpan) }) {
                     EmptyState(
                         icon = Icons.Default.Event,
                         title = "No recent events",
@@ -152,7 +207,10 @@ fun DashboardContent(
                     )
                 }
             } else {
-                items(uiState.recentEvents) { event ->
+                items(
+                    items = uiState.recentEvents,
+                    span = { GridItemSpan(maxLineSpan) }
+                ) { event ->
                     RecentEventItem(
                         event = event,
                         onClick = {
@@ -170,15 +228,22 @@ fun DashboardContent(
 @Composable
 private fun ContextHeaderCard(
     athleteCount: Int,
-    groupCount: Int
+    eventCount: Int,
+    coachFirstName: String,
+    coachLastName: String
 ) {
-    val greeting = remember {
+    val greetingPrefix = remember {
         when (java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)) {
-            in 5..11 -> "Good morning, Coach"
-            in 12..16 -> "Good afternoon, Coach"
-            else -> "Good evening, Coach"
+            in 5..11 -> "Good morning"
+            in 12..16 -> "Good afternoon"
+            else -> "Good evening"
         }
     }
+    val displayName = listOf(coachFirstName, coachLastName)
+        .filter { it.isNotBlank() }
+        .joinToString(" ")
+        .ifBlank { "Coach" }
+    val greeting = "$greetingPrefix, $displayName"
     val dateStr = remember {
         SimpleDateFormat("EEEE, d MMM", Locale.getDefault())
             .format(Date())
@@ -200,7 +265,7 @@ private fun ContextHeaderCard(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                "$athleteCount athletes · $groupCount tests", // Adjusted text mapping based on ui state
+                "$athleteCount athletes · $eventCount events",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.White.copy(alpha = 0.8f)
             )
@@ -264,44 +329,7 @@ private fun HeroCard(onClick: () -> Unit) {
     }
 }
 
-@Composable
-private fun QuickActionsSection(onAction: (DashboardAction) -> Unit) {
-    Column {
-        Text(
-            "Quick Actions",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            QuickActionCard(
-                icon = Icons.Default.Bolt,
-                label = "Quick Test",
-                tint = SportOrange,
-                modifier = Modifier.weight(1f),
-                onClick = { onAction(DashboardAction.OnQuickTestClick) }
-            )
-            QuickActionCard(
-                icon = Icons.Default.Group,
-                label = "Roster",
-                tint = SportBlue,
-                modifier = Modifier.weight(1f),
-                onClick = { onAction(DashboardAction.OnRosterClick) }
-            )
-            QuickActionCard(
-                icon = Icons.AutoMirrored.Filled.LibraryBooks,
-                label = "Tests",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.weight(1f),
-                onClick = { onAction(DashboardAction.OnTestLibraryClick) }
-            )
-        }
-    }
-}
+
 
 @Composable
 private fun QuickActionCard(

@@ -43,8 +43,8 @@ fun PercentileGauge(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.weight(1f)) {
-            Canvas(modifier = Modifier.size(180.dp, 100.dp)) {
-                val strokeWidth = 10.dp.toPx()
+            Canvas(modifier = Modifier.size(160.dp, 90.dp)) {
+                val strokeWidth = 8.dp.toPx()
                 
                 // Background Arc (Track)
                 drawArc(
@@ -122,9 +122,9 @@ private fun NumericInputModule(
         listOf(".", "0", "BACKSPACE")
     )
 
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         keys.forEach { row ->
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 row.forEach { key ->
                     InputButton(
                         text = key,
@@ -143,12 +143,24 @@ private fun NumericInputModule(
         }
         
         // LARGE SUBMIT BUTTON
+        val isValid = value.toDoubleOrNull() != null
         Button(
             onClick = onSubmit,
-            modifier = Modifier.fillMaxWidth().height(64.dp),
-            enabled = value.toDoubleOrNull() != null,
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            enabled = isValid,
             shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF22C55E))
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF22C55E),
+                contentColor = Color.White,
+                disabledContainerColor = Color(0xFFE5E7EB),
+                disabledContentColor = Color(0xFF6B7280)
+            ),
+            elevation = ButtonDefaults.buttonElevation(
+                defaultElevation = 4.dp,
+                pressedElevation = 8.dp,
+                disabledElevation = 0.dp
+            ),
+            border = if (!isValid) BorderStroke(1.dp, Color(0xFFD1D5DB)) else null
         ) {
             Icon(Icons.Default.Check, null)
             Spacer(Modifier.width(8.dp))
@@ -194,11 +206,24 @@ private fun IncrementalInputModule(
             }
         }
 
+        val isValid = count > 0
         Button(
             onClick = onSubmit,
-            modifier = Modifier.fillMaxWidth().height(64.dp),
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            enabled = isValid,
             shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF22C55E))
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF22C55E),
+                contentColor = Color.White,
+                disabledContainerColor = Color(0xFFE5E7EB),
+                disabledContentColor = Color(0xFF6B7280)
+            ),
+            elevation = ButtonDefaults.buttonElevation(
+                defaultElevation = 4.dp,
+                pressedElevation = 8.dp,
+                disabledElevation = 0.dp
+            ),
+            border = if (!isValid) BorderStroke(1.dp, Color(0xFFD1D5DB)) else null
         ) {
             Icon(Icons.Default.Check, null)
             Spacer(Modifier.width(8.dp))
@@ -235,11 +260,24 @@ private fun StageInputModule(
             )
         }
 
+        val isValid = level > 0 && shuttle > 0
         Button(
             onClick = onSubmit,
-            modifier = Modifier.fillMaxWidth().height(64.dp),
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            enabled = isValid,
             shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF22C55E))
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF22C55E),
+                contentColor = Color.White,
+                disabledContainerColor = Color(0xFFE5E7EB),
+                disabledContentColor = Color(0xFF6B7280)
+            ),
+            elevation = ButtonDefaults.buttonElevation(
+                defaultElevation = 4.dp,
+                pressedElevation = 8.dp,
+                disabledElevation = 0.dp
+            ),
+            border = if (!isValid) BorderStroke(1.dp, Color(0xFFD1D5DB)) else null
         ) {
             Icon(Icons.Default.Check, null)
             Spacer(Modifier.width(8.dp))
@@ -281,7 +319,7 @@ private fun InputButton(
 ) {
     Surface(
         onClick = onClick,
-        modifier = modifier.height(56.dp),
+        modifier = modifier.height(50.dp),
         shape = RoundedCornerShape(12.dp),
         color = if (isDelete) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
         tonalElevation = 1.dp

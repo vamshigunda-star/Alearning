@@ -3,8 +3,8 @@ package com.example.alearning.ui.groupoverview
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.alearning.reports.GroupOverviewData
-import com.example.alearning.reports.ReportsRepository
+import com.example.alearning.domain.model.reports.GroupOverviewData
+import com.example.alearning.domain.repository.ReportsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

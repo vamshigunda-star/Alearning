@@ -112,7 +112,7 @@ fun CreateEventContent(
     ) { padding ->
         when {
             uiState.isLoading -> LoadingState()
-            uiState.errorMessage != null && uiState.groups.isEmpty() -> ErrorState(
+            uiState.errorMessage != null && uiState.groups.isEmpty() -> InternalErrorState(
                 message = uiState.errorMessage,
                 onDismiss = { onAction(CreateEventAction.ClearError) }
             )
@@ -332,7 +332,7 @@ private fun LoadingState(message: String = "Loading...") {
 }
 
 @Composable
-private fun ErrorState(
+private fun InternalErrorState(
     message: String,
     onDismiss: () -> Unit
 ) {

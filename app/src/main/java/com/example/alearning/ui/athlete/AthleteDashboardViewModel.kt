@@ -4,8 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.alearning.domain.model.people.Individual
-import com.example.alearning.reports.AthleteDashboardData
-import com.example.alearning.reports.ReportsRepository
+import com.example.alearning.domain.model.reports.AthleteDashboardData
+import com.example.alearning.domain.repository.ReportsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -47,26 +47,30 @@ class AthleteDashboardViewModel @Inject constructor(
     private val getAthleteRadarData: GetAthleteRadarDataUseCase
 ) : ViewModel() {
 
-    val athleteId: String = savedStateHandle["athleteId"] ?: ""
-    val contextSessionId: String? = savedStateHandle["contextSessionId"]
+    var athleteId: String = ""
+        private set
+    var contextSessionId: String? = null
+        private set
 
     private val _uiState = MutableStateFlow(AthleteDashboardUiState())
     val uiState: StateFlow<AthleteDashboardUiState> = _uiState.asStateFlow()
 
-    init {
-        viewModelScope.launch {
+    private var loadJob: kotlinx.coroutines.Job? = null
+
+    fun loadDashboard(athleteId: String, contextSessionId: String? = null) {
+        this.athleteId = athleteId
+        this.contextSessionId = contextSessionId
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             reports.observeAthleteDashboard(athleteId, contextSessionId)
                 .catch { e -> _uiState.update { it.copy(errorMessage = e.message, isLoading = false) } }
                 .collect { d ->
                     _uiState.update { it.copy(data = d, isLoading = false) }
-                    // Recompute radar whenever the dashboard data emits (results changed).
                     if (d != null) {
                         try {
                             val radar = getAthleteRadarData(athleteId)
                             _uiState.update { it.copy(radarData = radar) }
-                        } catch (_: Exception) {
-                            // Radar is non-essential; ignore failures so the screen still loads.
-                        }
+                        } catch (_: Exception) {}
                     }
                 }
         }

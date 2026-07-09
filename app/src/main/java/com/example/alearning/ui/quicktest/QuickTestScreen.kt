@@ -8,12 +8,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material3.*
@@ -26,6 +29,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.alearning.ui.components.AppTopBar
@@ -83,20 +87,53 @@ fun QuickTestContent(
         bottomBar = {
             if (uiState.step == QuickTestStep.SETUP) {
                 Surface(tonalElevation = 3.dp) {
-                    val canStart = uiState.athleteSearchQuery.isNotBlank() && 
+                    val canStart = uiState.athleteSearchQuery.isNotBlank() &&
                                  uiState.selectedTestIds.isNotEmpty() &&
                                  (!uiState.isGuest || (uiState.guestAge.isNotBlank() && uiState.guestSex != BiologicalSex.UNSPECIFIED))
 
-                    Button(
-                        onClick = { onAction(QuickTestAction.OnConfirmSetup) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                            .height(56.dp),
-                        enabled = canStart,
-                        shape = MaterialTheme.shapes.large
-                    ) {
-                        Text("Start Testing", style = MaterialTheme.typography.titleMedium)
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        if (!canStart) {
+                            Text(
+                                text = when {
+                                    uiState.athleteSearchQuery.isBlank() -> "Enter an athlete name to continue"
+                                    uiState.selectedTestIds.isEmpty() -> "Select at least one test"
+                                    uiState.isGuest && uiState.guestAge.isBlank() -> "Enter guest age"
+                                    uiState.isGuest && uiState.guestSex == BiologicalSex.UNSPECIFIED -> "Select guest sex"
+                                    else -> ""
+                                },
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                        }
+                        Button(
+                            onClick = { onAction(QuickTestAction.OnConfirmSetup) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                            enabled = canStart,
+                            shape = MaterialTheme.shapes.large,
+                            elevation = ButtonDefaults.buttonElevation(
+                                defaultElevation = 4.dp,
+                                pressedElevation = 8.dp,
+                                disabledElevation = 0.dp
+                            ),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary,
+                                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            ),
+                            border = if (!canStart) BorderStroke(1.dp, MaterialTheme.colorScheme.outline) else null
+                        ) {
+                            Icon(Icons.Default.PlayArrow, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                "Start Testing",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }
@@ -267,7 +304,8 @@ private fun SetupStep(
                                     expanded = expanded,
                                     onDismissRequest = { expanded = false }
                                 ) {
-                                    BiologicalSex.values().filter { it != BiologicalSex.UNSPECIFIED }.forEach { sex ->
+                                    val filteredSexes = remember { BiologicalSex.values().filter { it != BiologicalSex.UNSPECIFIED } }
+                                    filteredSexes.forEach { sex ->
                                         DropdownMenuItem(
                                             text = { Text(sex.name) },
                                             onClick = {
@@ -370,6 +408,7 @@ private fun EnterScoresStep(
 ) {
     val currentTest = uiState.selectedTests.getOrNull(uiState.currentTestIndex)
     var scoreText by remember(uiState.currentTestIndex) { mutableStateOf("") }
+    val scrollState = rememberScrollState()
 
     val validMin = currentTest?.validMin
     val validMax = currentTest?.validMax
@@ -388,42 +427,44 @@ private fun EnterScoresStep(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+            .padding(16.dp)
+            .verticalScroll(scrollState),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         // Progress indicator
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             LinearProgressIndicator(
                 progress = { (uiState.currentTestIndex + 1).toFloat() / uiState.selectedTests.size },
-                modifier = Modifier.fillMaxWidth().height(6.dp).clip(MaterialTheme.shapes.small)
+                modifier = Modifier.weight(1f).height(4.dp).clip(MaterialTheme.shapes.small)
             )
             Text(
-                "Test ${uiState.currentTestIndex + 1} of ${uiState.selectedTests.size}",
+                "${uiState.currentTestIndex + 1}/${uiState.selectedTests.size}",
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.End
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
-        // Athlete info
-        ElevatedCard(
+        // Athlete info (Compact)
+        Surface(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.elevatedCardColors(
-                containerColor = if (uiState.isGuest) Color(0xFF546E7A) else NavyPrimary
-            )
+            shape = MaterialTheme.shapes.medium,
+            color = if (uiState.isGuest) Color(0xFF546E7A) else NavyPrimary
         ) {
             Row(
-                modifier = Modifier.padding(12.dp),
+                modifier = Modifier.padding(10.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Icon(Icons.Default.Person, contentDescription = null, tint = Color.White)
+                Icon(Icons.Default.Person, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
                 Column {
                     Text(
                         if (uiState.isGuest) "${uiState.athleteSearchQuery} (Guest)" 
                         else uiState.selectedAthlete?.fullName ?: "Unknown",
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
@@ -439,33 +480,38 @@ private fun EnterScoresStep(
         }
 
         if (currentTest != null) {
-            // Live Percentile Gauge (Compact)
+            // Live Percentile Gauge (Condensed)
             PercentileGauge(
                 percentile = uiState.lastRecordedPercentile,
-                modifier = Modifier.fillMaxWidth().height(140.dp)
+                modifier = Modifier.fillMaxWidth().height(110.dp)
             )
 
-            // Test info & Score Display (Combined for space)
+            // Test info & Score Display (Condensed)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                OutlinedCard(modifier = Modifier.weight(1f)) {
-                    Column(modifier = Modifier.padding(12.dp)) {
+                Surface(
+                    modifier = Modifier.weight(1f),
+                    shape = MaterialTheme.shapes.medium,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                ) {
+                    Column(modifier = Modifier.padding(8.dp)) {
                         Text(
                             currentTest.name,
-                            style = MaterialTheme.typography.titleMedium,
+                            style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary,
-                            maxLines = 1
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
-                        Text("Unit: ${currentTest.unit}", style = MaterialTheme.typography.bodySmall)
+                        Text("Unit: ${currentTest.unit}", style = MaterialTheme.typography.labelSmall)
                     }
                 }
 
                 Surface(
-                    modifier = Modifier.width(120.dp).height(56.dp),
+                    modifier = Modifier.width(100.dp).height(48.dp),
                     shape = MaterialTheme.shapes.medium,
                     color = MaterialTheme.colorScheme.surfaceVariant,
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
@@ -473,7 +519,7 @@ private fun EnterScoresStep(
                     Box(contentAlignment = Alignment.Center) {
                         Text(
                             text = scoreText.ifEmpty { "0.0" },
-                            style = MaterialTheme.typography.headlineMedium,
+                            style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = if (scoreText.isEmpty()) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
                             else MaterialTheme.colorScheme.onSurface
@@ -528,44 +574,162 @@ private fun CompleteStep(
     uiState: QuickTestUiState,
     onAction: (QuickTestAction) -> Unit
 ) {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+    val results = uiState.recordedResults
+    val percentiles = results.mapNotNull { it.percentile }
+    val avg = if (percentiles.isNotEmpty()) percentiles.average().toInt() else null
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(80.dp), tint = PerformanceGreen)
-        Spacer(Modifier.height(24.dp))
-        Text("Quick Test Complete", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(12.dp))
-        Text(
-            if (uiState.isGuest) "Scores have been calculated for the guest athlete."
-            else "All scores have been recorded to the athlete's history.",
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        
-        Spacer(Modifier.height(48.dp))
-        
-        Button(
-            onClick = { onAction(QuickTestAction.OnNavigateBack) },
-            modifier = Modifier.fillMaxWidth().height(56.dp),
-            shape = MaterialTheme.shapes.large
-        ) {
-            Text("Back to Dashboard", style = MaterialTheme.typography.titleMedium)
+        item {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(64.dp), tint = PerformanceGreen)
+                Spacer(Modifier.height(12.dp))
+                Text("Quick Test Complete", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    if (uiState.isGuest)
+                        "${results.size} test${if (results.size == 1) "" else "s"} calculated for ${uiState.athleteSearchQuery} (Guest)."
+                    else
+                        "${results.size} test${if (results.size == 1) "" else "s"} recorded to ${uiState.selectedAthlete?.fullName ?: "the athlete"}'s history.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
-        
-        if (!uiState.isGuest) {
+
+        if (avg != null) {
+            item {
+                OverallStandingCard(avgPercentile = avg)
+            }
+        }
+
+        if (results.isNotEmpty()) {
+            item {
+                Text(
+                    "Results",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+            items(results) { r -> ResultCard(result = r) }
+        }
+
+        item {
             Spacer(Modifier.height(16.dp))
-            OutlinedButton(
-                onClick = { onAction(QuickTestAction.OnRequestDelete) },
+            Button(
+                onClick = { onAction(QuickTestAction.OnNavigateBack) },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = MaterialTheme.shapes.large,
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
             ) {
-                Icon(Icons.Default.Delete, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("Delete These Results", style = MaterialTheme.typography.titleMedium)
+                Text("Back to Dashboard", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            }
+
+            if (!uiState.isGuest) {
+                Spacer(Modifier.height(12.dp))
+                OutlinedButton(
+                    onClick = { onAction(QuickTestAction.OnRequestDelete) },
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    shape = MaterialTheme.shapes.large,
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Icon(Icons.Default.Delete, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Delete These Results", style = MaterialTheme.typography.titleMedium)
+                }
+            }
+        }
+    }
+}
+
+private fun zoneFor(percentile: Int?): Triple<Color, Color, String> = when {
+    percentile == null -> Triple(PerformanceGrey, PerformanceGreyText, "No Norm")
+    percentile >= 60 -> Triple(PerformanceGreen, PerformanceGreenText, "Superior")
+    percentile >= 30 -> Triple(PerformanceYellow, PerformanceYellowText, "Healthy")
+    else -> Triple(PerformanceRed, PerformanceRedText, "Needs Improvement")
+}
+
+@Composable
+private fun OverallStandingCard(avgPercentile: Int) {
+    val (bg, fg, label) = zoneFor(avgPercentile)
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.elevatedCardColors(containerColor = bg)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text("Overall Standing", style = MaterialTheme.typography.labelLarge, color = fg.copy(alpha = 0.85f))
+                Spacer(Modifier.height(4.dp))
+                Text(label, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = fg)
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    "${avgPercentile}%",
+                    style = MaterialTheme.typography.displaySmall,
+                    fontWeight = FontWeight.Black,
+                    color = fg
+                )
+                Text("avg percentile", style = MaterialTheme.typography.labelSmall, color = fg.copy(alpha = 0.85f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun ResultCard(result: RecordedTestResult) {
+    val (bg, fg, label) = zoneFor(result.percentile)
+    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(result.testName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    "${result.rawScore} ${result.unit}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    result.classification ?: label,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Surface(
+                shape = MaterialTheme.shapes.medium,
+                color = bg,
+                modifier = Modifier.size(width = 72.dp, height = 56.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    if (result.percentile != null) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                "${result.percentile}",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Black,
+                                color = fg
+                            )
+                            Text("pctile", style = MaterialTheme.typography.labelSmall, color = fg.copy(alpha = 0.85f))
+                        }
+                    } else {
+                        Text("—", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = fg)
+                    }
+                }
             }
         }
     }

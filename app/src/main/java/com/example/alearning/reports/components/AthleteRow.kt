@@ -21,7 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.alearning.reports.LeaderboardRow
+import com.example.alearning.domain.model.reports.LeaderboardRow
 
 @Composable
 fun AthleteLeaderRow(
@@ -64,7 +64,15 @@ fun AthleteLeaderRow(
             }
             Spacer(Modifier.width(8.dp))
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                ZoneChip(classification = row.classification)
+                // Prefer the data-driven label from the norm CSV (e.g., "Excellent", "Healthy
+                // Fitness Zone") over the generic 4-zone label so coaches see the published
+                // classification, not a synthetic bucket. Falls back to the generic label
+                // when the snapshot has no classification (custom tests, missing norms).
+                ZoneChip(
+                    classification = row.classification,
+                    label = row.classificationLabel?.takeIf { it.isNotBlank() }
+                        ?: com.example.alearning.reports.components.zoneLabel(row.classification)
+                )
                 PercentileChip(percentile = row.percentile)
             }
         }

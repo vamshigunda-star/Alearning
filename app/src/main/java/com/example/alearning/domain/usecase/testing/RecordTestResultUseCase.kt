@@ -1,5 +1,6 @@
 package com.example.alearning.domain.usecase.testing
 
+import android.util.Log
 import com.example.alearning.domain.model.people.BiologicalSex
 import com.example.alearning.domain.model.standards.InterpretationStrategy
 import com.example.alearning.domain.model.testing.CaptureMethod
@@ -25,6 +26,12 @@ class RecordTestResultUseCase @Inject constructor(
         captureMethod: CaptureMethod = CaptureMethod.MANUAL_ENTRY
     ): TestResult {
         val test = standardsRepository.getTestById(testId)
+        if (test == null) {
+            // FK on test_results.testId would reject a save anyway, but a missing
+            // test here also means we have no isHigherBetter / interpretation hint.
+            // Loud warning so it shows up in logcat instead of failing opaquely on insert.
+            Log.w("RecordTestResult", "Unknown testId=$testId — proceeding without interpretation")
+        }
 
         val percentileResult = when (test?.interpretationStrategy) {
             InterpretationStrategy.NORM_LOOKUP ->
@@ -44,10 +51,27 @@ class RecordTestResultUseCase @Inject constructor(
             ageAtTime = ageAtTime,
             percentile = percentileResult?.percentile,
             classification = percentileResult?.classification,
+            normVariantUsed = percentileResult?.variant,
             captureMethod = captureMethod,
             createdAt = System.currentTimeMillis()
         )
-        repository.saveResult(result)
+        try {
+            repository.saveResult(result)
+        } catch (e: Exception) {
+            // FK violation, IO failure, etc. Log loudly so submit-loop callers can
+            // correlate which (event, athlete, test) failed instead of seeing a bare
+            // "Submit failed" toast.
+            Log.e(
+                "RecordTestResult",
+                "saveResult FAILED eventId=$eventId individualId=$individualId testId=$testId rawScore=$rawScore",
+                e
+            )
+            throw e
+        }
+        Log.d(
+            "RecordTestResult",
+            "saved id=${result.id} event=$eventId athlete=$individualId test=$testId score=$rawScore pct=${result.percentile}"
+        )
         return result
     }
 }

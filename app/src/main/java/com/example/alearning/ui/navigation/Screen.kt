@@ -25,7 +25,6 @@ sealed class Screen(val route: String) {
         }
     }
     data object Report : Screen("reports")
-    data object Analytics : Screen("analytics")
     data object Leaderboard : Screen("leaderboard/{eventId}/{groupId}/{mode}") {
         fun createRoute(eventId: String, groupId: String, mode: String) =
             "leaderboard/$eventId/$groupId/$mode"
@@ -54,11 +53,13 @@ sealed class Screen(val route: String) {
             "athlete/$athleteId" + if (contextSessionId != null) "?contextSessionId=$contextSessionId" else ""
     }
 
-    data object AthleteTestDetail : Screen("athlete/{athleteId}/test/{testId}?contextSessionId={contextSessionId}") {
-        fun createRoute(athleteId: String, testId: String, contextSessionId: String? = null) =
-            "athlete/$athleteId/test/$testId" +
-                if (contextSessionId != null) "?contextSessionId=$contextSessionId" else ""
-    }
+    // ───── Auth screens ─────
+    data object SignIn : Screen("sign_in")
+    data object SignUp : Screen("sign_up")
+    data object ResetPassword : Screen("reset_password")
+    
+    data object AiCoach : Screen("ai_coach")
+
 }
 
 sealed class BottomNavItem(
@@ -88,11 +89,5 @@ sealed class BottomNavItem(
         route = Screen.Report.route,
         title = "Reports",
         icon = Icons.AutoMirrored.Filled.Assignment
-    )
-
-    data object Analytics : BottomNavItem(
-        route = Screen.Analytics.route,
-        title = "Analytics",
-        icon = Icons.AutoMirrored.Filled.TrendingUp
     )
 }
