@@ -96,13 +96,11 @@ fun AthleteDashboardScreen(
     contextSessionId: String? = null,
     onNavigateBack: () -> Unit,
     onStartQuickTest: (String, List<String>) -> Unit, // (athleteId, testIds)
-    onNavigateToAiCoach: () -> Unit,
+    onNavigateToAiCoach: (String?) -> Unit,
     viewModel: AthleteDashboardViewModel = hiltViewModel(),
     aiCoachViewModel: AiCoachViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val aiCoachState by aiCoachViewModel.uiState.collectAsState()
-    val isAiCoachVisible = aiCoachState.status != AiCoachStatus.UNSUPPORTED
     val context = LocalContext.current
     val navigator = rememberListDetailPaneScaffoldNavigator<Any>()
 
@@ -146,7 +144,7 @@ fun AthleteDashboardScreen(
                             else -> viewModel.onAction(action)
                         }
                     },
-                    isAiCoachVisible = isAiCoachVisible,
+                    aiCoachViewModel = aiCoachViewModel,
                     onNavigateToAiCoach = onNavigateToAiCoach
                 )
             }
@@ -175,10 +173,12 @@ fun AthleteDashboardScreen(
 @Composable
 fun AthleteDashboardContent(
     uiState: AthleteDashboardUiState,
-    isAiCoachVisible: Boolean = false,
-    onNavigateToAiCoach: () -> Unit = {},
+    aiCoachViewModel: AiCoachViewModel,
+    onNavigateToAiCoach: (String?) -> Unit = {},
     onAction: (AthleteDashboardAction) -> Unit
 ) {
+    val aiCoachState by aiCoachViewModel.uiState.collectAsState()
+    val isAiCoachVisible = aiCoachState.status != AiCoachStatus.UNSUPPORTED
     val data = uiState.data
     Scaffold(
         topBar = {
@@ -216,7 +216,13 @@ fun AthleteDashboardContent(
         floatingActionButton = {
             AiFloatingActionButton(
                 isVisible = isAiCoachVisible,
-                onClick = { onNavigateToAiCoach() }
+                onClick = {
+                    val contextString = data?.let { d ->
+                        "Athlete: ${d.athlete.fullName}\nAge: ${d.athlete.currentAge}\nAvg Percentile: ${d.athleteSessionAvgPctile}\nTest Results:\n" +
+                        d.tiles.joinToString("\n") { t -> "${t.test.name}: ${t.latestResult?.rawScore} ${t.test.unit} (${t.latestResult?.percentile}th percentile)" }
+                    }
+                    onNavigateToAiCoach(contextString)
+                }
             )
         }
     ) { padding ->
@@ -233,7 +239,7 @@ fun AthleteDashboardContent(
 }
 
 @Composable
-private fun AthleteBody(
+fun AthleteBody(
     uiState: AthleteDashboardUiState,
     padding: PaddingValues,
     onAction: (AthleteDashboardAction) -> Unit
@@ -340,7 +346,7 @@ private fun AthleteBody(
 }
 
 @Composable
-private fun AthleteAlertCard(athlete: Individual) {
+fun AthleteAlertCard(athlete: Individual) {
     if (athlete.medicalAlert == null && !athlete.isRestricted) return
     Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = PerformanceRed)) {
         Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -355,7 +361,7 @@ private fun AthleteAlertCard(athlete: Individual) {
 }
 
 @Composable
-private fun LatestSessionCard(date: Long?, name: String?, testCount: Int, avgPercentile: Int?) {
+fun LatestSessionCard(date: Long?, name: String?, testCount: Int, avgPercentile: Int?) {
     val df = remember { SimpleDateFormat("MMM d, yyyy", Locale.getDefault()) }
     val cls = when {
         avgPercentile == null -> Classification.NO_DATA
@@ -384,7 +390,7 @@ private fun LatestSessionCard(date: Long?, name: String?, testCount: Int, avgPer
 }
 
 @Composable
-private fun TestTile(tile: AthleteTestTile, onClick: () -> Unit) {
+fun TestTile(tile: AthleteTestTile, onClick: () -> Unit) {
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth().height(140.dp),
@@ -420,7 +426,7 @@ private fun TestTile(tile: AthleteTestTile, onClick: () -> Unit) {
 }
 
 @Composable
-private fun FlagListRow(flag: AthleteFlag, onClick: () -> Unit) {
+fun FlagListRow(flag: AthleteFlag, onClick: () -> Unit) {
     val isActionable = flag.testId != null || flag.testIds.isNotEmpty() || flag.type == FlagType.MISSING_DATA
     Card(
         onClick = onClick,
@@ -456,7 +462,7 @@ private fun FlagListRow(flag: AthleteFlag, onClick: () -> Unit) {
 }
 
 @Composable
-private fun OutstandingTestsCard(tests: List<FitnessTest>, onTestClick: (String) -> Unit) {
+fun OutstandingTestsCard(tests: List<FitnessTest>, onTestClick: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background)) {
         Column(modifier = Modifier.fillMaxWidth().padding(14.dp)) {
@@ -486,7 +492,7 @@ private fun OutstandingTestsCard(tests: List<FitnessTest>, onTestClick: (String)
 }
 
 @Composable
-private fun CategoryRadarCard(radarData: AthleteRadarData?, hasResults: Boolean) {
+fun CategoryRadarCard(radarData: AthleteRadarData?, hasResults: Boolean) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -534,7 +540,7 @@ private fun CategoryRadarCard(radarData: AthleteRadarData?, hasResults: Boolean)
 }
 
 @Composable
-private fun PremiumAthleteMetaCard(athleteData: AthleteDashboardData) {
+fun PremiumAthleteMetaCard(athleteData: AthleteDashboardData) {
     val athlete = athleteData.athlete
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -584,7 +590,7 @@ private fun PremiumAthleteMetaCard(athleteData: AthleteDashboardData) {
 }
 
 @Composable
-private fun PerTestHeader(testCount: Int, expanded: Boolean, onToggle: () -> Unit) {
+fun PerTestHeader(testCount: Int, expanded: Boolean, onToggle: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)

@@ -7,6 +7,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.alearning.data.local.Converters
 import com.example.alearning.data.local.daos.auth.UserDao
+import com.example.alearning.data.local.daos.backup.BackupDao
 import com.example.alearning.data.local.daos.people.PeopleDao
 import com.example.alearning.data.local.daos.standards.StandardsDao
 import com.example.alearning.data.local.daos.testing.PendingTestEntryDao
@@ -47,6 +48,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun testingDao(): TestingDao
     abstract fun userDao(): UserDao
     abstract fun pendingTestEntryDao(): PendingTestEntryDao
+    abstract fun backupDao(): BackupDao
 
     companion object {
         val MIGRATION_8_9 = object : Migration(8, 9) {

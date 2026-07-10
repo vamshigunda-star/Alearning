@@ -36,6 +36,10 @@ import com.example.alearning.ui.theme.*
 import androidx.activity.compose.BackHandler
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Undo
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.alpha
+import kotlinx.coroutines.delay
 
 @Composable
 fun StopwatchScreen(
@@ -65,6 +69,12 @@ fun StopwatchScreen(
             }
         }
     )
+
+    LaunchedEffect(uiState.isSessionComplete) {
+        if (uiState.isSessionComplete) {
+            onNavigateBack()
+        }
+    }
 
     if (uiState.showDiscardDialog) {
         DiscardPendingDialog(
@@ -212,7 +222,7 @@ private fun StopwatchContent(
                 SubmitBar(
                     pendingCount = uiState.pendingResults.size,
                     isSubmitting = uiState.isSubmitting,
-                    onSubmit = { onAction(StopwatchAction.OnSubmitPending) }
+                    onSubmit = { onAction(StopwatchAction.OnRequestSubmit) }
                 )
             }
         }
@@ -220,9 +230,32 @@ private fun StopwatchContent(
         when {
             uiState.isLoading -> LoadingBox(padding)
             uiState.errorMessage != null -> ErrorBox(uiState.errorMessage, onAction, padding)
-            uiState.isSessionComplete -> SessionCompleteContent(uiState, onAction, padding)
+            uiState.isSessionComplete -> {
+                // Navigate back automatically handled by LaunchedEffect
+                Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
             uiState.mode == TimingMode.INDIVIDUAL -> IndividualModeContent(uiState, allAthletes, onAction, padding)
             uiState.mode == TimingMode.GROUP_START -> GroupStartModeContent(uiState, onAction, padding)
+        }
+    }
+
+    if (uiState.editingAthleteId != null) {
+        val athlete = allAthletes.find { it.athleteId == uiState.editingAthleteId }
+        if (athlete != null) {
+            val initialTimeMs = if (uiState.editingResultId != null) {
+                athlete.historicalTrials.find { it.id == uiState.editingResultId }?.rawScore?.times(1000)?.toLong() ?: 0L
+            } else {
+                athlete.capturedTimeMs ?: 0L
+            }
+            EditTimeDialog(
+                athleteName = athlete.name,
+                initialTimeMs = initialTimeMs,
+                onDismiss = { onAction(StopwatchAction.OnCloseEditDialog) },
+                onSave = { newTime -> onAction(StopwatchAction.OnSaveEditedTime(athlete.athleteId, newTime, uiState.editingResultId)) },
+                onClear = { onAction(StopwatchAction.OnClearEntry(athlete.athleteId, uiState.editingResultId)) }
+            )
         }
     }
 }
@@ -293,22 +326,7 @@ private fun ErrorBox(message: String, onAction: (StopwatchAction) -> Unit, paddi
     }
 }
 
-@Composable
-private fun SessionCompleteContent(uiState: StopwatchUiState, onAction: (StopwatchAction) -> Unit, padding: PaddingValues) {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(padding).padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(Icons.Default.Check, null, modifier = Modifier.size(80.dp).background(PerformanceGreen, CircleShape).padding(16.dp), tint = Color.White)
-        Spacer(Modifier.height(24.dp))
-        Text("All Done!", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(8.dp))
-        Text("${uiState.completedCount} results recorded for ${uiState.testName}", style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.height(32.dp))
-        Button(onClick = { onAction(StopwatchAction.OnNavigateBack) }, modifier = Modifier.fillMaxWidth()) { Text("Back to Testing Grid") }
-    }
-}
+// Removed SessionCompleteContent
 
 @Composable
 private fun IndividualModeContent(
@@ -330,96 +348,117 @@ private fun IndividualModeContent(
 
     val totalTrials = allAthletes.firstOrNull()?.totalTrials ?: 1
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(padding),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        contentPadding = PaddingValues(bottom = 80.dp)
-    ) {
-        item {
-            Spacer(Modifier.height(24.dp))
+    Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+        Spacer(Modifier.height(16.dp))
 
-            // Stopwatch display
-            StopwatchDisplay(elapsedMs = uiState.elapsedMs)
+        // Sticky Stopwatch display
+        StopwatchDisplay(elapsedMs = uiState.elapsedMs)
 
-            Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(16.dp))
 
-            // Selected Athlete Info & Action
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                if (currentAthlete != null) {
-                    Text(
-                        text = currentAthlete.name,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        text = "Trial ${currentAthlete.currentTrial} of ${currentAthlete.totalTrials}",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                } else {
-                    Text(
-                        text = "Select Athlete to Begin",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
-                    )
-                }
+        // Selected Athlete Info & Action
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            if (currentAthlete != null) {
+                Text(
+                    text = currentAthlete.name,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+                Text(
+                    text = "Trial ${currentAthlete.currentTrial} of ${currentAthlete.totalTrials}",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            } else {
+                Text(
+                    text = "Select Athlete to Begin",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+            }
 
-                Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(8.dp))
 
-                // Main action button
-                if (uiState.stopwatchPhase != StopwatchPhase.CONFIRMING) {
-                    val isRunning = uiState.stopwatchPhase == StopwatchPhase.RUNNING
-                    Button(
-                        onClick = { 
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            onAction(StopwatchAction.OnStartStop) 
-                        },
-                        modifier = Modifier.fillMaxWidth().height(64.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isRunning) MaterialTheme.colorScheme.error else PerformanceGreen
+            // Main action button
+            if (uiState.stopwatchPhase != StopwatchPhase.CONFIRMING) {
+                val isRunning = uiState.stopwatchPhase == StopwatchPhase.RUNNING
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(64.dp)
+                        .kineticPulse(
+                            shape = RoundedCornerShape(16.dp),
+                            baseElevation = 4.dp,
+                            onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                onAction(StopwatchAction.OnStartStop)
+                            }
                         ),
-                        shape = RoundedCornerShape(16.dp),
-                        enabled = currentAthlete != null
-                    ) { 
-                        Text(if (isRunning) "STOP" else "START", fontSize = 20.sp, fontWeight = FontWeight.Bold) 
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isRunning) MaterialTheme.colorScheme.error else ElectricBlue
+                    )
+                ) {
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                        Text(
+                            if (isRunning) "STOP" else "START",
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
                     }
                 }
             }
-
-            // Confirmation overlay
-            AnimatedVisibility(visible = uiState.stopwatchPhase == StopwatchPhase.CONFIRMING, enter = fadeIn(), exit = fadeOut()) {
-                uiState.confirmationData?.let { data ->
-                    ConfirmationFlash(
-                        data = data,
-                        canUndo = uiState.canUndo,
-                        hasPending = uiState.hasPendingChanges,
-                        isSubmitting = uiState.isSubmitting,
-                        onUndo = { onAction(StopwatchAction.OnUndo) },
-                        onSubmit = { onAction(StopwatchAction.OnSubmitPending) },
-                        onNext = { onAction(StopwatchAction.OnNext) },
-                        nextAthleteName = nextWaitingAthlete?.name,
-                        onResetAthlete = { onAction(StopwatchAction.OnResetAthlete) }
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(32.dp))
-
-            // Testing Grid Labels
-            TestingGridLabels(trialCount = totalTrials)
         }
 
-        items(allAthletes) { athlete ->
-            AthleteGridCard(
-                athlete = athlete,
-                isSelected = athlete.athleteId == uiState.selectedAthleteId,
-                onClick = { onAction(StopwatchAction.OnSelectAthlete(athlete.athleteId)) }
-            )
+        AnimatedVisibility(visible = uiState.showTrialCompletedMessage, enter = fadeIn(), exit = fadeOut()) {
+            LaunchedEffect(uiState.showTrialCompletedMessage) {
+                if (uiState.showTrialCompletedMessage) {
+                    delay(2000) // Show for 2 seconds
+                    onAction(StopwatchAction.OnDismissTrialMessage)
+                    onAction(StopwatchAction.OnNext) // Automatically move to next waiting athlete
+                }
+            }
+            Surface(
+                color = PerformanceGreen.copy(alpha = 0.1f),
+                border = BorderStroke(1.dp, PerformanceGreen),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.padding(vertical = 8.dp, horizontal = 24.dp).fillMaxWidth()
+            ) {
+                Text(
+                    "Trial completed. Proceed to next trial.",
+                    modifier = Modifier.padding(12.dp),
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold,
+                    color = PerformanceGreenText
+                )
+            }
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        // Testing Grid Labels
+        TestingGridLabels(trialCount = totalTrials)
+
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth().weight(1f),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            contentPadding = PaddingValues(bottom = 80.dp)
+        ) {
+            items(allAthletes) { athlete ->
+                AthleteGridCard(
+                    athlete = athlete,
+                    isSelected = athlete.athleteId == uiState.selectedAthleteId,
+                    onClick = { onAction(StopwatchAction.OnSelectAthlete(athlete.athleteId)) },
+                    onEditTrial = { resultId -> onAction(StopwatchAction.OnOpenEditDialog(athlete.athleteId, resultId)) },
+                    onToggleAbsent = { onAction(StopwatchAction.OnToggleAbsent(athlete.athleteId)) }
+                )
+            }
         }
     }
 }
@@ -432,62 +471,53 @@ private fun GroupStartModeContent(uiState: StopwatchUiState, onAction: (Stopwatc
         Spacer(Modifier.height(16.dp))
         StopwatchDisplay(elapsedMs = uiState.elapsedMs)
         Spacer(Modifier.height(16.dp))
-        AnimatedVisibility(visible = uiState.stopwatchPhase == StopwatchPhase.CONFIRMING, enter = fadeIn(), exit = fadeOut()) {
-            uiState.confirmationData?.let { data ->
-                ConfirmationFlash(
-                    data = data,
-                    canUndo = false,
-                    hasPending = uiState.hasPendingChanges,
-                    isSubmitting = uiState.isSubmitting,
-                    onUndo = {},
-                    onSubmit = { onAction(StopwatchAction.OnSubmitPending) },
-                    onNext = { onAction(StopwatchAction.OnNext) },
-                    nextAthleteName = null
+        
+        if (uiState.stopwatchPhase == StopwatchPhase.READY) {
+            Button(
+                onClick = { haptic.performHapticFeedback(HapticFeedbackType.LongPress); onAction(StopwatchAction.OnStartStop) },
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).height(80.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = PerformanceGreen),
+                shape = RoundedCornerShape(16.dp)
+            ) { Text("START SESSION", fontSize = 28.sp, fontWeight = FontWeight.Bold) }
+        }
+
+        Spacer(Modifier.height(16.dp))
+        LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 24.dp)) {
+            items(uiState.heatAthletes) { athlete ->
+                HeatAthleteRow(
+                    athlete = athlete,
+                    isRunning = uiState.stopwatchPhase == StopwatchPhase.RUNNING,
+                    onToggleAbsent = { onAction(StopwatchAction.OnToggleAbsent(athlete.athleteId)) },
+                    onCapture = { 
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onAction(StopwatchAction.OnCaptureTime(athlete.athleteId)) 
+                    },
+                    onEdit = { onAction(StopwatchAction.OnOpenEditDialog(athlete.athleteId)) }
                 )
             }
         }
-        if (uiState.stopwatchPhase != StopwatchPhase.CONFIRMING) {
-            when (uiState.stopwatchPhase) {
-                StopwatchPhase.READY -> {
-                    Button(
-                        onClick = { haptic.performHapticFeedback(HapticFeedbackType.LongPress); onAction(StopwatchAction.OnStartStop) },
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).height(80.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = PerformanceGreen),
-                        shape = RoundedCornerShape(16.dp)
-                    ) { Text("START HEAT", fontSize = 28.sp, fontWeight = FontWeight.Bold) }
+        
+    }
+
+    if (uiState.showMissingEntriesDialog) {
+        AlertDialog(
+            onDismissRequest = { onAction(StopwatchAction.OnDismissMissingEntriesDialog) },
+            title = { Text("Missing Entries") },
+            text = { Text("Some athletes do not have recorded times. What would you like to do?") },
+            confirmButton = {
+                TextButton(onClick = { 
+                    onAction(StopwatchAction.OnDismissMissingEntriesDialog)
+                    onAction(StopwatchAction.OnSubmitPending) 
+                }) {
+                    Text("Leave as Pending")
                 }
-                StopwatchPhase.RUNNING -> {
-                    Column(modifier = Modifier.padding(horizontal = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Button(
-                            onClick = { haptic.performHapticFeedback(HapticFeedbackType.LongPress); onAction(StopwatchAction.OnFinishTap) },
-                            modifier = Modifier.fillMaxWidth().height(80.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                            shape = RoundedCornerShape(16.dp)
-                        ) { Text("TAP TO FINISH", fontSize = 28.sp, fontWeight = FontWeight.Bold) }
-                        
-                        Spacer(Modifier.height(12.dp))
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            OutlinedButton(onClick = { onAction(StopwatchAction.OnResetHeat) }, modifier = Modifier.weight(1f).height(48.dp), shape = RoundedCornerShape(12.dp)) {
-                                Icon(Icons.Default.Refresh, null); Spacer(Modifier.width(4.dp)); Text("RESET")
-                            }
-                            OutlinedButton(onClick = { onAction(StopwatchAction.OnStopHeat) }, modifier = Modifier.weight(1f).height(48.dp), shape = RoundedCornerShape(12.dp)) {
-                                Text("STOP HEAT")
-                            }
-                        }
-                    }
-                }
-                else -> {}
-            }
-        }
-        Spacer(Modifier.height(16.dp))
-        Text("Select Athlete who is finishing:", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp))
-        LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 24.dp)) {
-            items(uiState.heatAthletes) { athlete ->
-                HeatAthleteRow(athlete, isSelected = uiState.selectedAthleteId == athlete.athleteId) {
-                    onAction(StopwatchAction.OnSelectAthlete(athlete.athleteId))
+            },
+            dismissButton = {
+                TextButton(onClick = { onAction(StopwatchAction.OnDismissMissingEntriesDialog) }) {
+                    Text("Cancel")
                 }
             }
-        }
+        )
     }
 }
 
@@ -506,123 +536,7 @@ private fun StopwatchDisplay(elapsedMs: Long) {
     )
 }
 
-@Composable
-private fun ConfirmationFlash(
-    data: ConfirmationData,
-    canUndo: Boolean,
-    hasPending: Boolean,
-    isSubmitting: Boolean,
-    onUndo: () -> Unit,
-    onSubmit: () -> Unit,
-    onNext: () -> Unit,
-    nextAthleteName: String?,
-    onResetAthlete: (() -> Unit)? = null
-) {
-    val containerColor = if (hasPending) PerformanceYellow.copy(alpha = 0.15f) else PerformanceGreen.copy(alpha = 0.15f)
-    val accentColor = if (hasPending) PerformanceYellowText else PerformanceGreenText
-
-    Card(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
-        colors = CardDefaults.cardColors(containerColor = containerColor),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = formatTimeDisplay(data.timeMs),
-                fontSize = 48.sp,
-                fontWeight = FontWeight.Bold,
-                fontFamily = FontFamily.Monospace,
-                color = accentColor
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = if (hasPending) "staged for ${data.athleteName}" else "✓ saved for ${data.athleteName}",
-                style = MaterialTheme.typography.bodyLarge,
-                color = accentColor,
-                textAlign = TextAlign.Center
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = if (hasPending) "Tap SUBMIT to save before continuing" else "Result recorded. Tap DONE or NEXT to continue.",
-                style = MaterialTheme.typography.labelSmall,
-                color = accentColor.copy(alpha = 0.7f),
-                textAlign = TextAlign.Center
-            )
-            Spacer(Modifier.height(24.dp))
-
-            // Undo / Reset row — only relevant while staged & not submitting
-            if (hasPending && !isSubmitting && (canUndo || onResetAthlete != null)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    if (canUndo) {
-                        OutlinedButton(
-                            onClick = onUndo,
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                        ) {
-                            Icon(Icons.AutoMirrored.Filled.Undo, null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(4.dp))
-                            Text("Clear")
-                        }
-                    }
-                    if (onResetAthlete != null) {
-                        OutlinedButton(
-                            onClick = onResetAthlete,
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)
-                        ) {
-                            Icon(Icons.Default.Refresh, null)
-                            Spacer(Modifier.width(4.dp))
-                            Text("Reset")
-                        }
-                    }
-                }
-                Spacer(Modifier.height(12.dp))
-            }
-
-            // Primary action row: SUBMIT (gating) → then DONE / NEXT
-            if (hasPending) {
-                Button(
-                    onClick = onSubmit,
-                    enabled = !isSubmitting,
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = NavyPrimary, contentColor = Color.White),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    if (isSubmitting) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            color = Color.White,
-                            strokeWidth = 2.dp
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text("Saving…", fontWeight = FontWeight.Bold)
-                    } else {
-                        Icon(Icons.Default.Check, null)
-                        Spacer(Modifier.width(8.dp))
-                        Text("SUBMIT", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                    }
-                }
-            } else {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedButton(onClick = onNext, modifier = Modifier.weight(1f)) {
-                        Text("DONE")
-                    }
-                    if (nextAthleteName != null) {
-                        Button(
-                            onClick = onNext,
-                            modifier = Modifier.weight(1.5f),
-                            colors = ButtonDefaults.buttonColors(containerColor = PerformanceGreen)
-                        ) {
-                            Icon(Icons.Default.SkipNext, null)
-                            Spacer(Modifier.width(8.dp))
-                            Text("NEXT: $nextAthleteName", maxLines = 1, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
+// Removed ConfirmationFlash
 
 @Composable
 private fun TestingGridLabels(trialCount: Int) {
@@ -647,21 +561,38 @@ private fun TestingGridLabels(trialCount: Int) {
     }
 }
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
-private fun AthleteGridCard(athlete: AthleteQueueItem, isSelected: Boolean, onClick: () -> Unit) {
-    val containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f) else Color.White
-    val borderColor = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
+private fun AthleteGridCard(
+    athlete: AthleteQueueItem, 
+    isSelected: Boolean, 
+    onClick: () -> Unit, 
+    onEditTrial: (String?) -> Unit,
+    onToggleAbsent: () -> Unit
+) {
+    val isAbsent = athlete.status == AthleteStatus.ABSENT
+    val containerColor = when {
+        isAbsent -> Color.LightGray.copy(alpha = 0.2f)
+        isSelected -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+        else -> Color.White
+    }
+    val borderColor = when {
+        isAbsent -> Color.Transparent
+        isSelected -> MaterialTheme.colorScheme.primary
+        else -> Color.LightGray.copy(alpha = 0.3f)
+    }
 
     Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 6.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 4.dp),
         colors = CardDefaults.cardColors(containerColor = containerColor),
-        shape = RoundedCornerShape(16.dp),
-        border = if (isSelected) BorderStroke(2.dp, borderColor) else BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.3f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(if (isSelected) 3.dp else 1.dp, borderColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isAbsent) 0.dp else if (isSelected) 4.dp else 2.dp)
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Athlete Info (Left Column)
@@ -697,8 +628,24 @@ private fun AthleteGridCard(athlete: AthleteQueueItem, isSelected: Boolean, onCl
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center,
                     maxLines = 2,
-                    lineHeight = 12.sp
+                    lineHeight = 12.sp,
+                    color = if (isAbsent) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f) else MaterialTheme.colorScheme.onSurface
                 )
+                
+                if (isAbsent) {
+                    Text("Absent", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                }
+
+                // Absent toggle
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
+                    Text("Absent?", style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp))
+                    Spacer(Modifier.width(4.dp))
+                    Switch(
+                        checked = isAbsent,
+                        onCheckedChange = { onToggleAbsent() },
+                        modifier = Modifier.height(24.dp).scale(0.6f)
+                    )
+                }
             }
 
             Spacer(Modifier.width(12.dp))
@@ -710,16 +657,37 @@ private fun AthleteGridCard(athlete: AthleteQueueItem, isSelected: Boolean, onCl
             ) {
                 repeat(athlete.totalTrials) { index ->
                     val trialNumber = index + 1
+                    val historicalResult = athlete.historicalTrials.getOrNull(index)
+                    
                     val status = when {
-                        trialNumber < athlete.currentTrial -> AthleteStatus.COMPLETED
+                        historicalResult != null -> AthleteStatus.COMPLETED
                         trialNumber == athlete.currentTrial && athlete.status == AthleteStatus.CAPTURED -> AthleteStatus.CAPTURED
+                        trialNumber == athlete.currentTrial && athlete.status == AthleteStatus.ABSENT -> AthleteStatus.ABSENT
                         else -> AthleteStatus.WAITING
                     }
                     
+                    val displayTimeMs = when (status) {
+                        AthleteStatus.COMPLETED -> (historicalResult!!.rawScore * 1000).toLong()
+                        AthleteStatus.CAPTURED -> athlete.capturedTimeMs
+                        else -> null
+                    }
+                    
+                    val resultId = historicalResult?.id
+                    
+                    val chipAlpha = if (isAbsent) 0.3f else 1f
+                    
                     TrialChip(
                         status = status,
-                        timeMs = if (status == AthleteStatus.CAPTURED) athlete.capturedTimeMs else null,
-                        modifier = Modifier.weight(1f)
+                        timeMs = displayTimeMs,
+                        modifier = Modifier.weight(1f).alpha(chipAlpha)
+                            .combinedClickable(
+                                onClick = { if (!isAbsent) onClick() },
+                                onLongClick = {
+                                    if (!isAbsent && (status == AthleteStatus.COMPLETED || status == AthleteStatus.CAPTURED)) {
+                                        onEditTrial(resultId)
+                                    }
+                                }
+                            )
                     )
                 }
             }
@@ -736,15 +704,15 @@ private fun TrialChip(status: AthleteStatus, timeMs: Long?, modifier: Modifier =
     }
 
     Surface(
-        modifier = modifier.height(64.dp),
-        shape = RoundedCornerShape(12.dp),
+        modifier = modifier.height(40.dp),
+        shape = RoundedCornerShape(8.dp),
         color = bgColor,
         border = BorderStroke(if (status == AthleteStatus.WAITING) 1.dp else 2.dp, borderColor)
     ) {
-        Column(
+        Row(
             modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 imageVector = if (status == AthleteStatus.COMPLETED) Icons.Default.Check else Icons.Default.Timer,
@@ -753,6 +721,7 @@ private fun TrialChip(status: AthleteStatus, timeMs: Long?, modifier: Modifier =
                 modifier = Modifier.size(16.dp)
             )
             if (timeMs != null) {
+                Spacer(Modifier.width(4.dp))
                 Text(
                     formatTimeDisplay(timeMs),
                     style = MaterialTheme.typography.labelSmall,
@@ -766,35 +735,135 @@ private fun TrialChip(status: AthleteStatus, timeMs: Long?, modifier: Modifier =
 }
 
 @Composable
-private fun HeatAthleteRow(athlete: AthleteQueueItem, isSelected: Boolean, onClick: () -> Unit) {
-    val bgColor = when {
-        isSelected -> MaterialTheme.colorScheme.primaryContainer
-        athlete.status == AthleteStatus.CAPTURED -> PerformanceGreen.copy(alpha = 0.1f)
-        athlete.status == AthleteStatus.COMPLETED -> MaterialTheme.colorScheme.surfaceVariant
-        else -> Color.Transparent
+private fun HeatAthleteRow(
+    athlete: AthleteQueueItem,
+    isRunning: Boolean,
+    onToggleAbsent: () -> Unit,
+    onCapture: () -> Unit,
+    onEdit: () -> Unit
+) {
+    val (bgColor, borderColor) = when (athlete.status) {
+        AthleteStatus.CAPTURED, AthleteStatus.COMPLETED -> Pair(PerformanceGreen.copy(alpha = 0.1f), PerformanceGreen)
+        AthleteStatus.ABSENT -> Pair(Color.LightGray.copy(alpha = 0.2f), Color.Transparent)
+        else -> Pair(MaterialTheme.colorScheme.surface, Color.LightGray.copy(alpha = 0.5f))
     }
-    val border = if (isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
 
     Surface(
-        onClick = onClick,
+        onClick = {
+            if (athlete.status == AthleteStatus.CAPTURED || athlete.status == AthleteStatus.COMPLETED) {
+                onEdit()
+            } else if (isRunning && athlete.status != AthleteStatus.ABSENT) {
+                onCapture()
+            }
+        },
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         color = bgColor,
         shape = RoundedCornerShape(8.dp),
-        border = border
+        border = BorderStroke(1.dp, borderColor)
     ) {
-        Row(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = athlete.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = if (athlete.status == AthleteStatus.ABSENT) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f) else MaterialTheme.colorScheme.onSurface
+                )
+                if (athlete.status == AthleteStatus.ABSENT) {
+                    Text("Absent", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                }
+            }
+
             if (athlete.status == AthleteStatus.CAPTURED || athlete.status == AthleteStatus.COMPLETED) {
-                Icon(Icons.Default.Check, null, tint = if (athlete.status == AthleteStatus.CAPTURED) PerformanceGreenText else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
-            } else { Spacer(Modifier.size(20.dp)) }
-            Spacer(Modifier.width(8.dp))
-            Text(athlete.name, style = MaterialTheme.typography.bodyMedium, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal, modifier = Modifier.weight(1f))
-            if (athlete.capturedTimeMs != null) {
-                Text(formatTimeDisplay(athlete.capturedTimeMs), style = MaterialTheme.typography.bodyMedium, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Medium, color = PerformanceGreenText)
-            } else if (athlete.status == AthleteStatus.ACTIVE) {
-                Text(if (isSelected) "READY" else "waiting...", style = MaterialTheme.typography.labelSmall, color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    text = formatTimeDisplay(athlete.capturedTimeMs ?: 0L),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontFamily = FontFamily.Monospace,
+                    fontWeight = FontWeight.Bold,
+                    color = PerformanceGreenText
+                )
+            } else if (!isRunning) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Absent?", style = MaterialTheme.typography.labelSmall)
+                    Spacer(Modifier.width(8.dp))
+                    Switch(
+                        checked = athlete.status == AthleteStatus.ABSENT,
+                        onCheckedChange = { onToggleAbsent() },
+                        modifier = Modifier.height(24.dp)
+                    )
+                }
+            } else if (athlete.status != AthleteStatus.ABSENT) {
+                Text("TAP TO FINISH", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
             }
         }
     }
+}
+
+@Composable
+private fun EditTimeDialog(
+    athleteName: String,
+    initialTimeMs: Long,
+    onDismiss: () -> Unit,
+    onSave: (Long) -> Unit,
+    onClear: () -> Unit
+) {
+    var inputString by remember { mutableStateOf(formatTimeDisplay(initialTimeMs).replace(Regex("[^0-9]"), "")) }
+    val displayMs = inputString.toLongOrNull()?.let { it * 10 } ?: 0L
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit Time for $athleteName") },
+        text = {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = formatTimeDisplay(displayMs),
+                    style = MaterialTheme.typography.displayMedium,
+                    fontFamily = FontFamily.Monospace,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(Modifier.height(24.dp))
+                val keys = listOf(
+                    listOf("1", "2", "3"),
+                    listOf("4", "5", "6"),
+                    listOf("7", "8", "9"),
+                    listOf("00", "0", "DEL")
+                )
+                keys.forEach { row ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 8.dp)) {
+                        row.forEach { key ->
+                            Button(
+                                onClick = {
+                                    if (key == "DEL") {
+                                        if (inputString.isNotEmpty()) inputString = inputString.dropLast(1)
+                                    } else {
+                                        if (inputString.length < 6) inputString += key
+                                    }
+                                },
+                                modifier = Modifier.size(64.dp),
+                                shape = CircleShape,
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurface)
+                            ) {
+                                Text(key, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onSave(displayMs) }) { Text("Save") }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = { onClear(); onDismiss() },
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+            ) { Text("Clear Entry") }
+        }
+    )
 }
 
 private fun formatTimeDisplay(ms: Long): String {

@@ -77,13 +77,11 @@ fun SessionReportScreen(
     onNavigateBack: () -> Unit,
     onNavigateToAthlete: (String, String) -> Unit,
     onResumeTesting: (String, String) -> Unit,
-    onNavigateToAiCoach: () -> Unit,
+    onNavigateToAiCoach: (String?) -> Unit,
     viewModel: SessionReportViewModel = hiltViewModel(),
     aiCoachViewModel: AiCoachViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val aiCoachState by aiCoachViewModel.uiState.collectAsState()
-    val isAiCoachVisible = aiCoachState.status != AiCoachStatus.UNSUPPORTED
     val context = LocalContext.current
     val sessionId = uiState.data?.event?.id ?: ""
     val groupId = uiState.data?.group?.id ?: ""
@@ -119,7 +117,7 @@ fun SessionReportScreen(
                 else -> viewModel.onAction(action)
             }
         },
-        isAiCoachVisible = isAiCoachVisible,
+        aiCoachViewModel = aiCoachViewModel,
         onNavigateToAiCoach = onNavigateToAiCoach
     )
 
@@ -142,14 +140,15 @@ fun SessionReportScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SessionReportContent(
     uiState: SessionReportUiState,
-    isAiCoachVisible: Boolean = false,
-    onNavigateToAiCoach: () -> Unit = {},
+    aiCoachViewModel: AiCoachViewModel,
+    onNavigateToAiCoach: (String?) -> Unit = {},
     onAction: (SessionReportAction) -> Unit
 ) {
+    val aiCoachState by aiCoachViewModel.uiState.collectAsState()
+    val isAiCoachVisible = aiCoachState.status != AiCoachStatus.UNSUPPORTED
     val data = uiState.data
     val df = remember { SimpleDateFormat("EEEE, MMM d", Locale.getDefault()) }
 
@@ -191,7 +190,13 @@ fun SessionReportContent(
         floatingActionButton = {
             AiFloatingActionButton(
                 isVisible = isAiCoachVisible,
-                onClick = { onNavigateToAiCoach() }
+                onClick = {
+                    val contextString = data?.let { d ->
+                        "Session: ${d.event.name}\nTotal Athletes: ${d.totalAthletes}\n" +
+                        "Tests:\n" + d.tests.joinToString("\n") { it.name }
+                    }
+                    onNavigateToAiCoach(contextString)
+                }
             )
         }
     ) { padding ->
@@ -214,7 +219,7 @@ fun SessionReportContent(
 }
 
 @Composable
-private fun SessionReportBody(
+fun SessionReportBody(
     uiState: SessionReportUiState,
     padding: PaddingValues,
     onAction: (SessionReportAction) -> Unit
@@ -457,7 +462,7 @@ private fun SessionReportBody(
 }
 
 @Composable
-private fun MetaChip(text: String, danger: Boolean = false) {
+fun MetaChip(text: String, danger: Boolean = false) {
     AssistChip(
         onClick = {},
         label = { Text(text, style = MaterialTheme.typography.labelSmall) },
@@ -468,7 +473,7 @@ private fun MetaChip(text: String, danger: Boolean = false) {
 }
 
 @Composable
-private fun AbsentAthleteRow(row: LeaderboardRow, onClick: () -> Unit) {
+fun AbsentAthleteRow(row: LeaderboardRow, onClick: () -> Unit) {
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
@@ -485,7 +490,7 @@ private fun AbsentAthleteRow(row: LeaderboardRow, onClick: () -> Unit) {
 }
 
 @Composable
-private fun MissingDataCard(names: List<String>, onResume: () -> Unit) {
+fun MissingDataCard(names: List<String>, onResume: () -> Unit) {
     Card(
         onClick = onResume,
         modifier = Modifier.fillMaxWidth(),
@@ -513,7 +518,7 @@ private fun MissingDataCard(names: List<String>, onResume: () -> Unit) {
 }
 
 @Composable
-private fun TrendBars(points: List<Pair<Long, Float>>) {
+fun TrendBars(points: List<Pair<Long, Float>>) {
     Row(
         modifier = Modifier.fillMaxSize(),
         horizontalArrangement = Arrangement.SpaceEvenly,
@@ -537,7 +542,7 @@ private fun TrendBars(points: List<Pair<Long, Float>>) {
 }
 
 @Composable
-private fun StatSummaryItem(
+fun StatSummaryItem(
     label: String,
     value: Double,
     unit: String,

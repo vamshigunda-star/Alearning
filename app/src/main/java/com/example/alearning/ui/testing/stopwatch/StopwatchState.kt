@@ -23,14 +23,19 @@ data class StopwatchUiState(
     val selectedAthleteId: String? = null,
     val pendingResults: Map<String, Double> = emptyMap(), // athleteId -> rawScore
     val isSubmitting: Boolean = false,
-    val showDiscardDialog: Boolean = false
+    val showDiscardDialog: Boolean = false,
+    val showMissingEntriesDialog: Boolean = false,
+    val editingAthleteId: String? = null,
+    val editingResultId: String? = null,
+    val showTrialCompletedMessage: Boolean = false,
+    val historicalResults: Map<String, List<com.example.alearning.domain.model.testing.TestResult>> = emptyMap()
 ) {
     val hasPendingChanges: Boolean get() = pendingResults.isNotEmpty()
 }
 
 enum class StopwatchPhase { READY, RUNNING, CONFIRMING }
 
-enum class AthleteStatus { WAITING, ACTIVE, CAPTURED, COMPLETED }
+enum class AthleteStatus { WAITING, ACTIVE, CAPTURED, COMPLETED, ABSENT }
 
 data class AthleteQueueItem(
     val athleteId: String,
@@ -38,7 +43,8 @@ data class AthleteQueueItem(
     val currentTrial: Int,
     val totalTrials: Int,
     val status: AthleteStatus = AthleteStatus.WAITING,
-    val capturedTimeMs: Long? = null
+    val capturedTimeMs: Long? = null,
+    val historicalTrials: List<com.example.alearning.domain.model.testing.TestResult> = emptyList()
 )
 
 data class ConfirmationData(
@@ -49,8 +55,6 @@ data class ConfirmationData(
 
 sealed interface StopwatchAction {
     data object OnStartStop : StopwatchAction
-    data object OnFinishTap : StopwatchAction
-    data object OnStopHeat : StopwatchAction
     data object OnUndo : StopwatchAction
     data object OnDismissError : StopwatchAction
     data object OnNavigateBack : StopwatchAction
@@ -59,9 +63,20 @@ sealed interface StopwatchAction {
     data object OnDismissDiscard : StopwatchAction
     data object OnNext : StopwatchAction
     data class OnSelectAthlete(val athleteId: String) : StopwatchAction
-    data object OnResetHeat : StopwatchAction
     data object OnResetAthlete : StopwatchAction
+    
+    // New Actions for Continuous Mass Timing
+    data class OnToggleAbsent(val athleteId: String) : StopwatchAction
+    data class OnCaptureTime(val athleteId: String) : StopwatchAction
+    data class OnOpenEditDialog(val athleteId: String, val resultId: String? = null) : StopwatchAction
+    data class OnSaveEditedTime(val athleteId: String, val newTimeMs: Long, val resultId: String? = null) : StopwatchAction
+    data class OnClearEntry(val athleteId: String, val resultId: String? = null) : StopwatchAction
+    data object OnCloseEditDialog : StopwatchAction
+    
+    data object OnRequestSubmit : StopwatchAction
+    data object OnDismissMissingEntriesDialog : StopwatchAction
     data object OnSubmitPending : StopwatchAction
+    data object OnDismissTrialMessage : StopwatchAction
 }
 
 

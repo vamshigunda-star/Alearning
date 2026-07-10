@@ -3,21 +3,26 @@ package com.example.alearning.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // Brand Colors
-val NavyPrimary = Color(0xFF0D1B2A)
-val NavyVariant = Color(0xFF1B263B)
-val BlueAccent = Color(0xFF415A77)
-val SportBlue = Color(0xFF0066CC)
-val VibrantBlue = Color(0xFF2196F3)
-val SportOrange = Color(0xFFFF6600) // Energetic CTA
-val SportOrangeVariant = Color(0xFFE65100)
-val SportOrangeContainer = Color(0xFFFFF4EC) // Warm tint for avatar/badge backgrounds
+val ElectricBlue = Color(0xFF0052FF) // Vibrant Primary
+val DynamicOrange = Color(0xFFFF5E00) // Energetic Secondary
+val AquaCyan = Color(0xFF00D1FF) // Lively Tertiary
+val NavyVariant = Color(0xFF1B263B) // For dark cards if needed
+
+// Legacy mappings for existing components
+val NavyPrimary = ElectricBlue
+val SportBlue = ElectricBlue
+val VibrantBlue = ElectricBlue
+val BlueAccent = AquaCyan
+val SportOrange = DynamicOrange
+val SportOrangeVariant = Color(0xFFE65100) 
+val SportOrangeContainer = Color(0xFFFFF4EC)
 
 // Neutral Colors
 val SurfaceWhite = Color(0xFFFFFFFF)
-val BackgroundLight = Color(0xFFF4F6F8) // Cool grey background
-val TextPrimary = Color(0xFF1A1C1E)
-val TextSecondary = Color(0xFF424242)
-val OutlineGrey = Color(0xFFE0E0E0)
+val BackgroundLight = Color(0xFFF7F9FA) // Very clean, cool off-white
+val TextPrimary = Color(0xFF111827) // Almost black
+val TextSecondary = Color(0xFF6B7280) // Soft gray
+val OutlineGrey = Color(0xFFE5E7EB)
 
 // Performance zone colors — used across all screens consistently
 // Rule: Green ≥ 60th percentile, Yellow 30–59th, Red < 30th, Grey = no data

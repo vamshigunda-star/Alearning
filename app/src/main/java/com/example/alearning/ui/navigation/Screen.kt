@@ -58,7 +58,9 @@ sealed class Screen(val route: String) {
     data object SignUp : Screen("sign_up")
     data object ResetPassword : Screen("reset_password")
     
-    data object AiCoach : Screen("ai_coach")
+    data object AiCoach : Screen("ai_coach?context={context}") {
+        fun createRoute(contextString: String?) = if (contextString != null) "ai_coach?context=${android.net.Uri.encode(contextString)}" else "ai_coach"
+    }
 
 }
 

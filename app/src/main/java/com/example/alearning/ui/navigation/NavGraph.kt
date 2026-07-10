@@ -183,6 +183,9 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
                 },
                 onNavigateToAthlete = { athleteId ->
                     navController.navigate(Screen.AthleteDashboard.createRoute(athleteId))
+                },
+                onNavigateToAiCoach = { contextString -> 
+                    navController.navigate(Screen.AiCoach.createRoute(contextString)) 
                 }
             )
         }
@@ -215,7 +218,7 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
                 onResumeTesting = { eventId, groupId ->
                     navController.navigate(Screen.TestingGrid.createRoute(eventId, groupId))
                 },
-                onNavigateToAiCoach = { navController.navigate(Screen.AiCoach.route) }
+                onNavigateToAiCoach = { contextString -> navController.navigate(Screen.AiCoach.createRoute(contextString)) }
             )
         }
 
@@ -235,7 +238,7 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
                 onStartQuickTest = { aid, testIds ->
                     navController.navigate(Screen.QuickTest.createRoute(aid, testIds))
                 },
-                onNavigateToAiCoach = { navController.navigate(Screen.AiCoach.route) }
+                onNavigateToAiCoach = { contextString -> navController.navigate(Screen.AiCoach.createRoute(contextString)) }
             )
         }
 
@@ -292,9 +295,11 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
             )
         }
 
-        composable(Screen.AiCoach.route) {
+        composable(
+            route = Screen.AiCoach.route,
+            arguments = listOf(navArgument("context") { nullable = true; type = NavType.StringType })
+        ) {
             AiCoachScreen(viewModel = hiltViewModel())
         }
-
     }
 }

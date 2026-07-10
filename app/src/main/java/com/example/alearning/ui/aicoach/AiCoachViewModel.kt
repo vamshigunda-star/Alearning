@@ -1,5 +1,6 @@
 package com.example.alearning.ui.aicoach
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.alearning.domain.repository.AiCoachRepository
@@ -29,9 +30,17 @@ sealed interface AiCoachAction {
 
 @HiltViewModel
 class AiCoachViewModel @Inject constructor(
-    private val repository: AiCoachRepository
+    private val repository: AiCoachRepository,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(AiCoachUiState())
+    private val contextData: String? = savedStateHandle.get<String>("context")
+    private val initialMessages = buildList {
+        add(ChatMessage(UUID.randomUUID().toString(), "Hello! I am your AI Coach. How can I help you?", false))
+        if (!contextData.isNullOrBlank()) {
+            add(ChatMessage(UUID.randomUUID().toString(), "I see you're looking at athlete data. You can ask me to analyze their performance, suggest training plans, or interpret their test results.", false))
+        }
+    }
+    private val _uiState = MutableStateFlow(AiCoachUiState(messages = initialMessages))
     val uiState: StateFlow<AiCoachUiState> = _uiState.asStateFlow()
 
     init {
@@ -57,7 +66,7 @@ class AiCoachViewModel @Inject constructor(
         
         viewModelScope.launch {
             try {
-                val response = repository.sendMessage(prompt)
+                val response = repository.sendMessage(prompt, contextData)
                 val aiMsg = ChatMessage(UUID.randomUUID().toString(), response, false)
                 _uiState.update { it.copy(messages = it.messages + aiMsg, isSending = false) }
             } catch (e: Exception) {

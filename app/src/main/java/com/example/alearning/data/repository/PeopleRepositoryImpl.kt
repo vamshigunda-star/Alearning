@@ -83,4 +83,8 @@ class PeopleRepositoryImpl @Inject constructor(
     override fun getIndividualsByIds(ids: List<String>): Flow<List<Individual>> {
         return dao.getIndividualsByIds(ids).map { list -> list.map { it.toDomain() } }
     }
+    
+    override fun getGroupAthleteCounts(): Flow<Map<String, Int>> {
+        return dao.getGroupAthleteCounts()
+    }
 }

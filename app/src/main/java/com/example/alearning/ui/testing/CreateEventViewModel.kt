@@ -26,6 +26,7 @@ data class CreateEventUiState(
     val allTests: List<FitnessTest> = emptyList(),
     val availableTests: List<FitnessTest> = emptyList(),
     val presets: List<TestPreset> = emptyList(),
+    val groupAthleteCounts: Map<String, Int> = emptyMap(),
     val selectedGroupId: String? = null,
     val selectedTabIndex: Int = 0,
     val selectedTestIds: Set<String> = emptySet(),
@@ -68,8 +69,10 @@ class CreateEventViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            peopleRepository.getAllGroups().collect { groups ->
-                _uiState.update { it.copy(groups = groups, isLoading = false) }
+            combine(peopleRepository.getAllGroups(), peopleRepository.getGroupAthleteCounts()) { groups, counts ->
+                groups to counts
+            }.collect { (groups, counts) ->
+                _uiState.update { it.copy(groups = groups, groupAthleteCounts = counts, isLoading = false) }
             }
         }
         viewModelScope.launch {

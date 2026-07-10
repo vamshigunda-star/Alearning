@@ -43,4 +43,5 @@ interface PeopleRepository {
 
     suspend fun removeMemberFromGroup(groupId: String, individualId: String)
     fun getIndividualsByIds(ids: List<String>): Flow<List<Individual>>
+    fun getGroupAthleteCounts(): Flow<Map<String, Int>>
 }

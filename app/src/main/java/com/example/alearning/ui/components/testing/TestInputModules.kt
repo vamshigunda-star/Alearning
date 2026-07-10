@@ -164,7 +164,7 @@ private fun NumericInputModule(
         ) {
             Icon(Icons.Default.Check, null)
             Spacer(Modifier.width(8.dp))
-            Text("SUBMIT SCORE", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text("SAVE", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -227,7 +227,7 @@ private fun IncrementalInputModule(
         ) {
             Icon(Icons.Default.Check, null)
             Spacer(Modifier.width(8.dp))
-            Text("SUBMIT COUNT", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text("SAVE", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -281,7 +281,7 @@ private fun StageInputModule(
         ) {
             Icon(Icons.Default.Check, null)
             Spacer(Modifier.width(8.dp))
-            Text("SUBMIT STAGE", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text("SAVE", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         }
     }
 }

@@ -17,31 +17,31 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
-    primary = VibrantBlue,
+    primary = ElectricBlue,
     onPrimary = Color.White,
-    secondary = SportOrange,
+    secondary = DynamicOrange,
     onSecondary = Color.White,
-    tertiary = BlueAccent,
-    background = NavyPrimary,
-    surface = NavyVariant,
+    tertiary = AquaCyan,
+    background = Color(0xFF111827),
+    surface = Color(0xFF1F2937),
     onBackground = Color.White,
     onSurface = Color.White
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = NavyPrimary,
+    primary = ElectricBlue,
     onPrimary = Color.White,
-    primaryContainer = NavyVariant,
-    onPrimaryContainer = Color.White,
-    secondary = SportBlue,
+    primaryContainer = Color(0xFFE0E7FF),
+    onPrimaryContainer = ElectricBlue,
+    secondary = DynamicOrange,
     onSecondary = Color.White,
-    tertiary = SportOrange,
+    tertiary = AquaCyan,
     onTertiary = Color.White,
     background = BackgroundLight,
     onBackground = TextPrimary,
     surface = SurfaceWhite,
     onSurface = TextPrimary,
-    surfaceVariant = Color(0xFFF0F2F5),
+    surfaceVariant = Color(0xFFF3F4F6),
     onSurfaceVariant = TextSecondary,
     outline = OutlineGrey
 )
@@ -75,6 +75,7 @@ fun AlearningTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
+        shapes = Shapes,
         content = content
     )
 }

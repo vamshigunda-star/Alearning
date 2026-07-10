@@ -16,6 +16,15 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
 import com.example.alearning.domain.model.reports.NormBandsForAge
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -44,6 +53,17 @@ fun NormBandLineChart(
     val textMeasurer = rememberTextMeasurer()
     val axisLabelStyle = TextStyle(color = Color(0xFF555555), fontSize = 10.sp)
     val dateFormatter = remember { SimpleDateFormat("MMM d", Locale.getDefault()) }
+    var isVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        isVisible = true
+    }
+    val animationProgress by animateFloatAsState(
+        targetValue = if (isVisible) 1f else 0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        )
+    )
 
     Canvas(modifier = modifier) {
         if (points.isEmpty()) return@Canvas
@@ -174,19 +194,32 @@ fun NormBandLineChart(
 
         // Line
         val path = Path()
-        points.forEachIndexed { i, p ->
-            val x = toX(i, points.size)
-            val y = toY(p.rawScore)
-            if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+        if (points.isNotEmpty()) {
+            val first = points.first()
+            path.moveTo(toX(0, points.size), toY(first.rawScore))
+            for (i in 0 until points.size - 1) {
+                val p1 = points[i]
+                val p2 = points[i + 1]
+                val x1 = toX(i, points.size)
+                val y1 = toY(p1.rawScore)
+                val x2 = toX(i + 1, points.size)
+                val y2 = toY(p2.rawScore)
+                
+                val cx = (x1 + x2) / 2f
+                path.cubicTo(cx, y1, cx, y2, x2, y2)
+            }
         }
-        drawPath(path, lineColor, style = Stroke(width = 2.dp.toPx()))
-
-        // Dots
-        points.forEachIndexed { i, p ->
-            val x = toX(i, points.size)
-            val y = toY(p.rawScore)
-            drawCircle(lineColor, radius = 4.dp.toPx(), center = Offset(x, y))
-            drawCircle(Color.White, radius = 2.dp.toPx(), center = Offset(x, y))
+        
+        clipRect(right = padLeft + plotW * animationProgress) {
+            drawPath(path, lineColor, style = Stroke(width = 2.dp.toPx()))
+    
+            // Dots
+            points.forEachIndexed { i, p ->
+                val x = toX(i, points.size)
+                val y = toY(p.rawScore)
+                drawCircle(lineColor, radius = 4.dp.toPx(), center = Offset(x, y))
+                drawCircle(Color.White, radius = 2.dp.toPx(), center = Offset(x, y))
+            }
         }
     }
 }

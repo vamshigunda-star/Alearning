@@ -8,13 +8,10 @@ import com.example.alearning.domain.model.people.Individual
 import com.example.alearning.domain.model.standards.FitnessTest
 import com.example.alearning.domain.model.testing.TestResult
 import com.example.alearning.domain.model.testing.TestingEvent
+import com.example.alearning.domain.repository.PeopleRepository
 import com.example.alearning.domain.repository.TestingRepository
-import com.example.alearning.domain.usecase.testing.ClearPendingEntryUseCase
-import com.example.alearning.domain.usecase.testing.DiscardPendingEntriesUseCase
 import com.example.alearning.domain.usecase.testing.GetTestingGridDataUseCase
-import com.example.alearning.domain.usecase.testing.ObservePendingEntriesUseCase
-import com.example.alearning.domain.usecase.testing.StagePendingEntryUseCase
-import com.example.alearning.domain.usecase.testing.SubmitPendingEntriesUseCase
+import com.example.alearning.domain.usecase.testing.RecordTestResultUseCase
 import com.example.alearning.domain.usecase.testing.TestingGridData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,35 +22,24 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-enum class TestingPhase { EVENT_DETAIL, LIVE_ENTRY }
-
 enum class CaptureMethodPreference { STOPWATCH, MANUAL }
 
 data class TestingGridUiState(
-    val phase: TestingPhase = TestingPhase.EVENT_DETAIL,
     val event: TestingEvent? = null,
     val gridData: TestingGridData? = null,
+    val selectedTestIndex: Int = 0,
     val editingCell: EditingCell? = null,
     val timingChoiceCell: TimingChoiceCell? = null,
-    // Tracks user's preference for time-based tests in this session: testId -> STOPWATCH or MANUAL
     val testCapturePreferences: Map<String, CaptureMethodPreference> = emptyMap(),
-    // Projection of `pending_test_entries` rows for this event, keyed by (athleteId, testId).
-    // Source of truth lives in Room; this map is rebuilt on every flow emission.
-    val pendingResults: Map<Pair<String, String>, Double> = emptyMap(),
-    val isSubmitting: Boolean = false,
-    val showDiscardDialog: Boolean = false,
     val deleteCandidate: DeleteCandidate? = null,
     val isLoading: Boolean = true,
     val errorMessage: String? = null
-) {
-    val hasPendingChanges: Boolean get() = pendingResults.isNotEmpty()
-}
+)
 
 data class EditingCell(
     val athlete: Individual,
     val test: FitnessTest,
-    val currentResult: TestResult?,
-    val pendingScore: Double?
+    val currentResult: TestResult?
 )
 
 data class TimingChoiceCell(
@@ -68,15 +54,12 @@ data class DeleteCandidate(
 )
 
 sealed interface TestingGridAction {
-    data object OnStartTesting : TestingGridAction
+    data class OnSelectTestTab(val index: Int) : TestingGridAction
     data class OnStartEditing(val athlete: Individual, val test: FitnessTest) : TestingGridAction
     data object OnDismissEditing : TestingGridAction
     data class OnSaveScore(val rawScore: Double) : TestingGridAction
-    data object OnClearPendingForEditingCell : TestingGridAction
-    data object OnSubmitAll : TestingGridAction
+    data class OnSaveAndNext(val rawScore: Double) : TestingGridAction
     data object OnRequestBack : TestingGridAction
-    data object OnConfirmDiscard : TestingGridAction
-    data object OnDismissDiscard : TestingGridAction
     data class OnRequestTimingChoice(val athlete: Individual, val test: FitnessTest) : TestingGridAction
     data class OnSelectTimingMethod(val testId: String, val method: CaptureMethodPreference) : TestingGridAction
     data object OnDismissTimingChoice : TestingGridAction
@@ -84,6 +67,7 @@ sealed interface TestingGridAction {
     data object OnConfirmDelete : TestingGridAction
     data object OnDismissDelete : TestingGridAction
     data object OnDismissError : TestingGridAction
+    
     // Navigation actions — handled by the screen composable
     data object OnNavigateBack : TestingGridAction
     data class OnNavigateToAthleteReport(val individualId: String) : TestingGridAction
@@ -96,12 +80,9 @@ sealed interface TestingGridAction {
 class TestingGridViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val testingRepository: TestingRepository,
+    private val peopleRepository: PeopleRepository,
     private val getGridData: GetTestingGridDataUseCase,
-    private val observePendingEntries: ObservePendingEntriesUseCase,
-    private val stagePendingEntry: StagePendingEntryUseCase,
-    private val clearPendingEntry: ClearPendingEntryUseCase,
-    private val discardPendingEntries: DiscardPendingEntriesUseCase,
-    private val submitPendingEntries: SubmitPendingEntriesUseCase
+    private val recordTestResult: RecordTestResultUseCase
 ) : ViewModel() {
 
     val eventId: String = savedStateHandle["eventId"] ?: ""
@@ -109,11 +90,6 @@ class TestingGridViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(TestingGridUiState())
     val uiState: StateFlow<TestingGridUiState> = _uiState.asStateFlow()
-
-    // Tracks whether we have already auto-resumed the user into LIVE_ENTRY for a non-empty
-    // pending set on the first hydration. Subsequent emptyings (e.g., after Submit/Discard)
-    // must NOT bounce them back to EVENT_DETAIL.
-    private var hasHydratedPending = false
 
     init {
         if (eventId.isNotEmpty() && groupId.isNotEmpty()) {
@@ -128,46 +104,26 @@ class TestingGridViewModel @Inject constructor(
                         _uiState.update { it.copy(gridData = data, isLoading = false) }
                     }
             }
-            viewModelScope.launch {
-                observePendingEntries(eventId)
-                    .catch { e -> _uiState.update { it.copy(errorMessage = e.message) } }
-                    .collect { entries ->
-                        val map = entries.associate { (it.individualId to it.testId) to it.rawScore }
-                        _uiState.update { state ->
-                            // Auto-resume into LIVE_ENTRY on first hydration if pending data exists
-                            // (coach was previously mid-session, app was killed, now they're back).
-                            val resumedPhase = if (!hasHydratedPending && map.isNotEmpty()) {
-                                TestingPhase.LIVE_ENTRY
-                            } else {
-                                state.phase
-                            }
-                            state.copy(pendingResults = map, phase = resumedPhase)
-                        }
-                        hasHydratedPending = true
-                    }
-            }
         }
     }
 
     fun onAction(action: TestingGridAction) {
         Log.d("TestingGridViewModel", "onAction: $action")
         when (action) {
-            is TestingGridAction.OnStartTesting -> {
-                _uiState.update { it.copy(phase = TestingPhase.LIVE_ENTRY) }
+            is TestingGridAction.OnSelectTestTab -> {
+                _uiState.update { it.copy(selectedTestIndex = action.index) }
             }
             is TestingGridAction.OnStartEditing -> {
                 val state = _uiState.value
                 val currentResult = state.gridData?.results?.find {
                     it.individualId == action.athlete.id && it.testId == action.test.id
                 }
-                val pending = state.pendingResults[action.athlete.id to action.test.id]
                 _uiState.update {
                     it.copy(
                         editingCell = EditingCell(
                             athlete = action.athlete,
                             test = action.test,
-                            currentResult = currentResult,
-                            pendingScore = pending
+                            currentResult = currentResult
                         )
                     )
                 }
@@ -175,17 +131,10 @@ class TestingGridViewModel @Inject constructor(
             is TestingGridAction.OnDismissEditing -> {
                 _uiState.update { it.copy(editingCell = null) }
             }
-            is TestingGridAction.OnSaveScore -> stagePendingScore(action.rawScore)
-            is TestingGridAction.OnClearPendingForEditingCell -> clearEditingCellPending()
-            is TestingGridAction.OnSubmitAll -> submitAll()
+            is TestingGridAction.OnSaveScore -> saveScore(action.rawScore, moveToNext = false)
+            is TestingGridAction.OnSaveAndNext -> saveScore(action.rawScore, moveToNext = true)
             is TestingGridAction.OnRequestBack -> {
-                if (_uiState.value.hasPendingChanges) {
-                    _uiState.update { it.copy(showDiscardDialog = true) }
-                }
-            }
-            is TestingGridAction.OnConfirmDiscard -> discardAll()
-            is TestingGridAction.OnDismissDiscard -> {
-                _uiState.update { it.copy(showDiscardDialog = false) }
+                onAction(TestingGridAction.OnNavigateBack)
             }
             is TestingGridAction.OnRequestTimingChoice -> {
                 _uiState.update {
@@ -222,68 +171,62 @@ class TestingGridViewModel @Inject constructor(
         }
     }
 
-    private fun stagePendingScore(rawScore: Double) {
+    private fun saveScore(rawScore: Double, moveToNext: Boolean) {
         val cell = _uiState.value.editingCell ?: return
-        _uiState.update { it.copy(editingCell = null) }
+        val gridData = _uiState.value.gridData ?: return
+        
+        // Temporarily clear the editing cell to dismiss keyboard while saving if not moving to next
+        if (!moveToNext) {
+            _uiState.update { it.copy(editingCell = null) }
+        }
+
         viewModelScope.launch {
             try {
-                stagePendingEntry(eventId, cell.athlete.id, cell.test.id, rawScore)
+                // Get full athlete data to calculate age
+                val athlete = peopleRepository.getIndividualById(cell.athlete.id)
+                if (athlete != null) {
+                    val ageMillis = System.currentTimeMillis() - athlete.dateOfBirth
+                    val ageYears = (ageMillis / (365.25 * 24 * 60 * 60 * 1000)).toFloat()
+
+                    recordTestResult(
+                        eventId = eventId,
+                        individualId = athlete.id,
+                        testId = cell.test.id,
+                        rawScore = rawScore,
+                        ageAtTime = ageYears,
+                        sex = athlete.sex
+                    )
+                }
+
+                if (moveToNext) {
+                    val students = gridData.students
+                    val currentIndex = students.indexOfFirst { it.id == cell.athlete.id }
+                    if (currentIndex != -1 && currentIndex + 1 < students.size) {
+                        val nextAthlete = students[currentIndex + 1]
+                        val nextCurrentResult = _uiState.value.gridData?.results?.find {
+                            it.individualId == nextAthlete.id && it.testId == cell.test.id
+                        }
+                        _uiState.update {
+                            it.copy(
+                                editingCell = EditingCell(
+                                    athlete = nextAthlete,
+                                    test = cell.test,
+                                    currentResult = nextCurrentResult
+                                )
+                            )
+                        }
+                    } else {
+                        // Reached the end of the list
+                        _uiState.update { it.copy(editingCell = null) }
+                    }
+                }
             } catch (e: Exception) {
                 Log.e(
                     "TestingGridViewModel",
-                    "stagePendingEntry FAILED event=$eventId athlete=${cell.athlete.id} test=${cell.test.id} score=$rawScore",
+                    "saveScore FAILED event=$eventId athlete=${cell.athlete.id} test=${cell.test.id} score=$rawScore",
                     e
                 )
-                _uiState.update { it.copy(errorMessage = e.message) }
-            }
-        }
-    }
-
-    private fun clearEditingCellPending() {
-        val cell = _uiState.value.editingCell ?: return
-        _uiState.update { it.copy(editingCell = null) }
-        viewModelScope.launch {
-            try {
-                clearPendingEntry(eventId, cell.athlete.id, cell.test.id)
-            } catch (e: Exception) {
-                Log.e(
-                    "TestingGridViewModel",
-                    "clearPendingEntry FAILED event=$eventId athlete=${cell.athlete.id} test=${cell.test.id}",
-                    e
-                )
-                _uiState.update { it.copy(errorMessage = e.message) }
-            }
-        }
-    }
-
-    private fun submitAll() {
-        val state = _uiState.value
-        if (state.pendingResults.isEmpty() || state.isSubmitting) return
-
-        Log.d("TestingGridViewModel", "submitAll start event=$eventId pending=${state.pendingResults.size}")
-        _uiState.update { it.copy(isSubmitting = true) }
-        viewModelScope.launch {
-            val outcome = submitPendingEntries(eventId)
-            outcome
-                .onSuccess { written ->
-                    Log.d("TestingGridViewModel", "submitAll success event=$eventId written=$written")
-                    _uiState.update { it.copy(isSubmitting = false) }
-                }
-                .onFailure { e ->
-                    Log.e("TestingGridViewModel", "submitAll FAILED event=$eventId", e)
-                    _uiState.update { it.copy(errorMessage = e.message, isSubmitting = false) }
-                }
-        }
-    }
-
-    private fun discardAll() {
-        _uiState.update { it.copy(showDiscardDialog = false) }
-        viewModelScope.launch {
-            try {
-                discardPendingEntries(eventId)
-            } catch (e: Exception) {
-                Log.e("TestingGridViewModel", "discardPendingEntries FAILED event=$eventId", e)
-                _uiState.update { it.copy(errorMessage = e.message) }
+                _uiState.update { it.copy(errorMessage = e.message, editingCell = null) }
             }
         }
     }

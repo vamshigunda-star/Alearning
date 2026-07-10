@@ -85,4 +85,14 @@ interface PeopleDao {
         WHERE gm.individualId = :studentId AND g.isDeleted = 0
     """)
     fun getGroupsForIndividual(studentId: String): Flow<List<GroupEntity>>
+
+    @MapInfo(keyColumn = "groupId", valueColumn = "count")
+    @Query("""
+        SELECT gm.groupId, COUNT(gm.individualId) as count 
+        FROM group_members gm 
+        INNER JOIN individuals i ON gm.individualId = i.id 
+        WHERE i.isDeleted = 0 
+        GROUP BY gm.groupId
+    """)
+    fun getGroupAthleteCounts(): Flow<Map<String, Int>>
 }

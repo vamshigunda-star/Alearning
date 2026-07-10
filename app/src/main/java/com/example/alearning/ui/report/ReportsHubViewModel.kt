@@ -16,6 +16,17 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import com.example.alearning.domain.repository.PeopleRepository
+import com.example.alearning.domain.repository.StandardsRepository
+import com.example.alearning.domain.repository.TestingRepository
+import com.example.alearning.domain.usecase.testing.AthleteRadarData
+import com.example.alearning.domain.usecase.testing.GetAthleteRadarDataUseCase
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.first
+import com.example.alearning.domain.model.people.Individual
+import com.example.alearning.domain.model.testing.TestResult
+import com.example.alearning.domain.model.standards.FitnessTest
+
 // ── UI State ──────────────────────────────────────────────────────────────────
 
 data class ReportsHubUiState(
@@ -25,6 +36,7 @@ data class ReportsHubUiState(
     // Athlete Profile tab
     val selectedAthleteId: String? = null,
     val athleteData: AthleteDashboardData? = null,
+    val athleteRadarData: AthleteRadarData? = null,
     val isLoadingAthlete: Boolean = false,
     val selectedAthleteTestId: String? = null,
 
@@ -34,8 +46,12 @@ data class ReportsHubUiState(
     val eventData: SessionReportData? = null,
     val isLoadingEvent: Boolean = false,
     val selectedEventTestId: String? = null,
+    val isSwitcherOpen: Boolean = false,
 
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val isExporting: Boolean = false,
+    val showDeleteDialog: Boolean = false,
+    val isEventDeleted: Boolean = false
 )
 
 // ── Actions ───────────────────────────────────────────────────────────────────
@@ -45,18 +61,48 @@ sealed interface ReportsHubAction {
     data class SelectAthleteTest(val testId: String) : ReportsHubAction
     data class SelectEvent(val eventId: String, val groupId: String) : ReportsHubAction
     data class SelectEventTest(val testId: String) : ReportsHubAction
+    data object OnOpenSwitcher : ReportsHubAction
+    data object OnDismissSwitcher : ReportsHubAction
+    data class OnSwitchSession(val sessionId: String) : ReportsHubAction
     data object DismissError : ReportsHubAction
+    
+    data object ExportAthleteCsv : ReportsHubAction
+    data object ExportEventCsv : ReportsHubAction
+    data object RequestDeleteEvent : ReportsHubAction
+    data object ConfirmDeleteEvent : ReportsHubAction
+    data object DismissDeleteEvent : ReportsHubAction
 }
 
 // ── ViewModel ─────────────────────────────────────────────────────────────────
 
 @HiltViewModel
 class ReportsHubViewModel @Inject constructor(
-    private val reports: ReportsRepository
+    private val reports: ReportsRepository,
+    private val testingRepository: TestingRepository,
+    private val peopleRepository: PeopleRepository,
+    private val standardsRepository: StandardsRepository,
+    private val getAthleteRadarData: GetAthleteRadarDataUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ReportsHubUiState())
     val uiState: StateFlow<ReportsHubUiState> = _uiState.asStateFlow()
+
+    private val _exportEvent = kotlinx.coroutines.flow.MutableSharedFlow<ExportRequest>()
+    val exportEvent = _exportEvent.asSharedFlow()
+
+    sealed interface ExportRequest {
+        data class Athlete(
+            val athlete: Individual,
+            val results: List<TestResult>,
+            val tests: Map<String, FitnessTest>
+        ) : ExportRequest
+
+        data class Event(
+            val eventName: String,
+            val results: List<Pair<Individual, TestResult>>,
+            val tests: Map<String, FitnessTest>
+        ) : ExportRequest
+    }
 
     private var athleteJob: Job? = null
     private var eventJob: Job? = null
@@ -91,7 +137,19 @@ class ReportsHubViewModel @Inject constructor(
             is ReportsHubAction.SelectAthleteTest -> _uiState.update { it.copy(selectedAthleteTestId = action.testId) }
             is ReportsHubAction.SelectEvent -> loadEvent(action.eventId, action.groupId)
             is ReportsHubAction.SelectEventTest -> _uiState.update { it.copy(selectedEventTestId = action.testId) }
+            ReportsHubAction.OnOpenSwitcher -> _uiState.update { it.copy(isSwitcherOpen = true) }
+            ReportsHubAction.OnDismissSwitcher -> _uiState.update { it.copy(isSwitcherOpen = false) }
+            is ReportsHubAction.OnSwitchSession -> {
+                _uiState.update { it.copy(isSwitcherOpen = false, isLoadingEvent = true, eventData = null) }
+                val groupId = _uiState.value.selectedEventGroupId ?: return
+                loadEvent(action.sessionId, groupId)
+            }
             ReportsHubAction.DismissError -> _uiState.update { it.copy(errorMessage = null) }
+            ReportsHubAction.ExportAthleteCsv -> exportAthleteResults()
+            ReportsHubAction.ExportEventCsv -> exportEventResults()
+            ReportsHubAction.RequestDeleteEvent -> _uiState.update { it.copy(showDeleteDialog = true) }
+            ReportsHubAction.DismissDeleteEvent -> _uiState.update { it.copy(showDeleteDialog = false) }
+            ReportsHubAction.ConfirmDeleteEvent -> deleteEvent()
         }
     }
 
@@ -108,6 +166,12 @@ class ReportsHubViewModel @Inject constructor(
                             isLoadingAthlete = false,
                             selectedAthleteTestId = state.selectedAthleteTestId ?: data?.tiles?.firstOrNull()?.test?.id
                         )
+                    }
+                    if (data != null) {
+                        try {
+                            val radar = getAthleteRadarData(id)
+                            _uiState.update { it.copy(athleteRadarData = radar) }
+                        } catch (_: Exception) {}
                     }
                 }
         }
@@ -136,6 +200,61 @@ class ReportsHubViewModel @Inject constructor(
                         )
                     }
                 }
+        }
+    }
+    
+    private fun exportAthleteResults() {
+        val athlete = _uiState.value.athleteData?.athlete ?: return
+        val athleteId = _uiState.value.selectedAthleteId ?: return
+        _uiState.update { it.copy(isExporting = true) }
+        viewModelScope.launch {
+            try {
+                val results = testingRepository.getAllResultsForIndividual(athleteId).first()
+                val tests = standardsRepository.getAllTests().first().associateBy { it.id }
+                _uiState.update { it.copy(isExporting = false) }
+                _exportEvent.emit(ExportRequest.Athlete(athlete, results, tests))
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Export failed: ${e.message}", isExporting = false) }
+            }
+        }
+    }
+
+    private fun exportEventResults() {
+        val data = _uiState.value.eventData ?: return
+        _uiState.update { it.copy(isExporting = true) }
+        viewModelScope.launch {
+            try {
+                val results = testingRepository.getEventResults(data.event.id).first()
+                val athleteIds = results.map { it.individualId }.distinct()
+                val athletesMap = peopleRepository.getIndividualsByIds(athleteIds).first().associateBy { it.id }
+                val tests = standardsRepository.getAllTests().first().associateBy { it.id }
+                
+                val pairedResults = results.mapNotNull { result ->
+                    athletesMap[result.individualId]?.let { it to result }
+                }
+                
+                _uiState.update { it.copy(isExporting = false) }
+                _exportEvent.emit(ExportRequest.Event(data.event.name, pairedResults, tests))
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Export failed: ${e.message}", isExporting = false) }
+            }
+        }
+    }
+
+    private fun deleteEvent() {
+        val eventId = _uiState.value.eventData?.event?.id ?: return
+        viewModelScope.launch {
+            try {
+                testingRepository.deleteEventById(eventId)
+                _uiState.update { it.copy(showDeleteDialog = false, isEventDeleted = true) }
+                // Need to clear the event or reload the home data? 
+                // Home data is observed so it will auto-update!
+                _uiState.update { it.copy(selectedEventId = null, eventData = null) }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(showDeleteDialog = false, errorMessage = "Failed to delete: ${e.message}")
+                }
+            }
         }
     }
 }
