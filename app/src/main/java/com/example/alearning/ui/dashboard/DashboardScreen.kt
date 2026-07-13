@@ -259,32 +259,44 @@ private fun ContextHeaderCard(
             .format(Date())
     }
 
-    ElevatedCard(
+    Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = NavyPrimary
-        )
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = NavyPrimary)
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
+        Column(modifier = Modifier.padding(24.dp)) {
             Text(
-                greeting,
-                style = MaterialTheme.typography.headlineSmall,
-                color = Color.White,
-                fontWeight = FontWeight.Bold
+                dateStr.uppercase(),
+                style = MaterialTheme.typography.labelMedium,
+                color = SportOrange,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                "$athleteCount athletes · $eventCount events",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.White.copy(alpha = 0.8f)
+                greeting,
+                style = MaterialTheme.typography.headlineMedium,
+                color = Color.White,
+                fontWeight = FontWeight.ExtraBold
             )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                dateStr,
-                style = MaterialTheme.typography.bodySmall,
-                color = Color.White.copy(alpha = 0.6f)
-            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Person, contentDescription = null, tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    "$athleteCount athletes",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.8f)
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Icon(Icons.Default.Event, contentDescription = null, tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    "$eventCount events",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.8f)
+                )
+            }
         }
     }
 }
@@ -296,17 +308,17 @@ private fun HeroCard(onClick: () -> Unit) {
             .fillMaxWidth()
             .minimumInteractiveComponentSize()
             .pressInteraction(
-                shape = MaterialTheme.shapes.large,
+                shape = RoundedCornerShape(24.dp),
                 baseElevation = 4.dp,
                 onClick = onClick
             ),
-        shape = MaterialTheme.shapes.large,
+        shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = SportOrange),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp) // Handled by pressInteraction
     ) {
         Row(
             modifier = Modifier
-                .padding(horizontal = 24.dp, vertical = 20.dp)
+                .padding(horizontal = 24.dp, vertical = 24.dp)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
@@ -316,26 +328,26 @@ private fun HeroCard(onClick: () -> Unit) {
                     "Start Testing Event",
                     style = MaterialTheme.typography.titleLarge,
                     color = Color.White,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.ExtraBold
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     "Select group → pick tests → begin",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.85f)
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Color.White.copy(alpha = 0.9f)
                 )
             }
             Surface(
-                modifier = Modifier.size(48.dp),
-                shape = MaterialTheme.shapes.medium,
-                color = Color.White.copy(alpha = 0.2f)
+                modifier = Modifier.size(56.dp),
+                shape = CircleShape,
+                color = Color.White.copy(alpha = 0.25f)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         Icons.Default.PlayArrow,
                         contentDescription = "Start",
                         tint = Color.White,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(32.dp)
                     )
                 }
             }
@@ -353,45 +365,45 @@ private fun QuickActionCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    ElevatedCard(
+    Card(
         modifier = modifier
-            .height(96.dp)
+            .height(104.dp)
             .pressInteraction(
-                shape = MaterialTheme.shapes.medium,
-                baseElevation = 2.dp,
+                shape = RoundedCornerShape(20.dp),
+                baseElevation = 0.dp,
                 onClick = onClick
             ),
-        shape = MaterialTheme.shapes.medium,
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp) // Handled by pressInteraction
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(8.dp),
+                .padding(12.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
-                    .background(tint.copy(alpha = 0.12f), shape = RoundedCornerShape(12.dp))
-                    .border(1.dp, tint.copy(alpha = 0.2f), shape = RoundedCornerShape(12.dp)),
+                    .size(48.dp)
+                    .background(tint.copy(alpha = 0.15f), shape = CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     icon,
                     contentDescription = label,
                     tint = tint,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(26.dp)
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             Text(
                 label,
                 style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.primary
             )
         }
     }
@@ -404,13 +416,13 @@ private fun RecentEventItem(event: TestingEvent, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .pressInteraction(
-                shape = MaterialTheme.shapes.medium,
-                baseElevation = 0.dp, // Flat by default as per existing design
+                shape = RoundedCornerShape(16.dp),
+                baseElevation = 0.dp,
                 onClick = onClick
             ),
-        shape = MaterialTheme.shapes.medium,
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
@@ -418,16 +430,24 @@ private fun RecentEventItem(event: TestingEvent, onClick: () -> Unit) {
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            Icon(
+                imageVector = Icons.Default.Event,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(16.dp))
             Text(
                 text = formatEventDate(event.date, event.name),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f)
             )
             Icon(
                 imageVector = Icons.Default.ChevronRight,
                 contentDescription = "Details",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

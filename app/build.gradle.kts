@@ -108,3 +108,57 @@ dependencies {
     implementation(libs.androidx.hilt.work)
     ksp(libs.androidx.hilt.compiler)
 }
+
+tasks.register("generateColorsFromDesign") {
+    val designFile = rootProject.file("design.md")
+    val outputDir = file("src/main/java/com/example/alearning/ui/theme")
+    val outputFile = file("$outputDir/Color.kt")
+    
+    inputs.file(designFile)
+    outputs.file(outputFile)
+    
+    doLast {
+        if (!designFile.exists()) return@doLast
+        val lines = designFile.readLines()
+        var inColorSection = false
+        val colors = mutableMapOf<String, String>()
+        
+        for (line in lines) {
+            if (line.startsWith("## 12. Color Palette")) {
+                inColorSection = true
+                continue
+            }
+            if (inColorSection && line.startsWith("## ") && !line.startsWith("## 12. Color Palette")) {
+                break
+            }
+            if (inColorSection) {
+                // Parse markdown table: | ColorName | #HEX |
+                val parts = line.split("|").map { it.trim() }
+                if (parts.size >= 3) {
+                    val name = parts[1]
+                    val hex = parts[2]
+                    if (name != "Name" && name.isNotBlank() && !name.contains("-")) {
+                        colors[name] = hex
+                    }
+                }
+            }
+        }
+        
+        val sb = StringBuilder()
+        sb.append("package com.example.alearning.ui.theme\n\n")
+        sb.append("import androidx.compose.ui.graphics.Color\n\n")
+        sb.append("// AUTO-GENERATED from design.md - DO NOT EDIT MANUALLY\n\n")
+        for ((name, hexRaw) in colors) {
+            val cleanHex = hexRaw.removePrefix("#")
+            val hexVal = if (cleanHex.length == 6) "0xFF$cleanHex" else "0x$cleanHex"
+            sb.append("val $name = Color($hexVal)\n")
+        }
+        
+        outputDir.mkdirs()
+        outputFile.writeText(sb.toString())
+    }
+}
+
+tasks.named("preBuild") {
+    dependsOn("generateColorsFromDesign")
+}
