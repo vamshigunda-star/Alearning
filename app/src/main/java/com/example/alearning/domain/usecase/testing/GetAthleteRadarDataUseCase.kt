@@ -6,6 +6,8 @@ import com.example.alearning.domain.repository.StandardsRepository
 import com.example.alearning.domain.repository.TestingRepository
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * One spoke on the radar chart.
@@ -48,7 +50,7 @@ class GetAthleteRadarDataUseCase @Inject constructor(
      * that category. Tests with a null percentile (no matching norm) are
      * skipped so they don't drag the average toward zero.
      */
-    suspend operator fun invoke(individualId: String): AthleteRadarData {
+    suspend operator fun invoke(individualId: String): AthleteRadarData = withContext(Dispatchers.IO) {
         val latestResults = testingRepository
             .getLatestResultPerTestForIndividual(individualId)
 
@@ -99,7 +101,7 @@ class GetAthleteRadarDataUseCase @Inject constructor(
 
         Log.d("GetAthleteRadarData", "Athlete=$individualId spokes=${axisScores.size} scored=${axisScores.count { it.testCount > 0 }}")
 
-        return AthleteRadarData(
+        AthleteRadarData(
             individualId = individualId,
             axisScores = axisScores
         )

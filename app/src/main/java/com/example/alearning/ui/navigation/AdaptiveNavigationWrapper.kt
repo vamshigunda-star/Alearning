@@ -40,7 +40,7 @@ fun AdaptiveNavigationWrapper(
     val items = listOf(
         BottomNavItem.Home,
         BottomNavItem.Roster,
-        BottomNavItem.Athletes,
+        BottomNavItem.Tests,
         BottomNavItem.Reports
     )
 
@@ -51,14 +51,42 @@ fun AdaptiveNavigationWrapper(
     // Check if the current route is one of the main tabs
     val isMainTab = items.any { it.route == currentRoute }
 
-    if (!isMainTab) {
-        // Hide nav bar entirely
-        Scaffold { innerPadding ->
-            content(Modifier.padding(innerPadding))
+    Scaffold(
+        bottomBar = {
+            if (isMainTab && !useNavRail) {
+                NavigationBar(
+                    containerColor = Color.White,
+                    contentColor = Color.Gray
+                ) {
+                    items.forEach { screen ->
+                        val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true
+                        NavigationBarItem(
+                            icon = { Icon(screen.icon, contentDescription = screen.title) },
+                            label = { Text(screen.title) },
+                            selected = selected,
+                            onClick = {
+                                if (currentRoute != screen.route) {
+                                    navController.navigate(screen.route) {
+                                        popUpTo(navController.graph.findStartDestination().id)
+                                        launchSingleTop = true
+                                    }
+                                }
+                            },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = SportOrange,
+                                selectedTextColor = SportOrange,
+                                unselectedIconColor = Color.Gray,
+                                unselectedTextColor = Color.Gray,
+                                indicatorColor = Color.Transparent
+                            )
+                        )
+                    }
+                }
+            }
         }
-    } else {
-        if (useNavRail) {
-            Row(modifier = Modifier.fillMaxSize()) {
+    ) { innerPadding ->
+        if (useNavRail && isMainTab) {
+            Row(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
                 NavigationRail(
                     containerColor = Color.White,
                     contentColor = Color.Gray
@@ -87,45 +115,10 @@ fun AdaptiveNavigationWrapper(
                         )
                     }
                 }
-                Scaffold { innerPadding ->
-                    content(Modifier.padding(innerPadding))
-                }
+                content(Modifier)
             }
         } else {
-            Scaffold(
-                bottomBar = {
-                    NavigationBar(
-                        containerColor = Color.White,
-                        contentColor = Color.Gray
-                    ) {
-                        items.forEach { screen ->
-                            val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true
-                            NavigationBarItem(
-                                icon = { Icon(screen.icon, contentDescription = screen.title) },
-                                label = { Text(screen.title) },
-                                selected = selected,
-                                onClick = {
-                                    if (currentRoute != screen.route) {
-                                        navController.navigate(screen.route) {
-                                            popUpTo(navController.graph.findStartDestination().id)
-                                            launchSingleTop = true
-                                        }
-                                    }
-                                },
-                                colors = NavigationBarItemDefaults.colors(
-                                    selectedIconColor = SportOrange,
-                                    selectedTextColor = SportOrange,
-                                    unselectedIconColor = Color.Gray,
-                                    unselectedTextColor = Color.Gray,
-                                    indicatorColor = Color.Transparent
-                                )
-                            )
-                        }
-                    }
-                }
-            ) { innerPadding ->
-                content(Modifier.padding(innerPadding))
-            }
+            content(Modifier.padding(innerPadding))
         }
     }
 }

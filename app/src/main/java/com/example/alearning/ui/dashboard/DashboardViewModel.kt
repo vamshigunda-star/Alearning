@@ -38,6 +38,7 @@ sealed interface DashboardAction {
     data object OnRosterClick : DashboardAction
     data object OnTestLibraryClick : DashboardAction
     data class OnEventClick(val eventId: String, val groupId: String) : DashboardAction
+    data object OnSettingsClick : DashboardAction
     data object OnDismissError : DashboardAction
     data object OnLeaderboardClick : DashboardAction
     data object OnAnalyticsClick : DashboardAction

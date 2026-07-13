@@ -50,8 +50,8 @@ import com.example.alearning.ui.components.AppTopBar
 import com.example.alearning.domain.model.reports.Distribution
 import com.example.alearning.domain.model.reports.SessionRow
 import com.example.alearning.domain.model.reports.TestTrendStrip
-import com.example.alearning.reports.components.DistributionBar
-import com.example.alearning.reports.components.MiniSparkline
+import com.example.alearning.ui.report.components.DistributionBar
+import com.example.alearning.ui.report.components.MiniSparkline
 import com.example.alearning.ui.theme.PerformanceRed
 import com.example.alearning.ui.theme.PerformanceRedText
 import java.text.SimpleDateFormat

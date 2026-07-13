@@ -66,6 +66,9 @@ sealed interface ReportsHubAction {
     data class OnSwitchSession(val sessionId: String) : ReportsHubAction
     data object DismissError : ReportsHubAction
     
+    data class OnNavigateToAthleteDashboard(val athleteId: String) : ReportsHubAction
+    data class OnStartQuickTest(val athleteId: String, val testIds: List<String>) : ReportsHubAction
+
     data object ExportAthleteCsv : ReportsHubAction
     data object ExportEventCsv : ReportsHubAction
     data object RequestDeleteEvent : ReportsHubAction
@@ -122,9 +125,9 @@ class ReportsHubViewModel @Inject constructor(
 
                     // Auto-load first event session if nothing selected yet
                     if (_uiState.value.selectedEventId == null) {
-                        val first = data.recentSessions.firstOrNull()
-                        if (first != null && first.groupId != null) {
-                            loadEvent(first.event.id, first.groupId)
+                        val firstValid = data.recentSessions.firstOrNull { it.groupId != null }
+                        if (firstValid != null) {
+                            loadEvent(firstValid.event.id, firstValid.groupId!!)
                         }
                     }
                 }
@@ -150,6 +153,8 @@ class ReportsHubViewModel @Inject constructor(
             ReportsHubAction.RequestDeleteEvent -> _uiState.update { it.copy(showDeleteDialog = true) }
             ReportsHubAction.DismissDeleteEvent -> _uiState.update { it.copy(showDeleteDialog = false) }
             ReportsHubAction.ConfirmDeleteEvent -> deleteEvent()
+            is ReportsHubAction.OnNavigateToAthleteDashboard,
+            is ReportsHubAction.OnStartQuickTest -> { /* Handled in UI navigation layer */ }
         }
     }
 

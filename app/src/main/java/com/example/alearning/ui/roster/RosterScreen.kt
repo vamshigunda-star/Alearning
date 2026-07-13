@@ -49,6 +49,7 @@ import com.example.alearning.ui.athlete.AthleteDashboardScreen
 fun RosterScreen(
     onNavigateBack: () -> Unit,
     onNavigateToAthleteReport: (String) -> Unit, // no longer invoked for athlete clicks
+    onNavigateToTest: (String, String, String?) -> Unit,
     viewModel: RosterViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -97,6 +98,7 @@ fun RosterScreen(
                         athleteId = athleteId,
                         contextSessionId = null,
                         onNavigateBack = { navigator.navigateBack() },
+                        onNavigateToTest = onNavigateToTest,
                         onStartQuickTest = { _, _ -> /* no-op in detail pane or handle if needed */ },
                         onNavigateToAiCoach = {}
                     )

@@ -370,7 +370,7 @@ fun ScoreCell(
             .height(64.dp)
             .clip(RoundedCornerShape(8.dp))
             .background(bgColor)
-            .combinedClickable(onClick = onClick, onLongClick = onLongPress),
+            .acceleratorClick(onClick = onClick, onLongClick = onLongPress),
         contentAlignment = Alignment.Center
     ) {
         if (savedResult != null) {

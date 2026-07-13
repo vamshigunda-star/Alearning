@@ -46,13 +46,13 @@ import com.example.alearning.ui.components.AppTopBarSubtitleColor
 import com.example.alearning.domain.model.reports.Classification
 import com.example.alearning.domain.model.reports.AttemptRow
 import com.example.alearning.domain.model.reports.LeaderboardRow
-import com.example.alearning.reports.components.ChartPoint
-import com.example.alearning.reports.components.DeltaArrow
-import com.example.alearning.reports.components.NormBandLineChart
-import com.example.alearning.reports.components.PercentileChip
-import com.example.alearning.reports.components.ZoneChip
-import com.example.alearning.reports.components.zoneColors
-import com.example.alearning.reports.components.zoneLabel
+import com.example.alearning.ui.report.components.ChartPoint
+import com.example.alearning.ui.report.components.DeltaArrow
+import com.example.alearning.ui.report.components.NormBandLineChart
+import com.example.alearning.ui.report.components.PercentileChip
+import com.example.alearning.ui.report.components.ZoneChip
+import com.example.alearning.ui.report.components.zoneColors
+import com.example.alearning.ui.report.components.zoneLabel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -72,11 +72,6 @@ fun AthleteTestDetailScreen(
     viewModel: AthleteTestDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    
-    LaunchedEffect(athleteId, testId, contextSessionId) {
-        viewModel.loadDetail(athleteId, testId, contextSessionId)
-    }
-    
     AthleteTestDetailContent(
         uiState = uiState,
         onAction = { action ->

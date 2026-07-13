@@ -1,8 +1,19 @@
 package com.example.alearning.ui.report
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Surface
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,6 +22,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
@@ -46,7 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.alearning.domain.model.reports.RecentSessionRow
 import com.example.alearning.domain.repository.AiCoachStatus
-import com.example.alearning.reports.components.SessionSwitcherSheet
+import com.example.alearning.ui.report.components.SessionSwitcherSheet
 import com.example.alearning.ui.aicoach.AiCoachViewModel
 import com.example.alearning.ui.aicoach.components.AiFloatingActionButton
 import com.example.alearning.ui.athlete.AthleteBody
@@ -67,7 +82,9 @@ fun ReportScreen(
     onNavigateToGroup: (String) -> Unit,
     onNavigateToSession: (String, String) -> Unit,
     onNavigateToAthlete: (String) -> Unit,
+    onNavigateToTest: (String, String) -> Unit = { _, _ -> },
     onNavigateToAiCoach: (String?) -> Unit = {},
+    onStartQuickTest: (String, List<String>) -> Unit = { _, _ -> },
     viewModel: ReportsHubViewModel = hiltViewModel(),
     aiCoachViewModel: AiCoachViewModel = hiltViewModel()
 ) {
@@ -123,9 +140,25 @@ fun ReportScreen(
                     }
                 }
             )
-        },
-        floatingActionButton = {
-            AiFloatingActionButton(
+        }
+    ) { padding ->
+        Box(modifier = Modifier.padding(padding).fillMaxSize()) {
+            ReportsHubContent(
+                uiState = uiState,
+                selectedTab = selectedTab,
+                onTabSelected = { selectedTab = it },
+                onAction = { action -> 
+                    when (action) {
+                        is ReportsHubAction.OnStartQuickTest -> onStartQuickTest(action.athleteId, action.testIds)
+                        is ReportsHubAction.OnNavigateToAthleteDashboard -> onNavigateToAthlete(action.athleteId)
+                        else -> viewModel.onAction(action)
+                    }
+                },
+                onNavigateToTest = onNavigateToTest,
+                modifier = Modifier.fillMaxSize()
+            )
+            
+            com.example.alearning.ui.aicoach.components.DraggableAiFab(
                 isVisible = isAiCoachVisible,
                 onClick = {
                     val contextString = if (selectedTab == 0) {
@@ -143,14 +176,6 @@ fun ReportScreen(
                 }
             )
         }
-    ) { padding ->
-        ReportsHubContent(
-            uiState = uiState,
-            selectedTab = selectedTab,
-            onTabSelected = { selectedTab = it },
-            onAction = { action -> viewModel.onAction(action) },
-            modifier = Modifier.padding(padding)
-        )
 
         if (uiState.showDeleteDialog) {
             AlertDialog(
@@ -187,40 +212,54 @@ private fun ReportsHubContent(
     selectedTab: Int,
     onTabSelected: (Int) -> Unit,
     onAction: (ReportsHubAction) -> Unit,
+    onNavigateToTest: (String, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val tabTitles = listOf("Athlete Profile", "Event Report")
 
     Column(modifier = modifier.fillMaxSize()) {
-        TabRow(
-            selectedTabIndex = selectedTab,
-            containerColor = NavyPrimary,
-            contentColor = Color.White,
-            indicator = { tabPositions ->
-                TabRowDefaults.SecondaryIndicator(
-                    Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
-                    color = SportOrange
-                )
-            }
+        // Custom Segmented Control Style Tabs
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(NavyPrimary)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.Center
         ) {
-            tabTitles.forEachIndexed { index, title ->
-                Tab(
-                    selected = selectedTab == index,
-                    onClick = { onTabSelected(index) },
-                    text = {
-                        Text(
-                            title,
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal,
-                            color = if (selectedTab == index) SportOrange else Color.White.copy(alpha = 0.7f)
-                        )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White.copy(alpha = 0.15f), CircleShape)
+                    .padding(4.dp)
+            ) {
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    tabTitles.forEachIndexed { index, title ->
+                        val isSelected = selectedTab == index
+                        val bgColor = if (isSelected) SportOrange else Color.Transparent
+                        val textColor = if (isSelected) Color.White else Color.White.copy(alpha = 0.7f)
+                        
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(bgColor, CircleShape)
+                                .clickable { onTabSelected(index) }
+                                .padding(vertical = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                title,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                color = textColor
+                            )
+                        }
                     }
-                )
+                }
             }
         }
 
         when (selectedTab) {
-            0 -> AthleteProfileTab(uiState = uiState, onAction = onAction)
+            0 -> AthleteProfileTab(uiState = uiState, onAction = onAction, onNavigateToTest = onNavigateToTest)
             1 -> EventReportTab(uiState = uiState, onAction = onAction)
         }
     }
@@ -229,7 +268,8 @@ private fun ReportsHubContent(
 @Composable
 private fun AthleteProfileTab(
     uiState: ReportsHubUiState,
-    onAction: (ReportsHubAction) -> Unit
+    onAction: (ReportsHubAction) -> Unit,
+    onNavigateToTest: (String, String) -> Unit
 ) {
     val data = uiState.homeData
 
@@ -247,22 +287,24 @@ private fun AthleteProfileTab(
         return
     }
 
-    val allAthletes = data.flags.map { it.individualId to it.athleteName }.distinctBy { it.first }
+    val allAthletes = data.allAthletes
 
     Column(modifier = Modifier.fillMaxSize()) {
-        Box(modifier = Modifier.padding(16.dp)) {
-            if (allAthletes.isNotEmpty()) {
-                AthletePickerRow(
-                    athletes = allAthletes,
-                    selectedId = uiState.selectedAthleteId,
-                    onSelect = { onAction(ReportsHubAction.SelectAthlete(it)) }
-                )
-            } else {
-                Text(
-                    "Select an athlete from the Roster tab to view their profile.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+        if (uiState.selectedAthleteId == null) {
+            Box(modifier = Modifier.padding(16.dp)) {
+                if (allAthletes.isNotEmpty()) {
+                    AthletePickerRow(
+                        athletes = allAthletes,
+                        selectedId = uiState.selectedAthleteId,
+                        onSelect = { onAction(ReportsHubAction.SelectAthlete(it)) }
+                    )
+                } else {
+                    Text(
+                        "Select an athlete from the Roster tab to view their profile.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
 
@@ -281,7 +323,28 @@ private fun AthleteProfileTab(
             AthleteBody(
                 uiState = athleteState,
                 padding = PaddingValues(0.dp),
-                onAction = { } // Ignore nested actions from AthleteBody in the Hub
+                onAction = { action ->
+                    when (action) {
+                        is com.example.alearning.ui.athlete.AthleteDashboardAction.OnStartQuickTest -> {
+                            uiState.selectedAthleteId?.let { athleteId ->
+                                onAction(ReportsHubAction.OnStartQuickTest(athleteId, action.testIds))
+                            }
+                        }
+                        is com.example.alearning.ui.athlete.AthleteDashboardAction.OnNavigateToTest -> {
+                            uiState.selectedAthleteId?.let { athleteId ->
+                                onNavigateToTest(athleteId, action.testId)
+                            }
+                        }
+                        else -> {}
+                    }
+                },
+                headerContent = {
+                    AthletePickerRow(
+                        athletes = allAthletes,
+                        selectedId = uiState.selectedAthleteId,
+                        onSelect = { onAction(ReportsHubAction.SelectAthlete(it)) }
+                    )
+                }
             )
         } else {
             Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
@@ -303,7 +366,8 @@ private fun EventReportTab(
         return
     }
 
-    val sessions = data?.recentSessions ?: emptyList()
+    // Only show sessions that are associated with a group, as Event Report requires a leaderboard
+    val sessions = data?.recentSessions?.filter { it.groupId != null } ?: emptyList()
     if (sessions.isEmpty()) {
         EmptyState(
             icon = "📋",
@@ -314,15 +378,17 @@ private fun EventReportTab(
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        Box(modifier = Modifier.padding(16.dp)) {
-            EventPickerRow(
-                sessions = sessions,
-                selectedEventId = uiState.selectedEventId,
-                onSelect = { row ->
-                    val gid = row.groupId ?: return@EventPickerRow
-                    onAction(ReportsHubAction.SelectEvent(row.event.id, gid))
-                }
-            )
+        if (uiState.selectedEventId == null) {
+            Box(modifier = Modifier.padding(16.dp)) {
+                EventPickerRow(
+                    sessions = sessions,
+                    selectedEventId = uiState.selectedEventId,
+                    onSelect = { row ->
+                        val gid = row.groupId ?: return@EventPickerRow
+                        onAction(ReportsHubAction.SelectEvent(row.event.id, gid))
+                    }
+                )
+            }
         }
 
         if (uiState.isLoadingEvent) {
@@ -349,6 +415,16 @@ private fun EventReportTab(
                         is com.example.alearning.ui.session.SessionReportAction.OnOpenSwitcher -> onAction(ReportsHubAction.OnOpenSwitcher)
                         else -> {} // ignore other actions
                     }
+                },
+                headerContent = {
+                    EventPickerRow(
+                        sessions = sessions,
+                        selectedEventId = uiState.selectedEventId,
+                        onSelect = { row ->
+                            val gid = row.groupId ?: return@EventPickerRow
+                            onAction(ReportsHubAction.SelectEvent(row.event.id, gid))
+                        }
+                    )
                 }
             )
         } else {
@@ -366,50 +442,54 @@ private fun AthletePickerRow(
     selectedId: String?,
     onSelect: (String) -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
-    val selectedName = athletes.firstOrNull { it.first == selectedId }?.second ?: ""
-    var searchText by remember { mutableStateOf(selectedName) }
+    var showSheet by remember { mutableStateOf(false) }
+    val selectedName = athletes.firstOrNull { it.first == selectedId }?.second ?: "Select Athlete"
 
-    LaunchedEffect(selectedName) {
-        if (selectedName.isNotEmpty() && !expanded) {
-            searchText = selectedName
+    Surface(
+        modifier = Modifier.fillMaxWidth().clickable { showSheet = true },
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        tonalElevation = 2.dp
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Athlete Profile", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(selectedName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            }
+            Icon(Icons.Default.ArrowDropDown, contentDescription = "Change")
         }
     }
 
-    val filteredAthletes = if (searchText.isBlank() || (searchText == selectedName && !expanded)) {
-        athletes
-    } else {
-        athletes.filter { it.second.contains(searchText, ignoreCase = true) }
-    }
-
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = it }
-    ) {
-        OutlinedTextField(
-            value = searchText.ifEmpty { if (!expanded) "Select Athlete" else "" },
-            onValueChange = { 
-                searchText = it
-                expanded = true 
-            },
-            readOnly = false,
-            label = { Text("Select Athlete") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .menuAnchor(MenuAnchorType.PrimaryEditable)
-        )
-        if (filteredAthletes.isNotEmpty()) {
-            ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                filteredAthletes.forEach { (id, name) ->
-                    DropdownMenuItem(
-                        text = { Text(name) },
-                        onClick = {
-                            searchText = name
-                            onSelect(id)
-                            expanded = false
-                        }
-                    )
+    if (showSheet) {
+        ModalBottomSheet(onDismissRequest = { showSheet = false }) {
+            Column(modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp)) {
+                Text(
+                    "Select Athlete",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
+                )
+                LazyColumn {
+                    items(athletes.size) { index ->
+                        val (id, name) = athletes[index]
+                        ListItem(
+                            headlineContent = { Text(name, fontWeight = if (id == selectedId) FontWeight.Bold else FontWeight.Normal) },
+                            modifier = Modifier.clickable {
+                                onSelect(id)
+                                showSheet = false
+                            },
+                            trailingContent = {
+                                if (id == selectedId) {
+                                    Icon(Icons.Default.Check, contentDescription = "Selected", tint = SportOrange)
+                                }
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -424,44 +504,59 @@ private fun EventPickerRow(
     onSelect: (RecentSessionRow) -> Unit
 ) {
     val df = remember { SimpleDateFormat("MMM d, yyyy", Locale.getDefault()) }
-    var expanded by remember { mutableStateOf(false) }
+    var showSheet by remember { mutableStateOf(false) }
     val selectedRow = sessions.firstOrNull { it.event.id == selectedEventId }
-    val displayText = selectedRow?.let {
-        "${it.event.name} — ${df.format(Date(it.event.date))}"
-    } ?: "Select Testing Event"
+    val displayText = selectedRow?.event?.name ?: "Select Testing Event"
+    val subtitleText = selectedRow?.let { "${it.groupName ?: ""} · ${df.format(Date(it.event.date))}" } ?: "View session report"
 
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = it }
+    Surface(
+        modifier = Modifier.fillMaxWidth().clickable { showSheet = true },
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        tonalElevation = 2.dp
     ) {
-        OutlinedTextField(
-            value = displayText,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("Select Testing Event") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
-        )
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            sessions.forEach { row ->
-                DropdownMenuItem(
-                    text = {
-                        Column {
-                            Text(row.event.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                            Text(
-                                "${row.groupName ?: ""} · ${df.format(Date(row.event.date))}",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    },
-                    onClick = {
-                        onSelect(row)
-                        expanded = false
-                    }
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Default.Event, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(displayText, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(subtitleText, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Icon(Icons.Default.ArrowDropDown, contentDescription = "Change")
+        }
+    }
+
+    if (showSheet) {
+        ModalBottomSheet(onDismissRequest = { showSheet = false }) {
+            Column(modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp)) {
+                Text(
+                    "Select Testing Event",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
                 )
+                LazyColumn {
+                    items(sessions.size) { index ->
+                        val row = sessions[index]
+                        val isSelected = row.event.id == selectedEventId
+                        ListItem(
+                            headlineContent = { Text(row.event.name, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
+                            supportingContent = { Text("${row.groupName ?: ""} · ${df.format(Date(row.event.date))}") },
+                            modifier = Modifier.clickable {
+                                onSelect(row)
+                                showSheet = false
+                            },
+                            trailingContent = {
+                                if (isSelected) {
+                                    Icon(Icons.Default.Check, contentDescription = "Selected", tint = SportOrange)
+                                }
+                            }
+                        )
+                    }
+                }
             }
         }
     }
@@ -472,11 +567,18 @@ private fun EmptyState(icon: String, title: String, subtitle: String) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.padding(32.dp)
         ) {
-            Text(icon, style = MaterialTheme.typography.displayMedium)
-            Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+            Box(
+                modifier = Modifier
+                    .size(80.dp)
+                    .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(icon, style = MaterialTheme.typography.displayMedium)
+            }
+            Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center)
             Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
         }
     }

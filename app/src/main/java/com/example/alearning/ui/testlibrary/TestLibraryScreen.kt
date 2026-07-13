@@ -241,6 +241,35 @@ private fun TestListCard(test: FitnessTest, onClick: () -> Unit) {
                     }
                 )
             }
+            
+            test.youtubeId?.let { youtubeId ->
+                Spacer(modifier = Modifier.height(12.dp))
+                val context = LocalContext.current
+                AsyncImage(
+                    model = "https://img.youtube.com/vi/$youtubeId/hqdefault.jpg",
+                    contentDescription = "Watch ${test.name} demonstration",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:$youtubeId"))
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            try {
+                                context.startActivity(intent)
+                            } catch (e: Exception) {
+                                try {
+                                    val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=$youtubeId"))
+                                    webIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    context.startActivity(webIntent)
+                                } catch (e2: Exception) {
+                                    android.widget.Toast.makeText(context, "No app available to play video", android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                )
+            }
         }
     }
 }

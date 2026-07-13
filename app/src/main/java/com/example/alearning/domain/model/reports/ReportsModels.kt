@@ -28,7 +28,8 @@ data class ReportsHomeData(
     val sessionsThisMonth: Int,
     val flags: List<AthleteFlag>,
     val groups: List<GroupCardData>,
-    val recentSessions: List<RecentSessionRow>
+    val recentSessions: List<RecentSessionRow>,
+    val allAthletes: List<Pair<String, String>>
 )
 
 data class TestTrendStrip(

@@ -29,6 +29,7 @@ import kotlinx.coroutines.delay
 enum class QuickTestStep { SETUP, ENTER_SCORES, COMPLETE }
 
 data class RecordedTestResult(
+    val id: String? = null,
     val testId: String,
     val testName: String,
     val unit: String,
@@ -53,8 +54,6 @@ data class QuickTestUiState(
     val availableTests: List<FitnessTest> = emptyList(),
     val selectedTestIds: Set<String> = emptySet(),
     val selectedTests: List<FitnessTest> = emptyList(),
-    val currentTestIndex: Int = 0,
-    val lastRecordedPercentile: Int? = null,
     val recordedResults: List<RecordedTestResult> = emptyList(),
     val isSaving: Boolean = false,
     val isLoading: Boolean = true,
@@ -72,8 +71,9 @@ sealed interface QuickTestAction {
     data class OnSelectCategory(val index: Int) : QuickTestAction
     data class OnToggleTest(val testId: String) : QuickTestAction
     data object OnConfirmSetup : QuickTestAction
-    data class OnSaveScore(val rawScore: Double) : QuickTestAction
-    data object OnSkipTest : QuickTestAction
+    data class OnSaveScore(val testId: String, val rawScore: Double) : QuickTestAction
+    data class OnDeleteScore(val testId: String) : QuickTestAction
+    data object OnCompleteTest : QuickTestAction
     data object OnRequestDelete : QuickTestAction
     data object OnConfirmDelete : QuickTestAction
     data object OnDismissDelete : QuickTestAction
@@ -104,8 +104,6 @@ class QuickTestViewModel @Inject constructor(
     )
     val uiState: StateFlow<QuickTestUiState> = _uiState.asStateFlow()
 
-    // Added for live calculation
-    private var calculationJob: Job? = null
     private var hasInitializedAthlete: Boolean = false
 
     init {
@@ -119,9 +117,6 @@ class QuickTestViewModel @Inject constructor(
                 // Load Categories
                 getTestLibrary.getCategories().collect { categories ->
                     _uiState.update { it.copy(categories = categories) }
-
-                    // If we have a testId, we might need to find which category it belongs to
-                    // but for simplicity, let's just make sure it's selected if found in loaded tests.
                     if (categories.isNotEmpty()) {
                         loadTests(categories.first().id)
                     }
@@ -132,8 +127,6 @@ class QuickTestViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            // Load Athletes for Search. Only seed selectedAthlete / search query / preselected tests
-            // on the FIRST emission — subsequent emissions must not wipe user toggles.
             peopleRepository.getAllIndividuals().collect { athletes ->
                 if (!hasInitializedAthlete) {
                     val selectedAthlete = athleteId?.let { id -> athletes.find { it.id == id } }
@@ -174,8 +167,8 @@ class QuickTestViewModel @Inject constructor(
                     isGuest = action.athlete == null
                 ) }
             }
-            is QuickTestAction.OnSetGuestSex -> _uiState.update { it.copy(guestSex = action.sex, lastRecordedPercentile = null) }
-            is QuickTestAction.OnSetGuestAge -> _uiState.update { it.copy(guestAge = action.age, lastRecordedPercentile = null) }
+            is QuickTestAction.OnSetGuestSex -> _uiState.update { it.copy(guestSex = action.sex) }
+            is QuickTestAction.OnSetGuestAge -> _uiState.update { it.copy(guestAge = action.age) }
             is QuickTestAction.OnSelectCategory -> {
                 val category = _uiState.value.categories.getOrNull(action.index) ?: return
                 _uiState.update { it.copy(selectedCategoryIndex = action.index) }
@@ -199,13 +192,21 @@ class QuickTestViewModel @Inject constructor(
                 }
                 confirmSetupAndProceed()
             }
-            is QuickTestAction.OnSaveScore -> saveScoreAndAdvance(action.rawScore)
-            is QuickTestAction.OnSkipTest -> skipTest()
+            is QuickTestAction.OnSaveScore -> saveScore(action.testId, action.rawScore)
+            is QuickTestAction.OnDeleteScore -> deleteScore(action.testId)
+            is QuickTestAction.OnCompleteTest -> _uiState.update { it.copy(step = QuickTestStep.COMPLETE) }
             is QuickTestAction.OnRequestDelete -> _uiState.update { it.copy(showDeleteConfirmation = true) }
             is QuickTestAction.OnConfirmDelete -> confirmDelete()
             is QuickTestAction.OnDismissDelete -> _uiState.update { it.copy(showDeleteConfirmation = false) }
             is QuickTestAction.OnDismissError -> _uiState.update { it.copy(errorMessage = null) }
-            is QuickTestAction.OnNavigateBack -> Unit
+            is QuickTestAction.OnNavigateBack -> {
+                val currentState = _uiState.value
+                if (currentState.step == QuickTestStep.ENTER_SCORES) {
+                    _uiState.update { it.copy(step = QuickTestStep.SETUP) }
+                } else if (currentState.step == QuickTestStep.COMPLETE) {
+                    // Navigate handled in UI
+                }
+            }
         }
     }
 
@@ -230,23 +231,6 @@ class QuickTestViewModel @Inject constructor(
             } catch (e: Exception) {
                 _uiState.update { it.copy(errorMessage = "Delete failed: ${e.message}", isDeleting = false) }
             }
-        }
-    }
-
-    // New helper for live calculation called from the UI
-    fun onLiveScoreChange(score: Double) {
-        val state = _uiState.value
-        val test = state.selectedTests.getOrNull(state.currentTestIndex) ?: return
-        
-        calculationJob?.cancel()
-        calculationJob = viewModelScope.launch {
-            delay(300) // Debounce calculations
-            val age = state.selectedAthlete?.currentAge?.toDouble() 
-                ?: state.guestAge.toDoubleOrNull() ?: 18.0
-            val sex = state.selectedAthlete?.sex ?: state.guestSex
-
-            val result = calculatePercentile(test.id, score, age, sex)
-            _uiState.update { it.copy(lastRecordedPercentile = result?.percentile) }
         }
     }
 
@@ -282,9 +266,9 @@ class QuickTestViewModel @Inject constructor(
         }
     }
 
-    private fun saveScoreAndAdvance(rawScore: Double) {
+    private fun saveScore(testId: String, rawScore: Double) {
         val state = _uiState.value
-        val test = state.selectedTests.getOrNull(state.currentTestIndex) ?: return
+        val test = state.selectedTests.find { it.id == testId } ?: return
 
         _uiState.update { it.copy(isSaving = true) }
         viewModelScope.launch {
@@ -304,6 +288,7 @@ class QuickTestViewModel @Inject constructor(
                         sex = athlete.sex
                     )
                     RecordedTestResult(
+                        id = result.id,
                         testId = test.id,
                         testName = test.name,
                         unit = test.unit,
@@ -313,7 +298,6 @@ class QuickTestViewModel @Inject constructor(
                         classification = result.classification
                     )
                 } else {
-                    // Guest: compute percentile directly without persisting.
                     val age = state.guestAge.toDoubleOrNull() ?: 18.0
                     val pr = calculatePercentile(test.id, rawScore, age, state.guestSex)
                     RecordedTestResult(
@@ -328,33 +312,34 @@ class QuickTestViewModel @Inject constructor(
                 }
 
                 _uiState.update {
-                    it.copy(
-                        lastRecordedPercentile = recorded.percentile,
-                        recordedResults = it.recordedResults + recorded
-                    )
+                    val newResults = it.recordedResults.filter { r -> r.testId != testId } + recorded
+                    it.copy(recordedResults = newResults, isSaving = false)
                 }
-                advanceToNextTest()
             } catch (e: Exception) {
                 _uiState.update { it.copy(errorMessage = e.message, isSaving = false) }
             }
         }
     }
 
-    private fun skipTest() {
-        advanceToNextTest()
-    }
-
-    private fun advanceToNextTest() {
+    private fun deleteScore(testId: String) {
         val state = _uiState.value
-        val nextIndex = state.currentTestIndex + 1
-        if (nextIndex >= state.selectedTests.size) {
-            _uiState.update { it.copy(step = QuickTestStep.COMPLETE, isSaving = false) }
-        } else {
-            _uiState.update { it.copy(currentTestIndex = nextIndex, isSaving = false) }
+        val existingResult = state.recordedResults.find { it.testId == testId } ?: return
+        
+        viewModelScope.launch {
+            try {
+                if (existingResult.id != null) {
+                    testingRepository.deleteResultById(existingResult.id)
+                }
+                _uiState.update { 
+                    it.copy(recordedResults = it.recordedResults.filter { r -> r.testId != testId }) 
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Delete failed: ${e.message}") }
+            }
         }
     }
 
-    private var createdEventId: String? = null
+    private var createdEventId: String? = savedStateHandle.get<String>("eventId")
 
     private suspend fun ensureEventExists(): String {
         createdEventId?.let { return it }

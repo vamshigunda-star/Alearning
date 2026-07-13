@@ -15,11 +15,12 @@ sealed class Screen(val route: String) {
     data object Insights : Screen("insights")
     data object TestLibrary : Screen("test_library")
     data object CreateEvent : Screen("create_event")
-    data object QuickTest : Screen("quick_test?athleteId={athleteId}&testIds={testIds}") {
-        fun createRoute(athleteId: String? = null, testIds: List<String> = emptyList()): String {
+    data object QuickTest : Screen("quick_test?athleteId={athleteId}&testIds={testIds}&eventId={eventId}") {
+        fun createRoute(athleteId: String? = null, testIds: List<String> = emptyList(), eventId: String? = null): String {
             val params = buildList {
                 if (athleteId != null) add("athleteId=$athleteId")
                 if (testIds.isNotEmpty()) add("testIds=${testIds.joinToString(",")}")
+                if (eventId != null) add("eventId=$eventId")
             }
             return "quick_test" + if (params.isEmpty()) "" else "?" + params.joinToString("&")
         }
@@ -39,6 +40,8 @@ sealed class Screen(val route: String) {
             "stopwatch/$eventId/$fitnessTestId/$groupId" + if (athleteId != null) "?athleteId=$athleteId" else ""
     }
 
+    data object TestsHub : Screen("tests_hub")
+    
     // Reports & Results layer
     data object GroupOverview : Screen("group/{groupId}") {
         fun createRoute(groupId: String) = "group/$groupId"
@@ -53,6 +56,11 @@ sealed class Screen(val route: String) {
             "athlete/$athleteId" + if (contextSessionId != null) "?contextSessionId=$contextSessionId" else ""
     }
 
+    data object AthleteTestDetail : Screen("athlete/{athleteId}/test/{testId}?contextSessionId={contextSessionId}") {
+        fun createRoute(athleteId: String, testId: String, contextSessionId: String? = null) =
+            "athlete/$athleteId/test/$testId" + if (contextSessionId != null) "?contextSessionId=$contextSessionId" else ""
+    }
+
     // ───── Auth screens ─────
     data object SignIn : Screen("sign_in")
     data object SignUp : Screen("sign_up")
@@ -62,6 +70,7 @@ sealed class Screen(val route: String) {
         fun createRoute(contextString: String?) = if (contextString != null) "ai_coach?context=${android.net.Uri.encode(contextString)}" else "ai_coach"
     }
 
+    data object Settings : Screen("settings")
 }
 
 sealed class BottomNavItem(
@@ -81,15 +90,15 @@ sealed class BottomNavItem(
         icon = Icons.Default.Groups
     )
 
-    data object Athletes : BottomNavItem(
-        route = Screen.Athletes.route,
-        title = "Athletes",
-        icon = Icons.Default.Person
+    data object Tests : BottomNavItem(
+        route = Screen.TestLibrary.route,
+        title = "Tests",
+        icon = Icons.AutoMirrored.Filled.Assignment
     )
 
     data object Reports : BottomNavItem(
         route = Screen.Report.route,
         title = "Reports",
-        icon = Icons.AutoMirrored.Filled.Assignment
+        icon = Icons.AutoMirrored.Filled.TrendingUp
     )
 }

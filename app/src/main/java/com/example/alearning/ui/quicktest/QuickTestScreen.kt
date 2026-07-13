@@ -20,10 +20,12 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material3.*
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -31,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.alearning.ui.components.AppTopBar
 import com.example.alearning.ui.theme.*
@@ -52,8 +55,7 @@ fun QuickTestScreen(
                 is QuickTestAction.OnNavigateBack -> onNavigateBack()
                 else -> viewModel.onAction(action)
             }
-        },
-        onLiveScoreChange = { viewModel.onLiveScoreChange(it) }
+        }
     )
 }
 
@@ -61,8 +63,7 @@ fun QuickTestScreen(
 @Composable
 fun QuickTestContent(
     uiState: QuickTestUiState,
-    onAction: (QuickTestAction) -> Unit,
-    onLiveScoreChange: (Double) -> Unit
+    onAction: (QuickTestAction) -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -150,7 +151,7 @@ fun QuickTestContent(
                 Box(modifier = Modifier.padding(padding)) {
                     when (uiState.step) {
                         QuickTestStep.SETUP -> SetupStep(uiState, onAction)
-                        QuickTestStep.ENTER_SCORES -> EnterScoresStep(uiState, onAction, onLiveScoreChange)
+                        QuickTestStep.ENTER_SCORES -> EnterScoresStep(uiState, onAction)
                         QuickTestStep.COMPLETE -> CompleteStep(uiState, onAction)
                     }
 
@@ -203,17 +204,15 @@ private fun SetupStep(
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         item {
             Text(
                 "Athlete Details",
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
-        }
-
-        item {
+            Spacer(modifier = Modifier.height(12.dp))
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = uiState.athleteSearchQuery,
@@ -228,14 +227,18 @@ private fun SetupStep(
                             Icon(Icons.Default.CheckCircle, null, tint = Color(0xFF4CAF50))
                         }
                     },
-                    shape = MaterialTheme.shapes.medium
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                    )
                 )
 
                 // Search Suggestions
                 if (uiState.matchingAthletes.isNotEmpty()) {
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.medium,
+                        shape = RoundedCornerShape(12.dp),
                         tonalElevation = 2.dp,
                         shadowElevation = 4.dp
                     ) {
@@ -260,9 +263,10 @@ private fun SetupStep(
 
         if (uiState.isGuest && uiState.athleteSearchQuery.isNotBlank()) {
             item {
-                Card(
+                Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                 ) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text("Guest Details (Required for Percentiles)", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
@@ -273,7 +277,8 @@ private fun SetupStep(
                                 onValueChange = { if (it.all { char -> char.isDigit() }) onAction(QuickTestAction.OnSetGuestAge(it)) },
                                 label = { Text("Age") },
                                 modifier = Modifier.weight(1f),
-                                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number)
+                                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                                shape = RoundedCornerShape(12.dp)
                             )
                             
                             var expanded by remember { mutableStateOf(false) }
@@ -285,6 +290,7 @@ private fun SetupStep(
                                     label = { Text("Sex") },
                                     modifier = Modifier.fillMaxWidth(),
                                     trailingIcon = {ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                                    shape = RoundedCornerShape(12.dp),
                                     colors = OutlinedTextFieldDefaults.colors(
                                         focusedContainerColor = Color.Transparent,
                                         unfocusedContainerColor = Color.Transparent
@@ -323,7 +329,7 @@ private fun SetupStep(
         }
 
         item {
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+            HorizontalDivider()
         }
 
         item {
@@ -334,31 +340,57 @@ private fun SetupStep(
                 placeholder = { Text("e.g., Morning Session") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                shape = MaterialTheme.shapes.medium
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                )
             )
         }
 
         item {
             Text(
                 "Select Tests",
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
         }
 
-        item {
-            if (uiState.categories.isNotEmpty()) {
+        if (uiState.categories.isNotEmpty()) {
+            item {
                 ScrollableTabRow(
                     selectedTabIndex = uiState.selectedCategoryIndex,
                     edgePadding = 0.dp,
                     containerColor = Color.Transparent,
-                    divider = {}
+                    divider = {},
+                    indicator = { tabPositions ->
+                        if (uiState.selectedCategoryIndex < tabPositions.size) {
+                            androidx.compose.material3.TabRowDefaults.SecondaryIndicator(
+                                modifier = Modifier.tabIndicatorOffset(tabPositions[uiState.selectedCategoryIndex]),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
                 ) {
                     uiState.categories.forEachIndexed { index, category ->
                         Tab(
                             selected = index == uiState.selectedCategoryIndex,
                             onClick = { onAction(QuickTestAction.OnSelectCategory(index)) },
-                            text = { Text(category.name, style = MaterialTheme.typography.labelLarge) }
+                            text = { 
+                                val isSelected = index == uiState.selectedCategoryIndex
+                                Surface(
+                                    shape = RoundedCornerShape(24.dp),
+                                    color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+                                    modifier = Modifier.padding(vertical = 4.dp)
+                                ) {
+                                    Text(
+                                        category.name,
+                                        style = MaterialTheme.typography.titleSmall,
+                                        color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                                    )
+                                }
+                            }
                         )
                     }
                 }
@@ -367,32 +399,59 @@ private fun SetupStep(
 
         items(uiState.availableTests) { test ->
             val isSelected = test.id in uiState.selectedTestIds
-            OutlinedCard(
+            Surface(
                 onClick = { onAction(QuickTestAction.OnToggleTest(test.id)) },
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.outlinedCardColors(
-                    containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                    else MaterialTheme.colorScheme.surface
-                ),
-                border = if (isSelected) CardDefaults.outlinedCardBorder().copy(brush = SolidColor(MaterialTheme.colorScheme.primary))
-                else CardDefaults.outlinedCardBorder()
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.surface,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(2.dp, RoundedCornerShape(16.dp))
             ) {
                 Row(
-                    modifier = Modifier.padding(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Checkbox(
                         checked = isSelected,
-                        onCheckedChange = { onAction(QuickTestAction.OnToggleTest(test.id)) }
+                        onCheckedChange = { onAction(QuickTestAction.OnToggleTest(test.id)) },
+                        colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary)
                     )
-                    Column {
-                        Text(test.name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
                         Text(
-                            "${test.unit} \u00b7 ${if (test.isHigherBetter) "Higher is better" else "Lower is better"}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            test.name, 
+                            style = MaterialTheme.typography.titleMedium, 
+                            fontWeight = FontWeight.Bold
                         )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                test.unit,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            val badgeColor = if (test.isHigherBetter) Color(0xFFE8F5E9) else Color(0xFFFFEBEE)
+                            val textColor = if (test.isHigherBetter) Color(0xFF2E7D32) else Color(0xFFC62828)
+                            Surface(
+                                shape = RoundedCornerShape(4.dp),
+                                color = badgeColor
+                            ) {
+                                Text(
+                                    if (test.isHigherBetter) "Higher is Better" else "Lower is Better",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = textColor,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -403,170 +462,242 @@ private fun SetupStep(
 @Composable
 private fun EnterScoresStep(
     uiState: QuickTestUiState,
-    onAction: (QuickTestAction) -> Unit,
-    onLiveScoreChange: (Double) -> Unit
+    onAction: (QuickTestAction) -> Unit
 ) {
-    val currentTest = uiState.selectedTests.getOrNull(uiState.currentTestIndex)
-    var scoreText by remember(uiState.currentTestIndex) { mutableStateOf("") }
-    val scrollState = rememberScrollState()
-
-    val validMin = currentTest?.validMin
-    val validMax = currentTest?.validMax
-    val isInRange = remember(scoreText, validMin, validMax) {
-        val v = scoreText.toDoubleOrNull() ?: return@remember false
-        val minOk = validMin?.let { v >= it } ?: true
-        val maxOk = validMax?.let { v <= it } ?: true
-        minOk && maxOk
-    }
-
-    // Trigger live calculation whenever text changes
-    LaunchedEffect(scoreText) {
-        scoreText.toDoubleOrNull()?.let { onLiveScoreChange(it) }
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        // Progress indicator
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            LinearProgressIndicator(
-                progress = { (uiState.currentTestIndex + 1).toFloat() / uiState.selectedTests.size },
-                modifier = Modifier.weight(1f).height(4.dp).clip(MaterialTheme.shapes.small)
-            )
-            Text(
-                "${uiState.currentTestIndex + 1}/${uiState.selectedTests.size}",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-
-        // Athlete info (Compact)
+    var editingTest by remember { mutableStateOf<com.example.alearning.domain.model.standards.FitnessTest?>(null) }
+    
+    Column(modifier = Modifier.fillMaxSize()) {
+        // Athlete Banner
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium,
             color = if (uiState.isGuest) Color(0xFF546E7A) else NavyPrimary
         ) {
             Row(
-                modifier = Modifier.padding(10.dp),
+                modifier = Modifier.padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Icon(Icons.Default.Person, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                Box(
+                    modifier = Modifier.size(48.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.2f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.Person, contentDescription = null, tint = Color.White, modifier = Modifier.size(28.dp))
+                }
                 Column {
                     Text(
                         if (uiState.isGuest) "${uiState.athleteSearchQuery} (Guest)" 
                         else uiState.selectedAthlete?.fullName ?: "Unknown",
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
-                    if (uiState.isGuest) {
-                        Text(
-                            "Guest: ${uiState.guestSex}, Age ${uiState.guestAge}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color.White.copy(alpha = 0.8f)
-                        )
-                    }
+                    Text(
+                        "${uiState.recordedResults.size}/${uiState.selectedTests.size} Tests Completed",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color.White.copy(alpha = 0.8f)
+                    )
                 }
             }
         }
 
-        if (currentTest != null) {
-            // Live Percentile Gauge (Condensed)
-            PercentileGauge(
-                percentile = uiState.lastRecordedPercentile,
-                modifier = Modifier.fillMaxWidth().height(110.dp)
-            )
-
-            // Test info & Score Display (Condensed)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Surface(
-                    modifier = Modifier.weight(1f),
-                    shape = MaterialTheme.shapes.medium,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+            contentPadding = PaddingValues(vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(uiState.selectedTests) { test ->
+                val savedResult = uiState.recordedResults.find { it.testId == test.id }
+                
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    onClick = { editingTest = test }
                 ) {
-                    Column(modifier = Modifier.padding(8.dp)) {
-                        Text(
-                            currentTest.name,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Text("Unit: ${currentTest.unit}", style = MaterialTheme.typography.labelSmall)
-                    }
-                }
-
-                Surface(
-                    modifier = Modifier.width(100.dp).height(48.dp),
-                    shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(
-                            text = scoreText.ifEmpty { "0.0" },
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = if (scoreText.isEmpty()) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
-                            else MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
-            }
-
-            if (!isInRange && scoreText.isNotEmpty()) {
-                Text(
-                    text = buildString {
-                        append("Valid range: ")
-                        if (validMin != null) append("≥ $validMin")
-                        if (validMin != null && validMax != null) append(" and ")
-                        if (validMax != null) append("≤ $validMax")
-                    },
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
-            }
-
-            // DYNAMIC MODULAR INPUT
-            TestInputSwitcher(
-                paradigm = currentTest.inputParadigm,
-                currentValue = scoreText,
-                onValueChange = { scoreText = it },
-                onSubmit = {
-                    if (isInRange) {
-                        scoreText.toDoubleOrNull()?.let { score ->
-                            onAction(QuickTestAction.OnSaveScore(score))
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                test.name, 
+                                fontSize = 16.sp, 
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                test.unit,
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.width(16.dp))
+                        
+                        Box(modifier = Modifier.width(100.dp)) {
+                            QuickTestScoreCell(savedResult = savedResult)
                         }
                     }
                 }
-            )
-
-            // Skip Action
-            TextButton(
-                onClick = { onAction(QuickTestAction.OnSkipTest) },
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            ) {
-                Icon(Icons.Default.SkipNext, null)
-                Spacer(Modifier.width(8.dp))
-                Text("Skip this test")
+            }
+            
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+                Button(
+                    onClick = { onAction(QuickTestAction.OnCompleteTest) },
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    shape = RoundedCornerShape(28.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = NavyPrimary)
+                ) {
+                    Text(
+                        "Complete Quick Test",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     }
+
+    if (editingTest != null) {
+        val test = editingTest!!
+        val savedResult = uiState.recordedResults.find { it.testId == test.id }
+        
+        QuickScoreEntryDialog(
+            testName = test.name,
+            unit = test.unit,
+            inputParadigm = test.inputParadigm,
+            currentResult = savedResult,
+            validMin = test.validMin,
+            validMax = test.validMax,
+            onDismiss = { editingTest = null },
+            onSave = { score -> 
+                onAction(QuickTestAction.OnSaveScore(test.id, score))
+                editingTest = null 
+            },
+            onDeleteSaved = {
+                onAction(QuickTestAction.OnDeleteScore(test.id))
+                editingTest = null
+            }
+        )
+    }
+}
+
+@Composable
+fun QuickTestScoreCell(savedResult: RecordedTestResult?) {
+    val (bgColor, textColor) = when {
+        savedResult == null -> Color(0xFFF3F4F6) to Color.Gray
+        savedResult.percentile == null -> PerformanceGrey to Color.Black
+        savedResult.percentile >= 60 -> PerformanceGreen.copy(alpha = 0.7f) to PerformanceGreenText
+        savedResult.percentile >= 30 -> PerformanceYellow.copy(alpha = 0.7f) to PerformanceYellowText
+        else -> PerformanceRed.copy(alpha = 0.7f) to PerformanceRedText
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(bgColor),
+        contentAlignment = Alignment.Center
+    ) {
+        if (savedResult != null) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(java.lang.String.format(java.util.Locale.getDefault(), "%.1f", savedResult.rawScore), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = textColor)
+                savedResult.percentile?.let { p -> Text("${p}%", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = textColor.copy(alpha = 0.8f)) }
+            }
+        } else {
+            Text("--", color = Color.LightGray, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
+fun QuickScoreEntryDialog(
+    testName: String,
+    unit: String,
+    inputParadigm: com.example.alearning.domain.model.standards.InputParadigm,
+    currentResult: RecordedTestResult?,
+    onDismiss: () -> Unit,
+    onSave: (Double) -> Unit,
+    onDeleteSaved: () -> Unit,
+    validMin: Double? = null,
+    validMax: Double? = null
+) {
+    var scoreText by remember(currentResult) { mutableStateOf(currentResult?.rawScore?.toString() ?: "") }
+    val scrollState = rememberScrollState()
+
+    val isInRange = if (scoreText.isEmpty()) false else {
+        val score = scoreText.toDoubleOrNull()
+        if (score != null) {
+            val validMinCheck = validMin?.let { score >= it } ?: true
+            val validMaxCheck = validMax?.let { score <= it } ?: true
+            validMinCheck && validMaxCheck
+        } else false
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = null,
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .verticalScroll(scrollState),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(testName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(unit, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Surface(modifier = Modifier.fillMaxWidth().height(72.dp), shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(scoreText.ifEmpty { "—" }, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
+                    }
+                }
+                if (!isInRange && scoreText.isNotEmpty()) {
+                    Text(
+                        text = buildString {
+                            append("Valid range: ")
+                            if (validMin != null) append("≥ $validMin")
+                            if (validMin != null && validMax != null) append(" and ")
+                            if (validMax != null) append("≤ $validMax")
+                        },
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+                TestInputSwitcher(
+                    paradigm = inputParadigm,
+                    currentValue = scoreText,
+                    onValueChange = { scoreText = it },
+                    onSubmit = {
+                        if (isInRange) {
+                            scoreText.toDoubleOrNull()?.let { onSave(it) }
+                        }
+                    }
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (currentResult != null) {
+                        TextButton(onClick = onDeleteSaved, modifier = Modifier.weight(1f)) {
+                            Text("Delete saved", color = MaterialTheme.colorScheme.error)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Close") }
+        }
+    )
 }
 
 @Composable

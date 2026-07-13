@@ -102,8 +102,9 @@ fun RadarChart(
             val dataPath = Path()
             var anyData = false
             for (i in 0 until n) {
-                val s = scores[i].normalizedScore.coerceIn(0f, 1f)
-                if (s > 0f) anyData = true
+                // Ensure a minimum size (e.g. 0.05f) so it forms a small polygon instead of a point
+                val s = maxOf(scores[i].normalizedScore.coerceIn(0f, 1f), 0.05f)
+                if (scores[i].normalizedScore > 0f) anyData = true
                 val a = angleAt(i)
                 val x = center.x + maxRadius * s * cos(a)
                 val y = center.y + maxRadius * s * sin(a)
@@ -111,22 +112,17 @@ fun RadarChart(
             }
             dataPath.close()
 
-            if (anyData) {
-                val gradientBrush = Brush.radialGradient(
-                    colors = listOf(color.copy(alpha = 0.6f), color.copy(alpha = 0.1f)),
-                    center = center,
-                    radius = maxRadius
-                )
-                drawPath(dataPath, gradientBrush)
-                drawPath(dataPath, color, style = Stroke(width = 2.dp.toPx()))
-            } else {
-                // If all scores are 0, draw a tiny dot in the center to show where data would be.
-                drawCircle(color, radius = 2.dp.toPx(), center = center)
-            }
+            val gradientBrush = Brush.radialGradient(
+                colors = listOf(color.copy(alpha = 0.6f), color.copy(alpha = 0.1f)),
+                center = center,
+                radius = maxRadius
+            )
+            drawPath(dataPath, gradientBrush)
+            drawPath(dataPath, color, style = Stroke(width = 2.dp.toPx()))
 
             // Vertices.
             for (i in 0 until n) {
-                val s = scores[i].normalizedScore.coerceIn(0f, 1f)
+                val s = maxOf(scores[i].normalizedScore.coerceIn(0f, 1f), 0.05f)
                 val a = angleAt(i)
                 val x = center.x + maxRadius * s * cos(a)
                 val y = center.y + maxRadius * s * sin(a)

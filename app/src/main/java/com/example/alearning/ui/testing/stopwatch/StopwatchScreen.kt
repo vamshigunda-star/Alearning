@@ -391,15 +391,13 @@ private fun IndividualModeContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(64.dp)
-                        .kineticPulse(
-                            shape = RoundedCornerShape(16.dp),
-                            baseElevation = 4.dp,
+                        .acceleratorClick(
                             onClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 onAction(StopwatchAction.OnStartStop)
                             }
                         ),
                     shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = if (isRunning) MaterialTheme.colorScheme.error else ElectricBlue
                     )
@@ -473,12 +471,17 @@ private fun GroupStartModeContent(uiState: StopwatchUiState, onAction: (Stopwatc
         Spacer(Modifier.height(16.dp))
         
         if (uiState.stopwatchPhase == StopwatchPhase.READY) {
-            Button(
-                onClick = { haptic.performHapticFeedback(HapticFeedbackType.LongPress); onAction(StopwatchAction.OnStartStop) },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).height(80.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = PerformanceGreen),
-                shape = RoundedCornerShape(16.dp)
-            ) { Text("START SESSION", fontSize = 28.sp, fontWeight = FontWeight.Bold) }
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .height(80.dp)
+                    .acceleratorClick(
+                        onClick = { onAction(StopwatchAction.OnStartStop) }
+                    ),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = PerformanceGreen)
+            ) { Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) { Text("START SESSION", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White) } }
         }
 
         Spacer(Modifier.height(16.dp))

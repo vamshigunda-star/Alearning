@@ -1,6 +1,7 @@
 package com.example.alearning.ui.session
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,10 +45,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.alearning.domain.model.reports.LeaderboardRow
-import com.example.alearning.reports.components.AthleteLeaderRow
-import com.example.alearning.reports.components.SessionPill
-import com.example.alearning.reports.components.SessionSwitcherSheet
-import com.example.alearning.reports.components.ZoneChip
+import com.example.alearning.ui.report.components.AthleteLeaderRow
+import com.example.alearning.ui.report.components.SessionPill
+import com.example.alearning.ui.report.components.SessionSwitcherSheet
+import com.example.alearning.ui.report.components.ZoneChip
 import com.example.alearning.domain.model.reports.Classification
 import com.example.alearning.ui.components.AppTopBar
 import com.example.alearning.ui.components.AppTopBarSubtitleColor
@@ -63,6 +64,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import androidx.compose.foundation.border
@@ -76,7 +78,7 @@ import com.example.alearning.ui.aicoach.components.AiFloatingActionButton
 fun SessionReportScreen(
     onNavigateBack: () -> Unit,
     onNavigateToAthlete: (String, String) -> Unit,
-    onResumeTesting: (String, String) -> Unit,
+    onResumeTesting: (String, String?, String?, List<String>?) -> Unit,
     onNavigateToAiCoach: (String?) -> Unit,
     viewModel: SessionReportViewModel = hiltViewModel(),
     aiCoachViewModel: AiCoachViewModel = hiltViewModel()
@@ -110,8 +112,11 @@ fun SessionReportScreen(
                 is SessionReportAction.OnNavigateToAthlete ->
                     onNavigateToAthlete(action.individualId, sessionId)
                 SessionReportAction.OnResumeTesting -> {
-                    if (sessionId.isNotEmpty() && groupId.isNotEmpty()) {
-                        onResumeTesting(sessionId, groupId)
+                    if (sessionId.isNotEmpty()) {
+                        val allRows = uiState.data?.leaderboardByTest?.values?.flatten().orEmpty() + uiState.data?.absentByTest?.values?.flatten().orEmpty()
+                        val athleteId = allRows.firstOrNull()?.individualId
+                        val testIds = uiState.data?.tests?.map { it.id }
+                        onResumeTesting(sessionId, groupId.takeIf { it.isNotEmpty() }, athleteId, testIds)
                     }
                 }
                 else -> viewModel.onAction(action)
@@ -222,7 +227,8 @@ fun SessionReportContent(
 fun SessionReportBody(
     uiState: SessionReportUiState,
     padding: PaddingValues,
-    onAction: (SessionReportAction) -> Unit
+    onAction: (SessionReportAction) -> Unit,
+    headerContent: @Composable (() -> Unit)? = null
 ) {
     val data = uiState.data!!
     val activeTestId = uiState.selectedTestId ?: data.tests.firstOrNull()?.id
@@ -234,6 +240,10 @@ fun SessionReportBody(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        if (headerContent != null) {
+            item { headerContent() }
+        }
+
         item { SessionPill(session = data.event, onTap = { onAction(SessionReportAction.OnOpenSwitcher) }) }
 
         item {
@@ -274,11 +284,13 @@ fun SessionReportBody(
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                    shape = RoundedCornerShape(24.dp)
                 ) {
-                    Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-                        Text("Roster Comparison", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        Spacer(Modifier.height(12.dp))
+                    Column(modifier = Modifier.fillMaxWidth().padding(24.dp)) {
+                        Text("Roster Comparison", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
+                        Spacer(Modifier.height(16.dp))
                         HorizontalBarChart(rows = activeRows)
                     }
                 }
@@ -294,14 +306,15 @@ fun SessionReportBody(
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                    shape = RoundedCornerShape(24.dp)
                 ) {
-                    Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-                        Text("Stats Summary", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        Spacer(Modifier.height(12.dp))
+                    Column(modifier = Modifier.fillMaxWidth().padding(24.dp)) {
+                        Text("Session Metrics", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        Spacer(Modifier.height(16.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             StatSummaryItem("Max", maxVal, unit, modifier = Modifier.weight(1f))
                             StatSummaryItem("Avg", avgVal, unit, modifier = Modifier.weight(1f))
@@ -332,15 +345,20 @@ fun SessionReportBody(
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
-                    Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-                        Text("Coaching Interpretation", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        Spacer(Modifier.height(8.dp))
+                    Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Lightbulb, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Coach's Insight", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                        }
+                        Spacer(Modifier.height(12.dp))
                         Text(
                             text = interpretationText,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.9f)
                         )
                         
                         if (redZoneAthletes.isNotEmpty()) {
@@ -430,10 +448,10 @@ fun SessionReportBody(
             }
             item {
                 val trend = activeTestId?.let { data.groupTrendByTest[it] }.orEmpty()
-                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)), shape = RoundedCornerShape(16.dp), elevation = CardDefaults.cardElevation(0.dp)) {
                     Box(modifier = Modifier.fillMaxWidth().height(160.dp).padding(16.dp), contentAlignment = Alignment.Center) {
                         if (trend.size < 2) {
-                            Text("Need 2+ sessions for trend", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                            Text("Need 2+ sessions for trend", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
                         } else {
                             TrendBars(points = trend)
                         }
@@ -472,15 +490,15 @@ fun MetaChip(text: String, danger: Boolean = false) {
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AbsentAthleteRow(row: LeaderboardRow, onClick: () -> Unit) {
     Card(
-        onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+            modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(row.athleteName, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
@@ -489,14 +507,14 @@ fun AbsentAthleteRow(row: LeaderboardRow, onClick: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MissingDataCard(names: List<String>, onResume: () -> Unit) {
     Card(
-        onClick = onResume,
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF8E1))
     ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(14.dp)) {
+        Column(modifier = Modifier.fillMaxWidth().clickable(onClick = onResume).padding(14.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     "Missing data: ${names.size} athlete${if (names.size == 1) "" else "s"}",
@@ -551,15 +569,17 @@ fun StatSummaryItem(
     val valueStr = if (value % 1.0 == 0.0) value.toInt().toString() else String.format("%.1f", value)
     Card(
         modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(16.dp)
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(Modifier.height(4.dp))
-            Text("$valueStr $unit", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(8.dp))
+            Text(valueStr, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.primary)
+            Text(unit, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

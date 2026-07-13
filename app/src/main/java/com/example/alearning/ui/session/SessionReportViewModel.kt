@@ -49,7 +49,7 @@ sealed interface SessionReportAction {
 @HiltViewModel
 class SessionReportViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
-    private val reports: ReportsRepository,
+    private val observeSessionReport: com.example.alearning.domain.usecase.reports.ObserveSessionReportUseCase,
     private val testingRepository: TestingRepository,
     private val peopleRepository: PeopleRepository,
     private val standardsRepository: StandardsRepository
@@ -112,7 +112,7 @@ class SessionReportViewModel @Inject constructor(
 
     private fun load(sessionId: String) {
         viewModelScope.launch {
-            reports.observeSessionReport(groupId, sessionId)
+            observeSessionReport(groupId, sessionId)
                 .catch { e -> _uiState.update { it.copy(errorMessage = e.message, isLoading = false) } }
                 .collect { data ->
                     _uiState.update {

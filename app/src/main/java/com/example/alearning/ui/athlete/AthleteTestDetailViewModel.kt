@@ -39,7 +39,7 @@ sealed interface AthleteTestDetailAction {
 @HiltViewModel
 class AthleteTestDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val reports: ReportsRepository,
+    private val observeAthleteTestDetail: com.example.alearning.domain.usecase.reports.ObserveAthleteTestDetailUseCase,
     private val testingRepository: TestingRepository
 ) : ViewModel() {
 
@@ -55,13 +55,22 @@ class AthleteTestDetailViewModel @Inject constructor(
 
     private var loadJob: kotlinx.coroutines.Job? = null
 
-    fun loadDetail(athleteId: String, testId: String, contextSessionId: String?) {
+    init {
+        athleteId = savedStateHandle.get<String>("athleteId") ?: ""
+        testId = savedStateHandle.get<String>("testId") ?: ""
+        contextSessionId = savedStateHandle.get<String>("contextSessionId")
+        if (athleteId.isNotBlank() && testId.isNotBlank()) {
+            loadDetail(athleteId, testId, contextSessionId)
+        }
+    }
+
+    private fun loadDetail(athleteId: String, testId: String, contextSessionId: String?) {
         this.athleteId = athleteId
         this.testId = testId
         this.contextSessionId = contextSessionId
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
-            reports.observeAthleteTestDetail(athleteId, testId, contextSessionId)
+            observeAthleteTestDetail(athleteId, testId, contextSessionId)
                 .catch { e -> _uiState.update { it.copy(errorMessage = e.message, isLoading = false) } }
                 .collect { d -> _uiState.update { it.copy(data = d, isLoading = false) } }
         }

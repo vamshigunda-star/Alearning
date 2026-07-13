@@ -52,11 +52,11 @@ import com.example.alearning.domain.model.standards.FitnessTest
 import com.example.alearning.domain.model.reports.AthleteFlag
 import com.example.alearning.domain.usecase.testing.AthleteRadarData
 import com.example.alearning.domain.model.reports.AthleteTestTile
-import com.example.alearning.reports.components.MiniSparkline
-import com.example.alearning.reports.components.PercentileChip
-import com.example.alearning.reports.components.ZoneChip
-import com.example.alearning.reports.components.zoneColors
-import com.example.alearning.reports.components.zoneLabel
+import com.example.alearning.ui.report.components.MiniSparkline
+import com.example.alearning.ui.report.components.PercentileChip
+import com.example.alearning.ui.report.components.ZoneChip
+import com.example.alearning.ui.report.components.zoneColors
+import com.example.alearning.ui.report.components.zoneLabel
 import com.example.alearning.domain.model.reports.Classification
 import com.example.alearning.domain.model.reports.FlagType
 import com.example.alearning.domain.model.reports.AthleteDashboardData
@@ -88,6 +88,7 @@ import androidx.activity.compose.BackHandler
 import com.example.alearning.ui.aicoach.AiCoachViewModel
 import com.example.alearning.domain.repository.AiCoachStatus
 import com.example.alearning.ui.aicoach.components.AiFloatingActionButton
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
@@ -95,6 +96,7 @@ fun AthleteDashboardScreen(
     athleteId: String,
     contextSessionId: String? = null,
     onNavigateBack: () -> Unit,
+    onNavigateToTest: (String, String, String?) -> Unit,
     onStartQuickTest: (String, List<String>) -> Unit, // (athleteId, testIds)
     onNavigateToAiCoach: (String?) -> Unit,
     viewModel: AthleteDashboardViewModel = hiltViewModel(),
@@ -118,54 +120,20 @@ fun AthleteDashboardScreen(
         }
     }
 
-    BackHandler(navigator.canNavigateBack()) {
-        navigator.navigateBack()
-    }
-
-    NavigableListDetailPaneScaffold(
-        navigator = navigator,
-        listPane = {
-            AnimatedPane {
-                AthleteDashboardContent(
-                    uiState = uiState,
-                    onAction = { action ->
-                        when (action) {
-                            AthleteDashboardAction.OnNavigateBack -> {
-                                if (navigator.canNavigateBack()) {
-                                    navigator.navigateBack()
-                                } else {
-                                    onNavigateBack()
-                                }
-                            }
-                            is AthleteDashboardAction.OnNavigateToTest ->
-                                navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, action.testId as Any)
-                            is AthleteDashboardAction.OnStartQuickTest ->
-                                onStartQuickTest(viewModel.athleteId, action.testIds)
-                            else -> viewModel.onAction(action)
-                        }
-                    },
-                    aiCoachViewModel = aiCoachViewModel,
-                    onNavigateToAiCoach = onNavigateToAiCoach
-                )
+    AthleteDashboardContent(
+        uiState = uiState,
+        onAction = { action ->
+            when (action) {
+                AthleteDashboardAction.OnNavigateBack -> onNavigateBack()
+                is AthleteDashboardAction.OnNavigateToTest ->
+                    onNavigateToTest(viewModel.athleteId, action.testId, viewModel.contextSessionId)
+                is AthleteDashboardAction.OnStartQuickTest ->
+                    onStartQuickTest(viewModel.athleteId, action.testIds)
+                else -> viewModel.onAction(action)
             }
         },
-        detailPane = {
-            AnimatedPane {
-                val testId = navigator.currentDestination?.content as? String
-                if (testId != null) {
-                    AthleteTestDetailScreen(
-                        athleteId = viewModel.athleteId,
-                        testId = testId,
-                        contextSessionId = viewModel.contextSessionId,
-                        onNavigateBack = { navigator.navigateBack() }
-                    )
-                } else {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Select a test to view details", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-            }
-        }
+        aiCoachViewModel = aiCoachViewModel,
+        onNavigateToAiCoach = onNavigateToAiCoach
     )
 }
 
@@ -212,9 +180,20 @@ fun AthleteDashboardContent(
                     }
                 }
             )
-        },
-        floatingActionButton = {
-            AiFloatingActionButton(
+        }
+    ) { padding ->
+        Box(modifier = Modifier.padding(padding).fillMaxSize()) {
+            when {
+                uiState.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+                data == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("Athlete not found", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                else -> AthleteBody(uiState = uiState, padding = PaddingValues(0.dp), onAction = onAction)
+            }
+
+            com.example.alearning.ui.aicoach.components.DraggableAiFab(
                 isVisible = isAiCoachVisible,
                 onClick = {
                     val contextString = data?.let { d ->
@@ -225,16 +204,6 @@ fun AthleteDashboardContent(
                 }
             )
         }
-    ) { padding ->
-        when {
-            uiState.isLoading -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-            data == null -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text("Athlete not found", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            else -> AthleteBody(uiState = uiState, padding = padding, onAction = onAction)
-        }
     }
 }
 
@@ -242,39 +211,39 @@ fun AthleteDashboardContent(
 fun AthleteBody(
     uiState: AthleteDashboardUiState,
     padding: PaddingValues,
-    onAction: (AthleteDashboardAction) -> Unit
+    onAction: (AthleteDashboardAction) -> Unit,
+    headerContent: @Composable (() -> Unit)? = null
 ) {
     val data = uiState.data!!
     var perTestExpanded by rememberSaveable { mutableStateOf(false) }
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
 
     LazyColumn(
+        state = listState,
         modifier = Modifier.fillMaxSize().padding(padding),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item {
-            Log.d("AthleteDashboardScreen", "Rendering AthleteBody for ${data.athlete.fullName}, tiles=${data.tiles.size}, expanded=$perTestExpanded")
-            AthleteAlertCard(data.athlete)
+        if (headerContent != null) {
+            item { headerContent() }
         }
 
         item {
-            PremiumAthleteMetaCard(athleteData = data)
-        }
-
-        item {
-            LatestSessionCard(
-                date = data.contextSession?.date,
-                name = data.contextSession?.name,
-                testCount = data.sessionTestCount,
-                avgPercentile = data.athleteSessionAvgPctile
-            )
-        }
-
-        item {
-            CategoryRadarCard(
-                radarData = uiState.radarData,
-                hasResults = data.tiles.isNotEmpty()
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                AthleteAlertCard(data.athlete)
+                PremiumAthleteMetaCard(athleteData = data)
+                LatestSessionCard(
+                    date = data.contextSession?.date,
+                    name = data.contextSession?.name,
+                    testCount = data.sessionTestCount,
+                    avgPercentile = data.athleteSessionAvgPctile
+                )
+                CategoryRadarCard(
+                    radarData = uiState.radarData,
+                    hasResults = data.tiles.isNotEmpty()
+                )
+            }
         }
 
         if (data.tiles.isEmpty()) {
@@ -293,8 +262,15 @@ fun AthleteBody(
                     testCount = data.tiles.size,
                     expanded = perTestExpanded,
                     onToggle = { 
-                        Log.d("AthleteDashboardScreen", "Toggling per-test section. Current state: $perTestExpanded")
-                        perTestExpanded = !perTestExpanded 
+                        perTestExpanded = !perTestExpanded
+                        val targetIndex = if (headerContent != null) 2 else 1
+                        coroutineScope.launch {
+                            if (perTestExpanded) {
+                                listState.animateScrollToItem(targetIndex)
+                            } else {
+                                listState.animateScrollToItem(0)
+                            }
+                        }
                     }
                 )
             }
@@ -371,20 +347,26 @@ fun LatestSessionCard(date: Long?, name: String?, testCount: Int, avgPercentile:
     }
     val colors = zoneColors(cls)
     Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = colors.bg)) {
-        Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(
-                if (date != null) "Latest session · ${df.format(Date(date))}" else "Latest session",
-                style = MaterialTheme.typography.labelMedium,
-                color = colors.fg
-            )
-            Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(avgPercentile?.toString() ?: "—", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Black, color = colors.fg)
-                Column {
-                    Text("avg percentile", style = MaterialTheme.typography.labelSmall, color = colors.fg)
-                    Text("$testCount test${if (testCount == 1) "" else "s"}${name?.let { " · $it" } ?: ""}", style = MaterialTheme.typography.labelSmall, color = colors.fg)
-                }
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text(
+                    if (date != null) "Latest session · ${df.format(Date(date))}" else "Latest session",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.fg.copy(alpha = 0.8f)
+                )
+                Text("$testCount test${if (testCount == 1) "" else "s"}${name?.let { " · $it" } ?: ""}", style = MaterialTheme.typography.bodySmall, color = colors.fg)
             }
-            ZoneChip(classification = cls)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(avgPercentile?.toString() ?: "—", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, color = colors.fg)
+                    Text("avg %ile", style = MaterialTheme.typography.labelSmall, color = colors.fg.copy(alpha = 0.8f))
+                }
+                ZoneChip(classification = cls)
+            }
         }
     }
 }
@@ -392,34 +374,34 @@ fun LatestSessionCard(date: Long?, name: String?, testCount: Int, avgPercentile:
 @Composable
 fun TestTile(tile: AthleteTestTile, onClick: () -> Unit) {
     Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth().height(140.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        modifier = Modifier.fillMaxWidth().height(150.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(modifier = Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.SpaceBetween) {
+        Column(modifier = Modifier.fillMaxSize().clickable(onClick = onClick).padding(16.dp), verticalArrangement = Arrangement.SpaceBetween) {
             Column {
-                Text(tile.test.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 2)
+                Text(tile.test.name, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, maxLines = 1, color = MaterialTheme.colorScheme.primary)
+                Spacer(Modifier.height(4.dp))
                 Text(
                     text = tile.latestResult?.let {
                         val s = if (it.rawScore % 1.0 == 0.0) it.rawScore.toInt().toString() else String.format("%.1f", it.rawScore)
                         "$s ${tile.test.unit}"
                     } ?: "—",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Black
                 )
             }
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                // Prefer the snapshot's data-driven label (e.g., "Excellent", "Healthy Fitness
-                // Zone") over the synthetic zone label so the rich norm-CSV text is shown.
                 val tileLabel = tile.latestResult?.classification?.takeIf { it.isNotBlank() }
                     ?: zoneLabel(tile.classification)
                 ZoneChip(classification = tile.classification, label = tileLabel)
                 Spacer(Modifier.weight(1f))
                 MiniSparkline(points = tile.sparkline)
             }
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                 PercentileChip(percentile = tile.latestResult?.percentile)
-                Text("${tile.rawSparkline.size} attempt${if (tile.rawSparkline.size == 1) "" else "s"}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("${tile.rawSparkline.size} try${if (tile.rawSparkline.size == 1) "" else "s"}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
@@ -429,12 +411,13 @@ fun TestTile(tile: AthleteTestTile, onClick: () -> Unit) {
 fun FlagListRow(flag: AthleteFlag, onClick: () -> Unit) {
     val isActionable = flag.testId != null || flag.testIds.isNotEmpty() || flag.type == FlagType.MISSING_DATA
     Card(
-        onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = SportOrangeContainer),
-        enabled = isActionable
+        colors = CardDefaults.cardColors(containerColor = SportOrangeContainer)
     ) {
-        Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.fillMaxWidth().then(if (isActionable) Modifier.clickable(onClick = onClick) else Modifier).padding(12.dp), 
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Icon(Icons.Default.Warning, contentDescription = null, tint = SportOrangeVariant)
             Spacer(Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -495,32 +478,33 @@ fun OutstandingTestsCard(tests: List<FitnessTest>, onTestClick: (String) -> Unit
 fun CategoryRadarCard(radarData: AthleteRadarData?, hasResults: Boolean) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(16.dp)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        shape = RoundedCornerShape(24.dp)
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.fillMaxWidth().padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                "Performance Across Multiple Categories",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                "Skill Matrix",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.ExtraBold
             )
-            val hasAxes = radarData != null && radarData.axisScores.isNotEmpty()
+            val hasAxes = radarData != null && radarData.axisScores.any { it.normalizedScore > 0f }
             if (hasAxes) {
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                     RadarChart(
                         data = radarData!!,
-                        modifier = Modifier.height(300.dp),
+                        modifier = Modifier.height(280.dp),
                         color = SportOrange
                     )
                 }
                 Text(
-                    "Average percentile per fitness category. Larger area = stronger overall profile.",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    "Average percentile per category. A larger area indicates a stronger overall athletic profile.",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 8.dp)
                 )
             } else {
                 Box(
@@ -530,7 +514,7 @@ fun CategoryRadarCard(radarData: AthleteRadarData?, hasResults: Boolean) {
                     Text(
                         if (hasResults) "Not enough percentile data to chart yet."
                         else "Record results to see a category profile.",
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -545,44 +529,41 @@ fun PremiumAthleteMetaCard(athleteData: AthleteDashboardData) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = NavyPrimary),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(24.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(20.dp),
+            modifier = Modifier.fillMaxWidth().padding(24.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .background(SportOrange, CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = athlete.fullName.firstOrNull()?.uppercaseChar()?.toString() ?: "?",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold
-                )
-            }
             Column(modifier = Modifier.weight(1f)) {
-                Text(athlete.fullName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(athlete.fullName, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold, color = Color.White)
+                Spacer(Modifier.height(4.dp))
                 Text(
-                    "${athleteData.groups.firstOrNull()?.name ?: "—"} · Age ${athlete.currentAge}",
+                    "${athleteData.groups.firstOrNull()?.name ?: "No Group"} · Age ${athlete.currentAge}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White.copy(alpha = 0.8f)
                 )
             }
             athleteData.athleteSessionAvgPctile?.let { avg ->
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        "$avg",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = SportOrange
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.size(72.dp)) {
+                    CircularProgressIndicator(
+                        progress = { avg / 100f },
+                        modifier = Modifier.fillMaxSize(),
+                        color = SportOrange,
+                        trackColor = Color.White.copy(alpha = 0.1f),
+                        strokeWidth = 6.dp,
+                        strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
                     )
-                    Text("avg %ile", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.7f))
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            "$avg",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Black,
+                            color = Color.White
+                        )
+                        Text("%ile", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.7f))
+                    }
                 }
             }
         }
@@ -591,26 +572,30 @@ fun PremiumAthleteMetaCard(athleteData: AthleteDashboardData) {
 
 @Composable
 fun PerTestHeader(testCount: Int, expanded: Boolean, onToggle: () -> Unit) {
+    val backgroundColor = if (expanded) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+    val contentColor = if (expanded) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+    
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(containerColor = backgroundColor),
+        shape = RoundedCornerShape(16.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().clickable { onToggle() }.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("Per-test results", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text("Individual Test Breakdown", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = contentColor)
                 Text(
                     "$testCount test${if (testCount == 1) "" else "s"} · ${if (expanded) "tap to collapse" else "tap to view trends"}",
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = if (expanded) contentColor.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             Icon(
                 imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                 contentDescription = if (expanded) "Collapse" else "Expand",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = if (expanded) contentColor else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

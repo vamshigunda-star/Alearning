@@ -113,7 +113,8 @@ class ReportsRepositoryImpl @Inject constructor(
             sessionsThisMonth = sessionsThisMonth,
             flags = flags.distinctBy { it.individualId to it.type },
             groups = groupCards,
-            recentSessions = recent
+            recentSessions = recent,
+            allAthletes = individuals.map { it.id to it.fullName }
         )
     }
 

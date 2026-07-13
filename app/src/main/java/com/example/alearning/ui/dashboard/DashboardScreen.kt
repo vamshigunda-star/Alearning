@@ -63,6 +63,7 @@ fun DashboardScreen(
     onNavigateToTestingGrid: (String, String) -> Unit,
     onNavigateToLeaderboard: () -> Unit,
     onNavigateToReports: () -> Unit,
+    onNavigateToSettings: () -> Unit,
     onNavigateToSignIn: () -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
@@ -88,6 +89,7 @@ fun DashboardScreen(
                 DashboardAction.OnLeaderboardClick -> onNavigateToLeaderboard()
                 DashboardAction.OnAnalyticsClick -> onNavigateToReports()
                 DashboardAction.OnSeeAllEventsClick -> onNavigateToReports()
+                DashboardAction.OnSettingsClick -> onNavigateToSettings()
                 else -> viewModel.onAction(it)
             }
         }
@@ -107,6 +109,12 @@ fun DashboardContent(
             AppTopBar(
                 title = "ALearning",
                 actions = {
+                    IconButton(onClick = { onAction(DashboardAction.OnSettingsClick) }) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings"
+                        )
+                    }
                     IconButton(onClick = { onAction(DashboardAction.OnSignOutClick) }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Logout,
@@ -175,7 +183,7 @@ fun DashboardContent(
             item {
                 QuickActionCard(
                     icon = Icons.AutoMirrored.Filled.LibraryBooks,
-                    label = "Tests",
+                    label = "Test Library",
                     tint = MaterialTheme.colorScheme.primary,
                     onClick = { onAction(DashboardAction.OnTestLibraryClick) }
                 )
@@ -287,14 +295,14 @@ private fun HeroCard(onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .minimumInteractiveComponentSize()
-            .kineticPulse(
+            .pressInteraction(
                 shape = MaterialTheme.shapes.large,
                 baseElevation = 4.dp,
                 onClick = onClick
             ),
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = SportOrange),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp) // Handled by kineticPulse
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp) // Handled by pressInteraction
     ) {
         Row(
             modifier = Modifier
@@ -345,26 +353,16 @@ private fun QuickActionCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    
-    val cardScale by animateFloatAsState(
-        targetValue = if (isPressed) 0.95f else 1f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
-        label = "cardScale"
-    )
-    val cardElevation by androidx.compose.animation.core.animateDpAsState(
-        targetValue = if (isPressed) 0.dp else 2.dp,
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        label = "cardElevation"
-    )
-
     ElevatedCard(
-        onClick = onClick,
-        modifier = modifier.height(96.dp).scale(cardScale),
-        interactionSource = interactionSource,
+        modifier = modifier
+            .height(96.dp)
+            .pressInteraction(
+                shape = MaterialTheme.shapes.medium,
+                baseElevation = 2.dp,
+                onClick = onClick
+            ),
         shape = MaterialTheme.shapes.medium,
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = cardElevation)
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp) // Handled by pressInteraction
     ) {
         Column(
             modifier = Modifier
@@ -402,27 +400,18 @@ private fun QuickActionCard(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun RecentEventItem(event: TestingEvent, onClick: () -> Unit) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    
-    val cardScale by animateFloatAsState(
-        targetValue = if (isPressed) 0.98f else 1f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
-        label = "cardScale"
-    )
-    val cardColor by androidx.compose.animation.animateColorAsState(
-        targetValue = if (isPressed) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surface,
-        label = "cardColor"
-    )
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .scale(cardScale),
-        onClick = onClick,
-        interactionSource = interactionSource,
+            .pressInteraction(
+                shape = MaterialTheme.shapes.medium,
+                baseElevation = 0.dp, // Flat by default as per existing design
+                onClick = onClick
+            ),
         shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(containerColor = cardColor),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(

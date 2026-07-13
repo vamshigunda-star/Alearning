@@ -41,7 +41,7 @@ sealed interface AthleteDashboardAction {
 @HiltViewModel
 class AthleteDashboardViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val reports: ReportsRepository,
+    private val observeAthleteDashboard: com.example.alearning.domain.usecase.reports.ObserveAthleteDashboardUseCase,
     private val testingRepository: TestingRepository,
     private val standardsRepository: StandardsRepository,
     private val getAthleteRadarData: GetAthleteRadarDataUseCase
@@ -62,15 +62,19 @@ class AthleteDashboardViewModel @Inject constructor(
         this.contextSessionId = contextSessionId
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
-            reports.observeAthleteDashboard(athleteId, contextSessionId)
+            observeAthleteDashboard(athleteId, contextSessionId)
                 .catch { e -> _uiState.update { it.copy(errorMessage = e.message, isLoading = false) } }
                 .collect { d ->
-                    _uiState.update { it.copy(data = d, isLoading = false) }
                     if (d != null) {
                         try {
                             val radar = getAthleteRadarData(athleteId)
-                            _uiState.update { it.copy(radarData = radar) }
-                        } catch (_: Exception) {}
+                            _uiState.update { it.copy(data = d, radarData = radar, isLoading = false) }
+                        } catch (e: Exception) {
+                            android.util.Log.e("AthleteDashboardVM", "Failed to fetch radar data", e)
+                            _uiState.update { it.copy(data = d, isLoading = false) }
+                        }
+                    } else {
+                        _uiState.update { it.copy(data = null, isLoading = false) }
                     }
                 }
         }
