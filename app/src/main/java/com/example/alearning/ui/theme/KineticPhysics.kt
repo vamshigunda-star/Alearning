@@ -28,26 +28,32 @@ import androidx.compose.ui.platform.LocalContext
 val TorqueEasing = CubicBezierEasing(0.6f, -0.28f, 0.735f, 0.045f)
 
 fun triggerAcceleratorHaptic(context: Context) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-        val vibrator = vibratorManager.defaultVibrator
-        val effect = VibrationEffect.startComposition()
-            .addPrimitive(VibrationEffect.Composition.PRIMITIVE_LOW_TICK, 0.3f)
-            .addPrimitive(VibrationEffect.Composition.PRIMITIVE_TICK, 0.6f, 30)
-            .addPrimitive(VibrationEffect.Composition.PRIMITIVE_CLICK, 1.0f, 60)
-            .compose()
-        vibrator.vibrate(effect)
-    } else {
-        @Suppress("DEPRECATION")
-        val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val timings = longArrayOf(0, 30, 30, 40, 30, 50)
-            val amplitudes = intArrayOf(0, 50, 0, 150, 0, 255)
-            vibrator.vibrate(VibrationEffect.createWaveform(timings, amplitudes, -1))
+    try {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            val vibrator = vibratorManager.defaultVibrator
+            val effect = VibrationEffect.startComposition()
+                .addPrimitive(VibrationEffect.Composition.PRIMITIVE_LOW_TICK, 0.3f)
+                .addPrimitive(VibrationEffect.Composition.PRIMITIVE_TICK, 0.6f, 30)
+                .addPrimitive(VibrationEffect.Composition.PRIMITIVE_CLICK, 1.0f, 60)
+                .compose()
+            vibrator.vibrate(effect)
         } else {
             @Suppress("DEPRECATION")
-            vibrator.vibrate(150)
+            val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val timings = longArrayOf(0, 30, 30, 40, 30, 50)
+                val amplitudes = intArrayOf(0, 50, 0, 150, 0, 255)
+                vibrator.vibrate(VibrationEffect.createWaveform(timings, amplitudes, -1))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(150)
+            }
         }
+    } catch (_: SecurityException) {
+        // VIBRATE permission not granted — degrade gracefully
+    } catch (_: Exception) {
+        // Unexpected vibration error — never crash over haptics
     }
 }
 

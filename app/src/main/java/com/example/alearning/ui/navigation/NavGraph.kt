@@ -129,9 +129,8 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
                 onNavigateToTestingGrid = { eventId, groupId ->
                     navController.navigate(Screen.TestingGrid.createRoute(eventId, groupId))
                 },
-                onNavigateToLeaderboard = {
-                    // Navigate to a default or global leaderboard if applicable,
-                    // or this could be handled by passing specific IDs if the UI provided them.
+                onNavigateToLeaderboard = { eventId, groupId, mode ->
+                    navController.navigate(Screen.Leaderboard.createRoute(eventId, groupId, mode))
                 },
                 onNavigateToReports = { navController.navigate(Screen.Report.route) },
                 onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
@@ -366,7 +365,10 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
             route = Screen.AiCoach.route,
             arguments = listOf(navArgument("context") { nullable = true; type = NavType.StringType })
         ) {
-            AiCoachScreen(viewModel = hiltViewModel())
+            AiCoachScreen(
+                viewModel = hiltViewModel(),
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
     }
 }

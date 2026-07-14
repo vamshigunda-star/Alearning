@@ -29,7 +29,9 @@ data class DashboardUiState(
     /** Coach's last name; included so the greeting can use a full name if desired. */
     val coachLastName: String = "",
     /** True after sign-out; screen navigates to SignIn via LaunchedEffect. */
-    val navigateToSignIn: Boolean = false
+    val navigateToSignIn: Boolean = false,
+    /** True while the leaderboard event picker is open. */
+    val showLeaderboardPicker: Boolean = false
 )
 
 sealed interface DashboardAction {
@@ -41,6 +43,8 @@ sealed interface DashboardAction {
     data object OnSettingsClick : DashboardAction
     data object OnDismissError : DashboardAction
     data object OnLeaderboardClick : DashboardAction
+    data object OnDismissLeaderboardPicker : DashboardAction
+    data class OnPickLeaderboardEvent(val eventId: String, val groupId: String) : DashboardAction
     data object OnAnalyticsClick : DashboardAction
     data object OnSeeAllEventsClick : DashboardAction
     data object OnSignOutClick : DashboardAction
@@ -77,6 +81,13 @@ class DashboardViewModel @Inject constructor(
             DashboardAction.NavigationConsumed -> {
                 _uiState.update { it.copy(navigateToSignIn = false) }
             }
+            DashboardAction.OnLeaderboardClick -> {
+                _uiState.update { it.copy(showLeaderboardPicker = true) }
+            }
+            DashboardAction.OnDismissLeaderboardPicker -> {
+                _uiState.update { it.copy(showLeaderboardPicker = false) }
+            }
+            is DashboardAction.OnPickLeaderboardEvent -> Unit // navigation only, handled by the Screen
             else -> Unit
         }
     }

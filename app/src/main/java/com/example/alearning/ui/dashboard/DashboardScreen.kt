@@ -61,7 +61,7 @@ fun DashboardScreen(
     onNavigateToCreateEvent: () -> Unit,
     onNavigateToQuickTest: () -> Unit,
     onNavigateToTestingGrid: (String, String) -> Unit,
-    onNavigateToLeaderboard: () -> Unit,
+    onNavigateToLeaderboard: (eventId: String, groupId: String, mode: String) -> Unit,
     onNavigateToReports: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToSignIn: () -> Unit = {},
@@ -86,7 +86,10 @@ fun DashboardScreen(
                 DashboardAction.OnRosterClick -> onNavigateToRoster()
                 DashboardAction.OnTestLibraryClick -> onNavigateToTestLibrary()
                 is DashboardAction.OnEventClick -> onNavigateToTestingGrid(it.eventId, it.groupId)
-                DashboardAction.OnLeaderboardClick -> onNavigateToLeaderboard()
+                is DashboardAction.OnPickLeaderboardEvent -> {
+                    viewModel.onAction(DashboardAction.OnDismissLeaderboardPicker)
+                    onNavigateToLeaderboard(it.eventId, it.groupId, "event")
+                }
                 DashboardAction.OnAnalyticsClick -> onNavigateToReports()
                 DashboardAction.OnSeeAllEventsClick -> onNavigateToReports()
                 DashboardAction.OnSettingsClick -> onNavigateToSettings()
@@ -188,6 +191,14 @@ fun DashboardContent(
                     onClick = { onAction(DashboardAction.OnTestLibraryClick) }
                 )
             }
+            item {
+                QuickActionCard(
+                    icon = Icons.Default.EmojiEvents,
+                    label = "Leaderboard",
+                    tint = SportOrange,
+                    onClick = { onAction(DashboardAction.OnLeaderboardClick) }
+                )
+            }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Row(
@@ -229,6 +240,82 @@ fun DashboardContent(
                             }
                         }
                     )
+                }
+            }
+        }
+    }
+
+    if (uiState.showLeaderboardPicker) {
+        LeaderboardEventPickerSheet(
+            events = uiState.recentEvents.filter { it.groupId != null },
+            onPick = { event -> onAction(DashboardAction.OnPickLeaderboardEvent(event.id, event.groupId!!)) },
+            onDismiss = { onAction(DashboardAction.OnDismissLeaderboardPicker) }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LeaderboardEventPickerSheet(
+    events: List<TestingEvent>,
+    onPick: (TestingEvent) -> Unit,
+    onDismiss: () -> Unit
+) {
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 24.dp)
+        ) {
+            Text(
+                "Choose an event",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(vertical = 12.dp)
+            )
+            if (events.isEmpty()) {
+                Text(
+                    "No events yet — create one to see a leaderboard.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(vertical = 24.dp)
+                )
+            } else {
+                events.forEach { event ->
+                    Surface(
+                        onClick = { onPick(event) },
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.EmojiEvents,
+                                contentDescription = null,
+                                tint = SportOrange,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Text(
+                                text = formatEventDate(event.date, event.name),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Icon(
+                                imageVector = Icons.Default.ChevronRight,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 }
             }
         }

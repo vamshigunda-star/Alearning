@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.alearning.domain.model.standards.TimingMode
 import com.example.alearning.ui.components.AppTopBar
+import com.example.alearning.ui.components.InlineErrorBanner
 import com.example.alearning.ui.theme.*
 
 import androidx.activity.compose.BackHandler
@@ -227,17 +228,25 @@ private fun StopwatchContent(
             }
         }
     ) { padding ->
-        when {
-            uiState.isLoading -> LoadingBox(padding)
-            uiState.errorMessage != null -> ErrorBox(uiState.errorMessage, onAction, padding)
-            uiState.isSessionComplete -> {
-                // Navigate back automatically handled by LaunchedEffect
-                Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
+        Column(modifier = Modifier.padding(padding)) {
+            if (uiState.errorMessage != null && uiState.sessionLoaded) {
+                InlineErrorBanner(
+                    message = uiState.errorMessage,
+                    onDismiss = { onAction(StopwatchAction.OnDismissError) }
+                )
             }
-            uiState.mode == TimingMode.INDIVIDUAL -> IndividualModeContent(uiState, allAthletes, onAction, padding)
-            uiState.mode == TimingMode.GROUP_START -> GroupStartModeContent(uiState, onAction, padding)
+            when {
+                uiState.isLoading -> LoadingBox(PaddingValues(0.dp))
+                !uiState.sessionLoaded -> ErrorBox(uiState.errorMessage ?: "Something went wrong", onAction, PaddingValues(0.dp))
+                uiState.isSessionComplete -> {
+                    // Navigate back automatically handled by LaunchedEffect
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
+                uiState.mode == TimingMode.INDIVIDUAL -> IndividualModeContent(uiState, allAthletes, onAction, PaddingValues(0.dp))
+                uiState.mode == TimingMode.GROUP_START -> GroupStartModeContent(uiState, onAction, PaddingValues(0.dp))
+            }
         }
     }
 

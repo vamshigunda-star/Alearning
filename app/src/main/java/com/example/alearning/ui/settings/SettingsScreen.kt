@@ -65,10 +65,16 @@ fun SettingsContent(
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult(),
     ) { result ->
+        if (result.resultCode != android.app.Activity.RESULT_OK) {
+            onAction(SettingsAction.ConnectDriveError("Sign-in cancelled or failed (Code: ${result.resultCode}). Please ensure your app is configured in Google Cloud Console with the correct SHA-1."))
+            return@rememberLauncherForActivityResult
+        }
         val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
         try {
             val account: GoogleSignInAccount? = task.getResult(ApiException::class.java)
             onAction(SettingsAction.ConnectDriveSuccess(account?.email ?: "Connected"))
+        } catch (e: ApiException) {
+            onAction(SettingsAction.ConnectDriveError("Sign-in failed (Code: ${e.statusCode}): ${e.message}"))
         } catch (e: Exception) {
             onAction(SettingsAction.ConnectDriveError("Sign-in failed: ${e.message}"))
         }
@@ -119,11 +125,22 @@ fun SettingsContent(
                 CircularProgressIndicator()
                 Text("Syncing in progress...")
             } else {
-                Button(
-                    onClick = { launcher.launch(googleSignInClient.signInIntent) },
-                    enabled = !uiState.isDriveConnected,
-                ) {
-                    Text(if (uiState.isDriveConnected) "Connected to Google Drive" else "Connect Google Drive")
+                if (!uiState.isDriveConnected) {
+                    Button(onClick = { launcher.launch(googleSignInClient.signInIntent) }) {
+                        Text("Connect Google Drive")
+                    }
+                } else {
+                    if (uiState.connectedEmail != null) {
+                        Text(
+                            text = "Connected as: ${uiState.connectedEmail}",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                    Button(
+                        onClick = { onAction(SettingsAction.DisconnectDrive) },
+                    ) {
+                        Text("Sign Out")
+                    }
                 }
 
                 Button(
@@ -134,7 +151,7 @@ fun SettingsContent(
                 }
 
                 Button(
-                    onClick = { onAction(SettingsAction.RestoreData) },
+                    onClick = { onAction(SettingsAction.RequestRestoreData) },
                     enabled = uiState.isDriveConnected,
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                 ) {
@@ -157,6 +174,24 @@ fun SettingsContent(
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
+        }
+
+        if (uiState.showRestoreConfirmation) {
+            AlertDialog(
+                onDismissRequest = { onAction(SettingsAction.DismissRestoreConfirmation) },
+                title = { Text("Restore from backup?") },
+                text = { Text("This replaces every athlete, group, and result on this device with the selected backup. It can't be undone.") },
+                confirmButton = {
+                    TextButton(onClick = { onAction(SettingsAction.RestoreData) }) {
+                        Text("Restore", color = MaterialTheme.colorScheme.error)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { onAction(SettingsAction.DismissRestoreConfirmation) }) {
+                        Text("Cancel")
+                    }
+                },
+            )
         }
     }
 }

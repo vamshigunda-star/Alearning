@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -14,34 +15,53 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.alearning.domain.repository.AiCoachStatus
+import com.example.alearning.ui.components.AppTopBar
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AiCoachScreen(viewModel: AiCoachViewModel) {
+fun AiCoachScreen(
+    viewModel: AiCoachViewModel,
+    onNavigateBack: () -> Unit
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    when (uiState.status) {
-        AiCoachStatus.UNSUPPORTED -> {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("AI Coach is not supported on this device.")
-            }
-        }
-        AiCoachStatus.DOWNLOADING -> {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        }
-        AiCoachStatus.READY -> {
-            ChatUI(
-                messages = uiState.messages,
-                isSending = uiState.isSending,
-                onSendMessage = { viewModel.onAction(AiCoachAction.SendMessage(it)) },
-                errorMessage = uiState.errorMessage,
-                onDismissError = { viewModel.onAction(AiCoachAction.OnDismissError) }
+    Scaffold(
+        topBar = {
+            AppTopBar(
+                title = "AI Coach",
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                }
             )
         }
-        AiCoachStatus.ERROR -> {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Error initializing AI Coach.")
+    ) { padding ->
+        when (uiState.status) {
+            AiCoachStatus.UNSUPPORTED -> {
+                Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                    Text("AI Coach is not supported on this device.")
+                }
+            }
+            AiCoachStatus.DOWNLOADING -> {
+                Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+            AiCoachStatus.READY -> {
+                ChatUI(
+                    messages = uiState.messages,
+                    isSending = uiState.isSending,
+                    onSendMessage = { viewModel.onAction(AiCoachAction.SendMessage(it)) },
+                    errorMessage = uiState.errorMessage,
+                    onDismissError = { viewModel.onAction(AiCoachAction.OnDismissError) },
+                    modifier = Modifier.padding(padding)
+                )
+            }
+            AiCoachStatus.ERROR -> {
+                Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                    Text("Error initializing AI Coach.")
+                }
             }
         }
     }
@@ -53,11 +73,12 @@ fun ChatUI(
     isSending: Boolean,
     onSendMessage: (String) -> Unit,
     errorMessage: String?,
-    onDismissError: () -> Unit
+    onDismissError: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     var inputText by remember { mutableStateOf("") }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize().then(modifier)) {
         if (errorMessage != null) {
             Snackbar(
                 action = {

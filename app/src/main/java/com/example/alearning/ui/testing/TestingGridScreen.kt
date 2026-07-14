@@ -2,6 +2,8 @@ package com.example.alearning.ui.testing
 
 import android.util.Log
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Assessment
@@ -19,9 +21,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.alearning.ui.components.AppTopBar
 import com.example.alearning.ui.components.AppTopBarSubtitleColor
+import com.example.alearning.ui.components.InlineErrorBanner
 import kotlinx.coroutines.delay
 
 @Composable
@@ -127,13 +132,25 @@ private fun TestingGridContent(
             )
         }
     ) { padding ->
-        when {
-            uiState.isLoading -> LoadingState()
-            uiState.errorMessage != null && uiState.gridData == null -> ErrorState(
-                message = uiState.errorMessage,
-                onDismiss = { onAction(TestingGridAction.OnDismissError) }
-            )
-            else -> LiveEntryPhase(uiState, eventId, groupId, onAction, padding)
+        Column(modifier = Modifier.padding(padding)) {
+            if (uiState.errorMessage != null && uiState.gridData != null) {
+                InlineErrorBanner(
+                    message = uiState.errorMessage,
+                    onDismiss = { onAction(TestingGridAction.OnDismissError) },
+                    retryLabel = if (uiState.failedAction != null) "Retry" else null,
+                    onRetry = if (uiState.failedAction != null) {
+                        { onAction(TestingGridAction.OnRetryFailedAction) }
+                    } else null
+                )
+            }
+            when {
+                uiState.isLoading -> LoadingState()
+                uiState.errorMessage != null && uiState.gridData == null -> ErrorState(
+                    message = uiState.errorMessage,
+                    onDismiss = { onAction(TestingGridAction.OnDismissError) }
+                )
+                else -> LiveEntryPhase(uiState, eventId, groupId, onAction, PaddingValues(0.dp))
+            }
         }
     }
 

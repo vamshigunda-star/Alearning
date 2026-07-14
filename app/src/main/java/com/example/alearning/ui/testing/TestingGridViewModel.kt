@@ -33,8 +33,24 @@ data class TestingGridUiState(
     val testCapturePreferences: Map<String, CaptureMethodPreference> = emptyMap(),
     val deleteCandidate: DeleteCandidate? = null,
     val isLoading: Boolean = true,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val failedAction: FailedGridAction? = null
 )
+
+sealed interface FailedGridAction {
+    data class Save(
+        val athlete: Individual,
+        val test: FitnessTest,
+        val rawScore: Double,
+        val moveToNext: Boolean
+    ) : FailedGridAction
+
+    data class Delete(
+        val resultId: String,
+        val athlete: Individual,
+        val test: FitnessTest
+    ) : FailedGridAction
+}
 
 data class EditingCell(
     val athlete: Individual,
@@ -67,6 +83,7 @@ sealed interface TestingGridAction {
     data object OnConfirmDelete : TestingGridAction
     data object OnDismissDelete : TestingGridAction
     data object OnDismissError : TestingGridAction
+    data object OnRetryFailedAction : TestingGridAction
     
     // Navigation actions — handled by the screen composable
     data object OnNavigateBack : TestingGridAction
@@ -131,8 +148,14 @@ class TestingGridViewModel @Inject constructor(
             is TestingGridAction.OnDismissEditing -> {
                 _uiState.update { it.copy(editingCell = null) }
             }
-            is TestingGridAction.OnSaveScore -> saveScore(action.rawScore, moveToNext = false)
-            is TestingGridAction.OnSaveAndNext -> saveScore(action.rawScore, moveToNext = true)
+            is TestingGridAction.OnSaveScore -> {
+                val cell = _uiState.value.editingCell ?: return
+                saveScore(cell.athlete, cell.test, action.rawScore, moveToNext = false)
+            }
+            is TestingGridAction.OnSaveAndNext -> {
+                val cell = _uiState.value.editingCell ?: return
+                saveScore(cell.athlete, cell.test, action.rawScore, moveToNext = true)
+            }
             is TestingGridAction.OnRequestBack -> {
                 onAction(TestingGridAction.OnNavigateBack)
             }
@@ -161,7 +184,14 @@ class TestingGridViewModel @Inject constructor(
             }
             is TestingGridAction.OnConfirmDelete -> deleteResult()
             is TestingGridAction.OnDismissDelete -> _uiState.update { it.copy(deleteCandidate = null) }
-            is TestingGridAction.OnDismissError -> _uiState.update { it.copy(errorMessage = null) }
+            is TestingGridAction.OnDismissError -> _uiState.update { it.copy(errorMessage = null, failedAction = null) }
+            is TestingGridAction.OnRetryFailedAction -> {
+                when (val f = _uiState.value.failedAction) {
+                    is FailedGridAction.Save -> saveScore(f.athlete, f.test, f.rawScore, f.moveToNext)
+                    is FailedGridAction.Delete -> retryDelete(f)
+                    null -> Unit
+                }
+            }
             // Navigation actions handled by screen composable
             is TestingGridAction.OnNavigateBack,
             is TestingGridAction.OnNavigateToAthleteReport,
@@ -171,10 +201,12 @@ class TestingGridViewModel @Inject constructor(
         }
     }
 
-    private fun saveScore(rawScore: Double, moveToNext: Boolean) {
-        val cell = _uiState.value.editingCell ?: return
+    private fun saveScore(athlete: Individual, test: FitnessTest, rawScore: Double, moveToNext: Boolean) {
         val gridData = _uiState.value.gridData ?: return
-        
+
+        // A fresh attempt supersedes any prior failure.
+        _uiState.update { it.copy(failedAction = null) }
+
         // Temporarily clear the editing cell to dismiss keyboard while saving if not moving to next
         if (!moveToNext) {
             _uiState.update { it.copy(editingCell = null) }
@@ -183,34 +215,34 @@ class TestingGridViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 // Get full athlete data to calculate age
-                val athlete = peopleRepository.getIndividualById(cell.athlete.id)
-                if (athlete != null) {
-                    val ageMillis = System.currentTimeMillis() - athlete.dateOfBirth
+                val fullAthlete = peopleRepository.getIndividualById(athlete.id)
+                if (fullAthlete != null) {
+                    val ageMillis = System.currentTimeMillis() - fullAthlete.dateOfBirth
                     val ageYears = (ageMillis / (365.25 * 24 * 60 * 60 * 1000)).toFloat()
 
                     recordTestResult(
                         eventId = eventId,
-                        individualId = athlete.id,
-                        testId = cell.test.id,
+                        individualId = fullAthlete.id,
+                        testId = test.id,
                         rawScore = rawScore,
                         ageAtTime = ageYears,
-                        sex = athlete.sex
+                        sex = fullAthlete.sex
                     )
                 }
 
                 if (moveToNext) {
                     val students = gridData.students
-                    val currentIndex = students.indexOfFirst { it.id == cell.athlete.id }
+                    val currentIndex = students.indexOfFirst { it.id == athlete.id }
                     if (currentIndex != -1 && currentIndex + 1 < students.size) {
                         val nextAthlete = students[currentIndex + 1]
                         val nextCurrentResult = _uiState.value.gridData?.results?.find {
-                            it.individualId == nextAthlete.id && it.testId == cell.test.id
+                            it.individualId == nextAthlete.id && it.testId == test.id
                         }
                         _uiState.update {
                             it.copy(
                                 editingCell = EditingCell(
                                     athlete = nextAthlete,
-                                    test = cell.test,
+                                    test = test,
                                     currentResult = nextCurrentResult
                                 )
                             )
@@ -223,10 +255,16 @@ class TestingGridViewModel @Inject constructor(
             } catch (e: Exception) {
                 Log.e(
                     "TestingGridViewModel",
-                    "saveScore FAILED event=$eventId athlete=${cell.athlete.id} test=${cell.test.id} score=$rawScore",
+                    "saveScore FAILED event=$eventId athlete=${athlete.id} test=${test.id} score=$rawScore",
                     e
                 )
-                _uiState.update { it.copy(errorMessage = e.message, editingCell = null) }
+                _uiState.update {
+                    it.copy(
+                        errorMessage = e.message,
+                        editingCell = null,
+                        failedAction = FailedGridAction.Save(athlete, test, rawScore, moveToNext)
+                    )
+                }
             }
         }
     }
@@ -244,7 +282,32 @@ class TestingGridViewModel @Inject constructor(
                     e
                 )
                 _uiState.update {
-                    it.copy(errorMessage = "Delete failed: ${e.message}", deleteCandidate = null)
+                    it.copy(
+                        errorMessage = "Delete failed: ${e.message}",
+                        deleteCandidate = null,
+                        failedAction = FailedGridAction.Delete(candidate.resultId, candidate.athlete, candidate.test)
+                    )
+                }
+            }
+        }
+    }
+
+    private fun retryDelete(failed: FailedGridAction.Delete) {
+        _uiState.update { it.copy(failedAction = null) }
+        viewModelScope.launch {
+            try {
+                testingRepository.deleteResultById(failed.resultId)
+            } catch (e: Exception) {
+                Log.e(
+                    "TestingGridViewModel",
+                    "deleteResultById RETRY FAILED resultId=${failed.resultId}",
+                    e
+                )
+                _uiState.update {
+                    it.copy(
+                        errorMessage = "Delete failed: ${e.message}",
+                        failedAction = FailedGridAction.Delete(failed.resultId, failed.athlete, failed.test)
+                    )
                 }
             }
         }

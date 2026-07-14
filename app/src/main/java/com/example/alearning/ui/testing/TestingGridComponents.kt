@@ -2,6 +2,7 @@ package com.example.alearning.ui.testing
 
 import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -220,11 +221,15 @@ fun LiveEntryPhase(
             items(gridData.students.size) { index ->
                 val athlete = gridData.students[index]
                 val savedResult = gridData.results.find { it.individualId == athlete.id && it.testId == selectedTest.id }
-                
+                val isFailed = (uiState.failedAction as? FailedGridAction.Save)?.let {
+                    it.athlete.id == athlete.id && it.test.id == selectedTest.id
+                } == true
+
                 AthleteRow(
                     athlete = athlete,
                     test = selectedTest,
                     savedResult = savedResult,
+                    isFailed = isFailed,
                     onCellClick = { testToLog ->
                         Log.d("TestingGridComponents", "Cell clicked for athlete ${athlete.id}, test ${testToLog.id}")
                         if (savedResult != null) {
@@ -278,6 +283,7 @@ fun AthleteRow(
     test: FitnessTest,
     savedResult: TestResult?,
     modifier: Modifier = Modifier,
+    isFailed: Boolean = false,
     onCellClick: (FitnessTest) -> Unit,
     onCellLongPress: (FitnessTest) -> Unit,
     onAthleteClick: () -> Unit
@@ -342,7 +348,8 @@ fun AthleteRow(
                 ScoreCell(
                     savedResult = savedResult,
                     onClick = { onCellClick(test) },
-                    onLongPress = { onCellLongPress(test) }
+                    onLongPress = { onCellLongPress(test) },
+                    isFailed = isFailed
                 )
             }
         }
@@ -354,9 +361,11 @@ fun AthleteRow(
 fun ScoreCell(
     savedResult: TestResult?,
     onClick: () -> Unit,
-    onLongPress: () -> Unit
+    onLongPress: () -> Unit,
+    isFailed: Boolean = false
 ) {
     val (bgColor, textColor) = when {
+        isFailed -> PerformanceRed.copy(alpha = 0.7f) to PerformanceRedText
         savedResult == null -> Color(0xFFF3F4F6) to Color.Gray
         savedResult.percentile == null -> PerformanceGrey to Color.Black
         savedResult.percentile >= 60 -> PerformanceGreen.copy(alpha = 0.7f) to PerformanceGreenText
@@ -370,10 +379,24 @@ fun ScoreCell(
             .height(64.dp)
             .clip(RoundedCornerShape(8.dp))
             .background(bgColor)
+            .then(
+                if (isFailed) Modifier.border(2.dp, MaterialTheme.colorScheme.error, RoundedCornerShape(8.dp))
+                else Modifier
+            )
             .acceleratorClick(onClick = onClick, onLongClick = onLongPress),
         contentAlignment = Alignment.Center
     ) {
-        if (savedResult != null) {
+        if (isFailed) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Icon(
+                    Icons.Default.ErrorOutline,
+                    contentDescription = "Save failed",
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(18.dp)
+                )
+                Text("Failed", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+            }
+        } else if (savedResult != null) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(String.format(Locale.getDefault(), "%.1f", savedResult.rawScore), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = textColor)
                 savedResult.percentile?.let { p -> Text("${p}%", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = textColor.copy(alpha = 0.8f)) }

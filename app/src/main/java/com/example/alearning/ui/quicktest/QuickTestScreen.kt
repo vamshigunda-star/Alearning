@@ -1,5 +1,6 @@
 package com.example.alearning.ui.quicktest
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -48,11 +49,25 @@ fun QuickTestScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
+    BackHandler {
+        if (uiState.step == QuickTestStep.ENTER_SCORES) {
+            viewModel.onAction(QuickTestAction.OnNavigateBack)
+        } else {
+            onNavigateBack()
+        }
+    }
+
     QuickTestContent(
         uiState = uiState,
         onAction = { action ->
             when (action) {
-                is QuickTestAction.OnNavigateBack -> onNavigateBack()
+                is QuickTestAction.OnNavigateBack -> {
+                    if (uiState.step == QuickTestStep.ENTER_SCORES) {
+                        viewModel.onAction(action)
+                    } else {
+                        onNavigateBack()
+                    }
+                }
                 else -> viewModel.onAction(action)
             }
         }

@@ -19,6 +19,7 @@ data class StopwatchUiState(
     val canUndo: Boolean = false,
     val isLoading: Boolean = true,
     val errorMessage: String? = null,
+    val sessionLoaded: Boolean = false,
     val isSessionComplete: Boolean = false,
     val selectedAthleteId: String? = null,
     val pendingResults: Map<String, Double> = emptyMap(), // athleteId -> rawScore

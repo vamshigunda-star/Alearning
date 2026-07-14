@@ -85,6 +85,7 @@ class StopwatchViewModel @Inject constructor(
                                 completedCount = completedTrials,
                                 totalCount = totalTrials,
                                 isLoading = false,
+                                sessionLoaded = true,
                                 selectedAthleteId = initialAthleteId // Use passed ID instead of first entry
                             )
                         }
@@ -102,7 +103,8 @@ class StopwatchViewModel @Inject constructor(
                                 totalHeats = heats.size,
                                 completedCount = completedTrials,
                                 totalCount = totalTrials,
-                                isLoading = false
+                                isLoading = false,
+                                sessionLoaded = true
                             )
                         }
                     }

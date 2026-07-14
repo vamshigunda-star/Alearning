@@ -70,7 +70,6 @@ import com.example.alearning.ui.components.AppTopBar
 import com.example.alearning.ui.components.AppTopBarSubtitleColor
 import com.example.alearning.ui.session.SessionReportBody
 import com.example.alearning.ui.session.SessionReportUiState
-import com.example.alearning.ui.theme.NavyPrimary
 import com.example.alearning.ui.theme.SportOrange
 import com.example.alearning.util.CsvExporter
 import java.text.SimpleDateFormat
@@ -218,43 +217,29 @@ private fun ReportsHubContent(
     val tabTitles = listOf("Athlete Profile", "Event Report")
 
     Column(modifier = modifier.fillMaxSize()) {
-        // Custom Segmented Control Style Tabs
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(NavyPrimary)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.Center
+        TabRow(
+            selectedTabIndex = selectedTab,
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.primary,
+            indicator = { tabPositions ->
+                TabRowDefaults.SecondaryIndicator(
+                    modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.White.copy(alpha = 0.15f), CircleShape)
-                    .padding(4.dp)
-            ) {
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    tabTitles.forEachIndexed { index, title ->
-                        val isSelected = selectedTab == index
-                        val bgColor = if (isSelected) SportOrange else Color.Transparent
-                        val textColor = if (isSelected) Color.White else Color.White.copy(alpha = 0.7f)
-                        
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .background(bgColor, CircleShape)
-                                .clickable { onTabSelected(index) }
-                                .padding(vertical = 8.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                title,
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = textColor
-                            )
-                        }
+            tabTitles.forEachIndexed { index, title ->
+                Tab(
+                    selected = selectedTab == index,
+                    onClick = { onTabSelected(index) },
+                    text = {
+                        Text(
+                            title,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Medium
+                        )
                     }
-                }
+                )
             }
         }
 
