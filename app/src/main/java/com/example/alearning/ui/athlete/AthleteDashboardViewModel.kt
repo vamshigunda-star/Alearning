@@ -1,26 +1,30 @@
 package com.example.alearning.ui.athlete
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.alearning.domain.model.people.Individual
 import com.example.alearning.domain.model.reports.AthleteDashboardData
-import com.example.alearning.domain.repository.ReportsRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.asSharedFlow
-import javax.inject.Inject
-
+import com.example.alearning.domain.model.standards.FitnessTest
+import com.example.alearning.domain.model.testing.TestResult
 import com.example.alearning.domain.repository.StandardsRepository
 import com.example.alearning.domain.repository.TestingRepository
+import com.example.alearning.domain.usecase.reports.ObserveAthleteDashboardUseCase
 import com.example.alearning.domain.usecase.testing.AthleteRadarData
 import com.example.alearning.domain.usecase.testing.GetAthleteRadarDataUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 data class AthleteDashboardUiState(
     val data: AthleteDashboardData? = null,
@@ -41,7 +45,7 @@ sealed interface AthleteDashboardAction {
 @HiltViewModel
 class AthleteDashboardViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val observeAthleteDashboard: com.example.alearning.domain.usecase.reports.ObserveAthleteDashboardUseCase,
+    private val observeAthleteDashboard: ObserveAthleteDashboardUseCase,
     private val testingRepository: TestingRepository,
     private val standardsRepository: StandardsRepository,
     private val getAthleteRadarData: GetAthleteRadarDataUseCase
@@ -55,7 +59,7 @@ class AthleteDashboardViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(AthleteDashboardUiState())
     val uiState: StateFlow<AthleteDashboardUiState> = _uiState.asStateFlow()
 
-    private var loadJob: kotlinx.coroutines.Job? = null
+    private var loadJob: Job? = null
 
     fun loadDashboard(athleteId: String, contextSessionId: String? = null) {
         this.athleteId = athleteId
@@ -70,7 +74,7 @@ class AthleteDashboardViewModel @Inject constructor(
                             val radar = getAthleteRadarData(athleteId)
                             _uiState.update { it.copy(data = d, radarData = radar, isLoading = false) }
                         } catch (e: Exception) {
-                            android.util.Log.e("AthleteDashboardVM", "Failed to fetch radar data", e)
+                            Log.e("AthleteDashboardVM", "Failed to fetch radar data", e)
                             _uiState.update { it.copy(data = d, isLoading = false) }
                         }
                     } else {
@@ -104,14 +108,14 @@ class AthleteDashboardViewModel @Inject constructor(
         }
     }
 
-    private val _exportEvent = kotlinx.coroutines.flow.MutableSharedFlow<ExportRequest>()
+    private val _exportEvent = MutableSharedFlow<ExportRequest>()
     val exportEvent = _exportEvent.asSharedFlow()
 
     sealed interface ExportRequest {
         data class Athlete(
             val athlete: Individual,
-            val results: List<com.example.alearning.domain.model.testing.TestResult>,
-            val tests: Map<String, com.example.alearning.domain.model.standards.FitnessTest>
+            val results: List<TestResult>,
+            val tests: Map<String, FitnessTest>
         ) : ExportRequest
     }
 }

@@ -1,17 +1,17 @@
 package com.example.alearning.ui.report.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -34,28 +34,45 @@ private val df = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
 fun SessionPill(
     session: TestingEvent,
     onTap: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    groupName: String? = null
 ) {
-    Row(
-        modifier = modifier
-            .background(Color(0xFFE3F2FD), RoundedCornerShape(999.dp))
-            .clickable(onClick = onTap)
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Icon(
-            Icons.Default.CalendarMonth,
-            contentDescription = null,
-            tint = Color(0xFF0D47A1),
-            modifier = Modifier.size(14.dp)
-        )
-        Text(
-            "${df.format(Date(session.date))} · ${session.name}",
-            style = MaterialTheme.typography.labelMedium,
-            color = Color(0xFF0D47A1),
-            fontWeight = FontWeight.Medium
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth().clickable(onClick = onTap).padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            InitialsAvatar(
+                name = groupName ?: session.name,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                size = 40.dp
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "${groupName?.let { "$it · " } ?: ""}${df.format(Date(session.date))}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    session.name,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                )
+            }
+            Icon(
+                Icons.Default.ExpandMore,
+                contentDescription = "Switch session",
+                tint = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
     }
 }
 

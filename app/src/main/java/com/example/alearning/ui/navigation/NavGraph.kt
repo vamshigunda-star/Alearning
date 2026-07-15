@@ -1,5 +1,11 @@
 package com.example.alearning.ui.navigation
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
@@ -14,12 +20,6 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import com.example.alearning.ui.aicoach.AiCoachScreen
 import com.example.alearning.ui.athlete.AthleteDashboardScreen
 import com.example.alearning.ui.athlete.AthleteTestDetailScreen
@@ -32,13 +32,14 @@ import com.example.alearning.ui.dashboard.DashboardScreen
 import com.example.alearning.ui.groupoverview.GroupOverviewScreen
 import com.example.alearning.ui.leaderboard.LeaderboardScreen
 import com.example.alearning.ui.quicktest.QuickTestScreen
+import com.example.alearning.ui.report.ReportScreen
 import com.example.alearning.ui.roster.RosterScreen
 import com.example.alearning.ui.session.SessionReportScreen
-import com.example.alearning.ui.testlibrary.TestLibraryScreen
+import com.example.alearning.ui.settings.SettingsScreen
 import com.example.alearning.ui.testing.CreateEventScreen
 import com.example.alearning.ui.testing.TestingGridScreen
 import com.example.alearning.ui.testing.stopwatch.StopwatchScreen
-import com.example.alearning.ui.settings.SettingsScreen
+import com.example.alearning.ui.testlibrary.TestLibraryScreen
 
 @Composable
 fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
@@ -197,7 +198,7 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
 
         composable(Screen.Report.route) {
 
-            com.example.alearning.ui.report.ReportScreen(
+            ReportScreen(
                 onNavigateToGroup = { groupId ->
                     navController.navigate(Screen.GroupOverview.createRoute(groupId))
                 },

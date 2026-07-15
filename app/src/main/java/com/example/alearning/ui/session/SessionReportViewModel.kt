@@ -1,9 +1,8 @@
-package com.example.alearning.ui.session
+﻿package com.example.alearning.ui.session
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.alearning.domain.repository.ReportsRepository
 import com.example.alearning.domain.model.reports.SessionReportData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,7 +27,8 @@ data class SessionReportUiState(
     val isExporting: Boolean = false,
     val errorMessage: String? = null,
     val showDeleteDialog: Boolean = false,
-    val isDeleted: Boolean = false
+    val isDeleted: Boolean = false,
+    val isInsightSheetOpen: Boolean = false
 )
 
 sealed interface SessionReportAction {
@@ -36,6 +36,8 @@ sealed interface SessionReportAction {
     data class OnSwitchSession(val sessionId: String) : SessionReportAction
     data object OnOpenSwitcher : SessionReportAction
     data object OnDismissSwitcher : SessionReportAction
+    data object OnOpenInsight : SessionReportAction
+    data object OnDismissInsight : SessionReportAction
     data class OnNavigateToAthlete(val individualId: String) : SessionReportAction
     data object OnResumeTesting : SessionReportAction
     data object OnNavigateBack : SessionReportAction
@@ -81,6 +83,8 @@ class SessionReportViewModel @Inject constructor(
             is SessionReportAction.OnSelectTest -> _uiState.update { it.copy(selectedTestId = action.testId) }
             SessionReportAction.OnOpenSwitcher -> _uiState.update { it.copy(isSwitcherOpen = true) }
             SessionReportAction.OnDismissSwitcher -> _uiState.update { it.copy(isSwitcherOpen = false) }
+            SessionReportAction.OnOpenInsight -> _uiState.update { it.copy(isInsightSheetOpen = true) }
+            SessionReportAction.OnDismissInsight -> _uiState.update { it.copy(isInsightSheetOpen = false) }
             is SessionReportAction.OnSwitchSession -> {
                 _uiState.update { it.copy(isSwitcherOpen = false, isLoading = true, data = null) }
                 load(action.sessionId)

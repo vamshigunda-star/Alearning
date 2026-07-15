@@ -1,5 +1,6 @@
 package com.example.alearning.ui.groupoverview
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -37,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -44,12 +46,11 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.Canvas
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.alearning.ui.components.AppTopBar
 import com.example.alearning.domain.model.reports.Distribution
 import com.example.alearning.domain.model.reports.SessionRow
 import com.example.alearning.domain.model.reports.TestTrendStrip
+import com.example.alearning.ui.components.AppTopBar
 import com.example.alearning.ui.report.components.DistributionBar
 import com.example.alearning.ui.report.components.MiniSparkline
 import com.example.alearning.ui.theme.PerformanceRed
@@ -287,8 +288,8 @@ private fun TrendLineChart(points: List<Pair<Long, Float>>, modifier: Modifier =
         // Percentile 100 at top (topPadding), 0 at bottom (totalHeight - bottomPadding)
         val yAt = { p: Float -> topPadding + h * (1f - (p.coerceIn(0f, 100f) / 100f)) }
 
-        drawRect(superiorColor, topLeft = Offset(leftPadding, yAt(100f)), size = androidx.compose.ui.geometry.Size(w, yAt(70f) - yAt(100f)))
-        drawRect(healthyColor, topLeft = Offset(leftPadding, yAt(70f)), size = androidx.compose.ui.geometry.Size(w, yAt(35f) - yAt(70f)))
+        drawRect(superiorColor, topLeft = Offset(leftPadding, yAt(100f)), size = Size(w, yAt(70f) - yAt(100f)))
+        drawRect(healthyColor, topLeft = Offset(leftPadding, yAt(70f)), size = Size(w, yAt(35f) - yAt(70f)))
 
         // Gridlines and Y labels at 0, 35, 70, 100
         listOf(0f, 35f, 70f, 100f).forEach { p ->

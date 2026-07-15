@@ -5,39 +5,36 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Surface
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
@@ -59,22 +56,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.alearning.domain.model.reports.RecentSessionRow
 import com.example.alearning.domain.repository.AiCoachStatus
-import com.example.alearning.ui.report.components.SessionSwitcherSheet
 import com.example.alearning.ui.aicoach.AiCoachViewModel
-import com.example.alearning.ui.aicoach.components.AiFloatingActionButton
 import com.example.alearning.ui.athlete.AthleteBody
 import com.example.alearning.ui.athlete.AthleteDashboardUiState
 import com.example.alearning.ui.components.AppTopBar
 import com.example.alearning.ui.components.AppTopBarSubtitleColor
+import com.example.alearning.ui.report.components.SessionSwitcherSheet
+import com.example.alearning.ui.session.CoachInsightSheet
 import com.example.alearning.ui.session.SessionReportBody
 import com.example.alearning.ui.session.SessionReportUiState
-import com.example.alearning.ui.theme.SportOrange
-import com.example.alearning.util.CsvExporter
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.example.alearning.util.CsvExporter
+import com.example.alearning.domain.model.reports.RecentSessionRow
+import com.example.alearning.ui.theme.SportOrange
 
 @Composable
 fun ReportScreen(
@@ -174,6 +171,19 @@ fun ReportScreen(
                     onNavigateToAiCoach(contextString)
                 }
             )
+
+            if (selectedTab == 1 && uiState.eventData != null && uiState.eventData!!.tests.isNotEmpty()) {
+                ExtendedFloatingActionButton(
+                    onClick = { viewModel.onAction(ReportsHubAction.OnOpenInsight) },
+                    icon = { Icon(Icons.Default.Lightbulb, contentDescription = null) },
+                    text = { Text("Coach Insight") },
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 16.dp, bottom = 96.dp)
+                )
+            }
         }
 
         if (uiState.showDeleteDialog) {
@@ -200,6 +210,17 @@ fun ReportScreen(
                 currentId = uiState.eventData!!.event.id,
                 onPick = { viewModel.onAction(ReportsHubAction.OnSwitchSession(it.id)) },
                 onDismiss = { viewModel.onAction(ReportsHubAction.OnDismissSwitcher) }
+            )
+        }
+
+        if (uiState.isInsightSheetOpen && uiState.eventData != null) {
+            val activeTestId = uiState.selectedEventTestId ?: uiState.eventData!!.tests.firstOrNull()?.id
+            val activeTest = uiState.eventData!!.tests.find { it.id == activeTestId }
+            val activeRows = activeTestId?.let { uiState.eventData!!.leaderboardByTest[it] }.orEmpty()
+            CoachInsightSheet(
+                test = activeTest,
+                redZoneAthletes = activeRows.filter { it.percentile != null && it.percentile < 30 },
+                onDismiss = { viewModel.onAction(ReportsHubAction.OnDismissInsight) }
             )
         }
     }
@@ -281,6 +302,7 @@ private fun AthleteProfileTab(
                     AthletePickerRow(
                         athletes = allAthletes,
                         selectedId = uiState.selectedAthleteId,
+                        athleteData = null,
                         onSelect = { onAction(ReportsHubAction.SelectAthlete(it)) }
                     )
                 } else {
@@ -327,6 +349,7 @@ private fun AthleteProfileTab(
                     AthletePickerRow(
                         athletes = allAthletes,
                         selectedId = uiState.selectedAthleteId,
+                        athleteData = uiState.athleteData,
                         onSelect = { onAction(ReportsHubAction.SelectAthlete(it)) }
                     )
                 }
@@ -368,6 +391,7 @@ private fun EventReportTab(
                 EventPickerRow(
                     sessions = sessions,
                     selectedEventId = uiState.selectedEventId,
+                    eventData = null,
                     onSelect = { row ->
                         val gid = row.groupId ?: return@EventPickerRow
                         onAction(ReportsHubAction.SelectEvent(row.event.id, gid))
@@ -405,6 +429,7 @@ private fun EventReportTab(
                     EventPickerRow(
                         sessions = sessions,
                         selectedEventId = uiState.selectedEventId,
+                        eventData = uiState.eventData,
                         onSelect = { row ->
                             val gid = row.groupId ?: return@EventPickerRow
                             onAction(ReportsHubAction.SelectEvent(row.event.id, gid))
@@ -425,6 +450,7 @@ private fun EventReportTab(
 private fun AthletePickerRow(
     athletes: List<Pair<String, String>>,
     selectedId: String?,
+    athleteData: com.example.alearning.domain.model.reports.AthleteDashboardData?,
     onSelect: (String) -> Unit
 ) {
     var showSheet by remember { mutableStateOf(false) }
@@ -443,8 +469,24 @@ private fun AthletePickerRow(
             Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text("Athlete Profile", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(selectedName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                if (athleteData != null) {
+                    val avg = athleteData.athleteSessionAvgPctile
+                    val cls = when {
+                        avg == null -> com.example.alearning.domain.model.reports.Classification.NO_DATA
+                        avg >= 60 -> com.example.alearning.domain.model.reports.Classification.SUPERIOR
+                        avg >= 30 -> com.example.alearning.domain.model.reports.Classification.HEALTHY
+                        else -> com.example.alearning.domain.model.reports.Classification.NEEDS_IMPROVEMENT
+                    }
+                    val healthText = com.example.alearning.ui.report.components.zoneLabel(cls)
+                    val testCountText = "${athleteData.sessionTestCount} Test${if (athleteData.sessionTestCount == 1) "" else "s"}"
+                    
+                    Text(
+                        text = "$healthText • $testCountText",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
             Icon(Icons.Default.ArrowDropDown, contentDescription = "Change")
         }
@@ -486,13 +528,24 @@ private fun AthletePickerRow(
 private fun EventPickerRow(
     sessions: List<RecentSessionRow>,
     selectedEventId: String?,
+    eventData: com.example.alearning.domain.model.reports.SessionReportData?,
     onSelect: (RecentSessionRow) -> Unit
 ) {
     val df = remember { SimpleDateFormat("MMM d, yyyy", Locale.getDefault()) }
     var showSheet by remember { mutableStateOf(false) }
     val selectedRow = sessions.firstOrNull { it.event.id == selectedEventId }
     val displayText = selectedRow?.event?.name ?: "Select Testing Event"
-    val subtitleText = selectedRow?.let { "${it.groupName ?: ""} · ${df.format(Date(it.event.date))}" } ?: "View session report"
+    
+    val subtitleText = if (eventData != null) {
+        val dateStr = df.format(Date(eventData.event.date))
+        val testCount = eventData.tests.size
+        val flaggedCount = eventData.leaderboardByTest.values.flatten().count { it.flagged } + 
+                           eventData.absentByTest.values.flatten().count { it.flagged }
+        
+        "$dateStr • $testCount Tests" + if (flaggedCount > 0) " • $flaggedCount Flagged" else ""
+    } else {
+        selectedRow?.let { "${it.groupName ?: ""} · ${df.format(Date(it.event.date))}" } ?: "Select an event to view report"
+    }
 
     Surface(
         modifier = Modifier.fillMaxWidth().clickable { showSheet = true },

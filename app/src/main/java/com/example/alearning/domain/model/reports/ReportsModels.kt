@@ -85,7 +85,8 @@ data class AthleteTestTile(
     val latestResult: TestResult?,
     val classification: Classification,
     val sparkline: List<Float>,        // raw scores oldest -> newest, normalized externally
-    val rawSparkline: List<Double>
+    val rawSparkline: List<Double>,
+    val deltaPercentile: Int? = null   // latest minus previous attempt; null if < 2 attempts or percentile missing
 )
 
 data class AthleteDashboardData(

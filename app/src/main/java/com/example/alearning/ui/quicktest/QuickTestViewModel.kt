@@ -1,4 +1,4 @@
-package com.example.alearning.ui.quicktest
+﻿package com.example.alearning.ui.quicktest
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -23,8 +23,6 @@ import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
 import com.example.alearning.domain.usecase.standards.CalculatePercentileUseCase
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 
 enum class QuickTestStep { SETUP, ENTER_SCORES, COMPLETE }
 

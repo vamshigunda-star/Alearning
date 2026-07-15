@@ -1,5 +1,6 @@
 package com.example.alearning.ui.aicoach
 
+import androidx.lifecycle.SavedStateHandle
 import com.example.alearning.domain.repository.AiCoachRepository
 import com.example.alearning.domain.repository.AiCoachStatus
 import kotlinx.coroutines.Dispatchers
@@ -37,26 +38,28 @@ class AiCoachViewModelTest {
     @Test
     fun `initialization sets status correctly`() = runTest {
         val repo = TestAiCoachRepository()
-        val viewModel = AiCoachViewModel(repo)
-        
+        val viewModel = AiCoachViewModel(repo, SavedStateHandle())
+
         advanceUntilIdle()
-        
+
         assertEquals(AiCoachStatus.READY, viewModel.uiState.value.status)
     }
 
     @Test
-    fun `sendMessage appends user and AI messages`() = runTest {
+    fun `sendMessage appends user and AI messages after the greeting`() = runTest {
         val repo = TestAiCoachRepository()
-        val viewModel = AiCoachViewModel(repo)
-        
+        val viewModel = AiCoachViewModel(repo, SavedStateHandle())
+
         viewModel.onAction(AiCoachAction.SendMessage("Hello"))
         advanceUntilIdle()
-        
+
+        // Without nav context the VM seeds exactly one greeting message.
         val messages = viewModel.uiState.value.messages
-        assertEquals(2, messages.size)
-        assertEquals("Hello", messages[0].text)
-        assertEquals(true, messages[0].isFromUser)
-        assertEquals("Response to Hello", messages[1].text)
-        assertEquals(false, messages[1].isFromUser)
+        assertEquals(3, messages.size)
+        assertEquals(false, messages[0].isFromUser)
+        assertEquals("Hello", messages[1].text)
+        assertEquals(true, messages[1].isFromUser)
+        assertEquals("Response to Hello", messages[2].text)
+        assertEquals(false, messages[2].isFromUser)
     }
 }

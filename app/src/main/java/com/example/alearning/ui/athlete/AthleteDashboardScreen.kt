@@ -1,6 +1,6 @@
-package com.example.alearning.ui.athlete
+﻿package com.example.alearning.ui.athlete
 
-import android.util.Log
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,78 +16,70 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.alearning.domain.model.people.Individual
-import com.example.alearning.domain.model.standards.FitnessTest
+import com.example.alearning.domain.model.reports.AthleteDashboardData
 import com.example.alearning.domain.model.reports.AthleteFlag
-import com.example.alearning.domain.usecase.testing.AthleteRadarData
 import com.example.alearning.domain.model.reports.AthleteTestTile
-import com.example.alearning.ui.report.components.MiniSparkline
+import com.example.alearning.domain.model.reports.Classification
+import com.example.alearning.domain.model.reports.FlagType
+import com.example.alearning.domain.model.standards.FitnessTest
+import com.example.alearning.domain.repository.AiCoachStatus
+import com.example.alearning.domain.usecase.testing.AthleteRadarData
+import com.example.alearning.ui.aicoach.AiCoachViewModel
+import com.example.alearning.ui.components.AppTopBar
+import com.example.alearning.ui.components.AppTopBarSubtitleColor
+import com.example.alearning.ui.components.charts.RadarChart
+import com.example.alearning.ui.report.components.DeltaArrow
 import com.example.alearning.ui.report.components.PercentileChip
 import com.example.alearning.ui.report.components.ZoneChip
 import com.example.alearning.ui.report.components.zoneColors
 import com.example.alearning.ui.report.components.zoneLabel
-import com.example.alearning.domain.model.reports.Classification
-import com.example.alearning.domain.model.reports.FlagType
-import com.example.alearning.domain.model.reports.AthleteDashboardData
-import com.example.alearning.ui.components.AppTopBar
-import com.example.alearning.ui.components.AppTopBarSubtitleColor
-import com.example.alearning.ui.components.charts.RadarChart
-import com.example.alearning.ui.theme.NavyPrimary
 import com.example.alearning.ui.theme.PerformanceRed
 import com.example.alearning.ui.theme.PerformanceRedText
 import com.example.alearning.ui.theme.SportOrange
 import com.example.alearning.ui.theme.SportOrangeContainer
 import com.example.alearning.ui.theme.SportOrangeVariant
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-
 import com.example.alearning.util.CsvExporter
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.material.icons.filled.Download
-
-import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
-import androidx.compose.material3.adaptive.layout.AnimatedPane
-import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
-import androidx.compose.material3.adaptive.navigation.NavigableListDetailPaneScaffold
-import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
-import androidx.activity.compose.BackHandler
-
-import com.example.alearning.ui.aicoach.AiCoachViewModel
-import com.example.alearning.domain.repository.AiCoachStatus
-import com.example.alearning.ui.aicoach.components.AiFloatingActionButton
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
@@ -104,7 +96,6 @@ fun AthleteDashboardScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-    val navigator = rememberListDetailPaneScaffoldNavigator<Any>()
 
     LaunchedEffect(athleteId, contextSessionId) {
         viewModel.loadDashboard(athleteId, contextSessionId)
@@ -154,10 +145,22 @@ fun AthleteDashboardContent(
                 title = {
                     Column {
                         Text(data?.athlete?.fullName ?: "Athlete", style = MaterialTheme.typography.titleLarge)
-                        data?.athlete?.let { ind ->
+                        if (data != null) {
+                            val ind = data.athlete
                             val grp = data.groups.firstOrNull()?.name?.let { " · $it" } ?: ""
+                            
+                            val avg = data.athleteSessionAvgPctile
+                            val cls = when {
+                                avg == null -> Classification.NO_DATA
+                                avg >= 60 -> Classification.SUPERIOR
+                                avg >= 30 -> Classification.HEALTHY
+                                else -> Classification.NEEDS_IMPROVEMENT
+                            }
+                            val healthText = zoneLabel(cls)
+                            val testCountText = "${data.sessionTestCount} Test${if (data.sessionTestCount == 1) "" else "s"}"
+
                             Text(
-                                "${ind.currentAge}y · ${ind.sex.name.lowercase().replaceFirstChar { it.uppercase() }}$grp",
+                                "${ind.currentAge}y · ${ind.sex.name.lowercase().replaceFirstChar { it.uppercase() }}$grp · $healthText · $testCountText",
                                 style = MaterialTheme.typography.labelSmall, color = AppTopBarSubtitleColor
                             )
                         }
@@ -232,13 +235,6 @@ fun AthleteBody(
         item {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 AthleteAlertCard(data.athlete)
-                PremiumAthleteMetaCard(athleteData = data)
-                LatestSessionCard(
-                    date = data.contextSession?.date,
-                    name = data.contextSession?.name,
-                    testCount = data.sessionTestCount,
-                    avgPercentile = data.athleteSessionAvgPctile
-                )
                 CategoryRadarCard(
                     radarData = uiState.radarData,
                     hasResults = data.tiles.isNotEmpty()
@@ -257,36 +253,41 @@ fun AthleteBody(
                 }
             }
         } else {
+            val togglePerTest: () -> Unit = {
+                perTestExpanded = !perTestExpanded
+                val targetIndex = if (headerContent != null) 2 else 1
+                coroutineScope.launch {
+                    if (perTestExpanded) {
+                        listState.animateScrollToItem(targetIndex)
+                    } else {
+                        listState.animateScrollToItem(0)
+                    }
+                }
+            }
             item {
                 PerTestHeader(
                     testCount = data.tiles.size,
                     expanded = perTestExpanded,
-                    onToggle = { 
-                        perTestExpanded = !perTestExpanded
-                        val targetIndex = if (headerContent != null) 2 else 1
-                        coroutineScope.launch {
-                            if (perTestExpanded) {
-                                listState.animateScrollToItem(targetIndex)
-                            } else {
-                                listState.animateScrollToItem(0)
-                            }
-                        }
-                    }
+                    onToggle = togglePerTest
                 )
             }
-            if (perTestExpanded) {
-                items(data.tiles.chunked(2), key = { row -> row.joinToString("|") { it.test.id } }) { row ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        row.forEach { tile ->
-                            Box(modifier = Modifier.weight(1f)) {
-                                TestTile(tile = tile, onClick = { onAction(AthleteDashboardAction.OnNavigateToTest(tile.test.id)) })
-                            }
-                        }
-                        if (row.size == 1) Spacer(Modifier.weight(1f))
-                    }
+            val visibleTiles = if (perTestExpanded) data.tiles else data.tiles.take(COLLAPSED_BREAKDOWN_ROWS)
+            items(visibleTiles, key = { it.test.id }) { tile ->
+                TestBreakdownRow(tile = tile, onClick = { onAction(AthleteDashboardAction.OnNavigateToTest(tile.test.id)) })
+            }
+            if (!perTestExpanded && data.tiles.size > COLLAPSED_BREAKDOWN_ROWS) {
+                item {
+                    Text(
+                        "Show all ${data.tiles.size}",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(onClick = togglePerTest)
+                            .padding(vertical = 8.dp),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
                 }
             }
         }
@@ -312,9 +313,10 @@ fun AthleteBody(
 
         if (data.outstandingTests.isNotEmpty()) {
             item {
-                OutstandingTestsCard(
+                MissingTestsCard(
                     tests = data.outstandingTests,
-                    onTestClick = { onAction(AthleteDashboardAction.OnStartQuickTest(listOf(it))) }
+                    onTestClick = { onAction(AthleteDashboardAction.OnStartQuickTest(listOf(it))) },
+                    onStartQuickTest = { onAction(AthleteDashboardAction.OnStartQuickTest(data.outstandingTests.map { it.id })) }
                 )
             }
         }
@@ -336,72 +338,42 @@ fun AthleteAlertCard(athlete: Individual) {
     }
 }
 
-@Composable
-fun LatestSessionCard(date: Long?, name: String?, testCount: Int, avgPercentile: Int?) {
-    val df = remember { SimpleDateFormat("MMM d, yyyy", Locale.getDefault()) }
-    val cls = when {
-        avgPercentile == null -> Classification.NO_DATA
-        avgPercentile >= 60 -> Classification.SUPERIOR
-        avgPercentile >= 30 -> Classification.HEALTHY
-        else -> Classification.NEEDS_IMPROVEMENT
-    }
-    val colors = zoneColors(cls)
-    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = colors.bg)) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column {
-                Text(
-                    if (date != null) "Latest session · ${df.format(Date(date))}" else "Latest session",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = colors.fg.copy(alpha = 0.8f)
-                )
-                Text("$testCount test${if (testCount == 1) "" else "s"}${name?.let { " · $it" } ?: ""}", style = MaterialTheme.typography.bodySmall, color = colors.fg)
-            }
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(avgPercentile?.toString() ?: "—", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, color = colors.fg)
-                    Text("avg %ile", style = MaterialTheme.typography.labelSmall, color = colors.fg.copy(alpha = 0.8f))
-                }
-                ZoneChip(classification = cls)
-            }
-        }
-    }
-}
+
+private const val COLLAPSED_BREAKDOWN_ROWS = 4
 
 @Composable
-fun TestTile(tile: AthleteTestTile, onClick: () -> Unit) {
+fun TestBreakdownRow(tile: AthleteTestTile, onClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth().height(150.dp),
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(modifier = Modifier.fillMaxSize().clickable(onClick = onClick).padding(16.dp), verticalArrangement = Arrangement.SpaceBetween) {
-            Column {
+        Row(
+            modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(tile.test.name, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, maxLines = 1, color = MaterialTheme.colorScheme.primary)
-                Spacer(Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    val tileLabel = tile.latestResult?.classification?.takeIf { it.isNotBlank() }
+                        ?: zoneLabel(tile.classification)
+                    ZoneChip(classification = tile.classification, label = tileLabel)
+                    PercentileChip(percentile = tile.latestResult?.percentile)
+                    Text("${tile.rawSparkline.size} try${if (tile.rawSparkline.size == 1) "" else "s"}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     text = tile.latestResult?.let {
                         val s = if (it.rawScore % 1.0 == 0.0) it.rawScore.toInt().toString() else String.format("%.1f", it.rawScore)
                         "$s ${tile.test.unit}"
                     } ?: "—",
-                    style = MaterialTheme.typography.headlineSmall,
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Black
                 )
-            }
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                val tileLabel = tile.latestResult?.classification?.takeIf { it.isNotBlank() }
-                    ?: zoneLabel(tile.classification)
-                ZoneChip(classification = tile.classification, label = tileLabel)
-                Spacer(Modifier.weight(1f))
-                MiniSparkline(points = tile.sparkline)
-            }
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                PercentileChip(percentile = tile.latestResult?.percentile)
-                Text("${tile.rawSparkline.size} try${if (tile.rawSparkline.size == 1) "" else "s"}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                DeltaArrow(deltaPercentile = tile.deltaPercentile)
             }
         }
     }
@@ -445,30 +417,34 @@ fun FlagListRow(flag: AthleteFlag, onClick: () -> Unit) {
 }
 
 @Composable
-fun OutstandingTestsCard(tests: List<FitnessTest>, onTestClick: (String) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background)) {
-        Column(modifier = Modifier.fillMaxWidth().padding(14.dp)) {
-            Row(modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded }, verticalAlignment = Alignment.CenterVertically) {
-                Text("Outstanding tests (${tests.size})", fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-                Text(if (expanded) "Hide" else "Show", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelMedium)
+fun MissingTestsCard(tests: List<FitnessTest>, onTestClick: (String) -> Unit, onStartQuickTest: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(modifier = Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column {
+                Text("Missing Tests", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text("${tests.size} remaining", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            if (expanded) {
-                Spacer(Modifier.height(8.dp))
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    tests.forEach { test ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onTestClick(test.id) }
-                                .padding(vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("• ${test.name}", style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
-                            Text("Start", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
-                        }
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                tests.forEach { test ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onTestClick(test.id) }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(test.name, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                        Text("Not attempted", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
+            }
+            Button(onClick = onStartQuickTest, modifier = Modifier.fillMaxWidth()) {
+                Text("Start Quick Test (${tests.size})")
             }
         }
     }
@@ -476,45 +452,85 @@ fun OutstandingTestsCard(tests: List<FitnessTest>, onTestClick: (String) -> Unit
 
 @Composable
 fun CategoryRadarCard(radarData: AthleteRadarData?, hasResults: Boolean) {
+    val hasAxes = radarData != null && radarData.axisScores.any { it.normalizedScore > 0f }
+    
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = RoundedCornerShape(24.dp)
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Text(
-                "Skill Matrix",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.ExtraBold
-            )
-            val hasAxes = radarData != null && radarData.axisScores.any { it.normalizedScore > 0f }
-            if (hasAxes) {
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    RadarChart(
-                        data = radarData!!,
-                        modifier = Modifier.height(280.dp),
-                        color = SportOrange
-                    )
-                }
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
                 Text(
-                    "Average percentile per category. A larger area indicates a stronger overall athletic profile.",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 8.dp)
+                    "Skill Matrix",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.ExtraBold
                 )
-            } else {
+                
+                if (hasAxes) {
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        RadarChart(
+                            data = radarData!!,
+                            modifier = Modifier.height(280.dp),
+                            color = SportOrange
+                        )
+                    }
+                    
+                    val scoredAxes = radarData.axisScores.filter { it.testCount > 0 }
+                    if (scoredAxes.size >= 2) {
+                        val strongest = scoredAxes.maxBy { it.normalizedScore }
+                        val focus = scoredAxes.minBy { it.normalizedScore }
+                        
+                        if (strongest !== focus) {
+                            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                                InsightItem(
+                                    label = "Strongest Area",
+                                    value = strongest.label,
+                                    classification = Classification.SUPERIOR
+                                )
+                                InsightItem(
+                                    label = "Focus Area",
+                                    value = focus.label,
+                                    classification = Classification.NEEDS_IMPROVEMENT
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(160.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            if (hasResults) "Not enough percentile data to chart yet."
+                            else "Record results to see a category profile.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
+                }
+            }
+            
+            if (hasAxes) {
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 24.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                )
+                
                 Box(
-                    modifier = Modifier.fillMaxWidth().height(160.dp),
-                    contentAlignment = Alignment.Center
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                        .padding(24.dp)
                 ) {
                     Text(
-                        if (hasResults) "Not enough percentile data to chart yet."
-                        else "Record results to see a category profile.",
-                        style = MaterialTheme.typography.bodyMedium,
+                        "How to read: This chart shows average percentile per category. A larger area indicates a stronger overall athletic profile compared to norms.",
+                        style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -524,48 +540,36 @@ fun CategoryRadarCard(radarData: AthleteRadarData?, hasResults: Boolean) {
 }
 
 @Composable
-fun PremiumAthleteMetaCard(athleteData: AthleteDashboardData) {
-    val athlete = athleteData.athlete
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = NavyPrimary),
-        shape = RoundedCornerShape(24.dp)
-    ) {
+private fun InsightItem(
+    label: String,
+    value: String,
+    classification: Classification,
+    modifier: Modifier = Modifier
+) {
+    val colors = zoneColors(classification)
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = label.uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            letterSpacing = androidx.compose.ui.unit.TextUnit.Unspecified
+        )
         Row(
-            modifier = Modifier.fillMaxWidth().padding(24.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(athlete.fullName, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold, color = Color.White)
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    "${athleteData.groups.firstOrNull()?.name ?: "No Group"} · Age ${athlete.currentAge}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.8f)
-                )
-            }
-            athleteData.athleteSessionAvgPctile?.let { avg ->
-                Box(contentAlignment = Alignment.Center, modifier = Modifier.size(72.dp)) {
-                    CircularProgressIndicator(
-                        progress = { avg / 100f },
-                        modifier = Modifier.fillMaxSize(),
-                        color = SportOrange,
-                        trackColor = Color.White.copy(alpha = 0.1f),
-                        strokeWidth = 6.dp,
-                        strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
-                    )
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            "$avg",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Black,
-                            color = Color.White
-                        )
-                        Text("%ile", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.7f))
-                    }
-                }
-            }
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .background(colors.bg, CircleShape)
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
         }
     }
 }
@@ -587,7 +591,7 @@ fun PerTestHeader(testCount: Int, expanded: Boolean, onToggle: () -> Unit) {
             Column(modifier = Modifier.weight(1f)) {
                 Text("Individual Test Breakdown", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = contentColor)
                 Text(
-                    "$testCount test${if (testCount == 1) "" else "s"} · ${if (expanded) "tap to collapse" else "tap to view trends"}",
+                    "$testCount test${if (testCount == 1) "" else "s"} recorded · ${if (expanded) "tap to collapse" else "tap to view all"}",
                     style = MaterialTheme.typography.labelSmall,
                     color = if (expanded) contentColor.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
                 )

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -35,47 +36,51 @@ fun AthleteLeaderRow(
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(12.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 14.dp, vertical = 12.dp),
+            modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 "${row.rank}",
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Black,
                 color = Color(0xFF90A4AE),
-                modifier = Modifier.width(28.dp)
+                modifier = Modifier.width(24.dp)
             )
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(row.athleteName, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+                    Text(row.athleteName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                     if (row.flagged) {
-                        Box(modifier = Modifier.size(8.dp).background(Color(0xFFF57F17), CircleShape))
+                        Box(modifier = Modifier.size(6.dp).background(Color(0xFFF57F17), CircleShape))
                     }
                 }
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
                         if (row.rawScore != null) "${formatScore(row.rawScore)} ${row.unit}" else "Absent",
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.labelSmall,
                         color = Color.Gray
                     )
                     DeltaArrow(deltaPercentile = row.deltaPercentile)
                 }
             }
             Spacer(Modifier.width(8.dp))
-            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                // Prefer the data-driven label from the norm CSV (e.g., "Excellent", "Healthy
-                // Fitness Zone") over the generic 4-zone label so coaches see the published
-                // classification, not a synthetic bucket. Falls back to the generic label
-                // when the snapshot has no classification (custom tests, missing norms).
+            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 ZoneChip(
                     classification = row.classification,
                     label = row.classificationLabel?.takeIf { it.isNotBlank() }
                         ?: com.example.alearning.ui.report.components.zoneLabel(row.classification)
                 )
-                PercentileChip(percentile = row.percentile)
+                if (row.percentile != null) {
+                    Text(
+                        "${row.percentile}%ile",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
         }
     }

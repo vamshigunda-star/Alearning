@@ -47,6 +47,7 @@ data class ReportsHubUiState(
     val isLoadingEvent: Boolean = false,
     val selectedEventTestId: String? = null,
     val isSwitcherOpen: Boolean = false,
+    val isInsightSheetOpen: Boolean = false,
 
     val errorMessage: String? = null,
     val isExporting: Boolean = false,
@@ -63,6 +64,8 @@ sealed interface ReportsHubAction {
     data class SelectEventTest(val testId: String) : ReportsHubAction
     data object OnOpenSwitcher : ReportsHubAction
     data object OnDismissSwitcher : ReportsHubAction
+    data object OnOpenInsight : ReportsHubAction
+    data object OnDismissInsight : ReportsHubAction
     data class OnSwitchSession(val sessionId: String) : ReportsHubAction
     data object DismissError : ReportsHubAction
     
@@ -142,6 +145,8 @@ class ReportsHubViewModel @Inject constructor(
             is ReportsHubAction.SelectEventTest -> _uiState.update { it.copy(selectedEventTestId = action.testId) }
             ReportsHubAction.OnOpenSwitcher -> _uiState.update { it.copy(isSwitcherOpen = true) }
             ReportsHubAction.OnDismissSwitcher -> _uiState.update { it.copy(isSwitcherOpen = false) }
+            ReportsHubAction.OnOpenInsight -> _uiState.update { it.copy(isInsightSheetOpen = true) }
+            ReportsHubAction.OnDismissInsight -> _uiState.update { it.copy(isInsightSheetOpen = false) }
             is ReportsHubAction.OnSwitchSession -> {
                 _uiState.update { it.copy(isSwitcherOpen = false, isLoadingEvent = true, eventData = null) }
                 val groupId = _uiState.value.selectedEventGroupId ?: return

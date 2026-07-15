@@ -4,12 +4,26 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -18,29 +32,68 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material3.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScrollableTabRow
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
-import androidx.compose.runtime.*
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.alearning.ui.components.AppTopBar
-import com.example.alearning.ui.theme.*
-import com.example.alearning.ui.components.testing.PercentileGauge
-import com.example.alearning.ui.components.testing.TestInputSwitcher
 import com.example.alearning.domain.model.people.BiologicalSex
+import com.example.alearning.ui.components.AppTopBar
+import com.example.alearning.ui.components.testing.TestInputSwitcher
+import com.example.alearning.ui.theme.NavyPrimary
+import com.example.alearning.ui.theme.PerformanceGreen
+import com.example.alearning.ui.theme.PerformanceGreenText
+import com.example.alearning.ui.theme.PerformanceGrey
+import com.example.alearning.ui.theme.PerformanceRed
+import androidx.compose.material3.OutlinedCard
+import com.example.alearning.ui.theme.PerformanceGreyText
+import com.example.alearning.ui.theme.PerformanceRedText
+import com.example.alearning.ui.theme.PerformanceYellow
+import com.example.alearning.ui.theme.PerformanceYellowText
+import java.util.Locale
 
 @Composable
 fun QuickTestScreen(
@@ -292,7 +345,7 @@ private fun SetupStep(
                                 onValueChange = { if (it.all { char -> char.isDigit() }) onAction(QuickTestAction.OnSetGuestAge(it)) },
                                 label = { Text("Age") },
                                 modifier = Modifier.weight(1f),
-                                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                 shape = RoundedCornerShape(12.dp)
                             )
                             
@@ -310,11 +363,11 @@ private fun SetupStep(
                                         focusedContainerColor = Color.Transparent,
                                         unfocusedContainerColor = Color.Transparent
                                     ),
-                                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+                                    interactionSource = remember { MutableInteractionSource() }
                                         .also { interactionSource ->
                                             LaunchedEffect(interactionSource) {
                                                 interactionSource.interactions.collect {
-                                                    if (it is androidx.compose.foundation.interaction.PressInteraction.Release) {
+                                                    if (it is PressInteraction.Release) {
                                                         expanded = !expanded
                                                     }
                                                 }
@@ -325,8 +378,7 @@ private fun SetupStep(
                                     expanded = expanded,
                                     onDismissRequest = { expanded = false }
                                 ) {
-                                    val filteredSexes = remember { BiologicalSex.values().filter { it != BiologicalSex.UNSPECIFIED } }
-                                    filteredSexes.forEach { sex ->
+                                    BiologicalSex.entries.filter { it != BiologicalSex.UNSPECIFIED }.forEach { sex ->
                                         DropdownMenuItem(
                                             text = { Text(sex.name) },
                                             onClick = {
@@ -620,7 +672,7 @@ fun QuickTestScoreCell(savedResult: RecordedTestResult?) {
     ) {
         if (savedResult != null) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(java.lang.String.format(java.util.Locale.getDefault(), "%.1f", savedResult.rawScore), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = textColor)
+                Text(String.format(Locale.getDefault(), "%.1f", savedResult.rawScore), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = textColor)
                 savedResult.percentile?.let { p -> Text("${p}%", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = textColor.copy(alpha = 0.8f)) }
             }
         } else {
@@ -796,6 +848,7 @@ private fun CompleteStep(
     }
 }
 
+@Composable
 private fun zoneFor(percentile: Int?): Triple<Color, Color, String> = when {
     percentile == null -> Triple(PerformanceGrey, PerformanceGreyText, "No Norm")
     percentile >= 60 -> Triple(PerformanceGreen, PerformanceGreenText, "Superior")

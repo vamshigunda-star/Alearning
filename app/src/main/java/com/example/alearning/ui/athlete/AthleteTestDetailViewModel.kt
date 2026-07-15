@@ -4,8 +4,11 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.alearning.domain.model.reports.AthleteTestDetailData
-import com.example.alearning.domain.repository.ReportsRepository
+import com.example.alearning.domain.model.reports.AttemptRow
+import com.example.alearning.domain.repository.TestingRepository
+import com.example.alearning.domain.usecase.reports.ObserveAthleteTestDetailUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,9 +16,6 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
-import com.example.alearning.domain.repository.TestingRepository
-import com.example.alearning.domain.model.reports.AttemptRow
 
 data class AthleteTestDetailUiState(
     val data: AthleteTestDetailData? = null,
@@ -39,7 +39,7 @@ sealed interface AthleteTestDetailAction {
 @HiltViewModel
 class AthleteTestDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val observeAthleteTestDetail: com.example.alearning.domain.usecase.reports.ObserveAthleteTestDetailUseCase,
+    private val observeAthleteTestDetail: ObserveAthleteTestDetailUseCase,
     private val testingRepository: TestingRepository
 ) : ViewModel() {
 
@@ -53,7 +53,7 @@ class AthleteTestDetailViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(AthleteTestDetailUiState())
     val uiState: StateFlow<AthleteTestDetailUiState> = _uiState.asStateFlow()
 
-    private var loadJob: kotlinx.coroutines.Job? = null
+    private var loadJob: Job? = null
 
     init {
         athleteId = savedStateHandle.get<String>("athleteId") ?: ""

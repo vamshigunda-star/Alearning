@@ -361,12 +361,17 @@ class ReportsRepositoryImpl @Inject constructor(
             val test = standards.getTestById(testId) ?: return@mapNotNull null
             val sorted = results.sortedBy { it.createdAt }
             val latest = sorted.lastOrNull()
+            val previous = if (sorted.size >= 2) sorted[sorted.size - 2] else null
+            val latestPct = latest?.percentile
+            val previousPct = previous?.percentile
+            val deltaPct = if (latestPct != null && previousPct != null) latestPct - previousPct else null
             AthleteTestTile(
                 test = test,
                 latestResult = latest,
                 classification = classifyPercentile(latest?.percentile),
                 sparkline = normalizeForSparkline(sorted.map { it.rawScore }, test.isHigherBetter),
-                rawSparkline = sorted.map { it.rawScore }
+                rawSparkline = sorted.map { it.rawScore },
+                deltaPercentile = deltaPct
             )
         }.sortedBy { it.test.name }
 
