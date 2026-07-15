@@ -1,5 +1,6 @@
 package com.example.alearning.ui.dashboard
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -34,6 +35,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.alearning.domain.model.testing.TestingEvent
 import com.example.alearning.ui.components.AppTopBar
 import com.example.alearning.ui.theme.*
+import com.example.alearning.ui.theme.PeachIconBg
+import com.example.alearning.ui.theme.BlueIconBg
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -158,6 +161,7 @@ fun DashboardContent(
                     icon = Icons.Default.Bolt,
                     label = "Quick Test",
                     tint = SportOrange,
+                    iconBg = PeachIconBg,
                     onClick = { onAction(DashboardAction.OnQuickTestClick) }
                 )
             }
@@ -166,6 +170,7 @@ fun DashboardContent(
                     icon = Icons.Default.Group,
                     label = "Roster",
                     tint = SportBlue,
+                    iconBg = BlueIconBg,
                     onClick = { onAction(DashboardAction.OnRosterClick) }
                 )
             }
@@ -174,6 +179,7 @@ fun DashboardContent(
                     icon = Icons.AutoMirrored.Filled.LibraryBooks,
                     label = "Test Library",
                     tint = MaterialTheme.colorScheme.primary,
+                    iconBg = BlueIconBg,
                     onClick = { onAction(DashboardAction.OnTestLibraryClick) }
                 )
             }
@@ -182,6 +188,7 @@ fun DashboardContent(
                     icon = Icons.Default.EmojiEvents,
                     label = "Leaderboard",
                     tint = SportOrange,
+                    iconBg = PeachIconBg,
                     onClick = { onAction(DashboardAction.OnLeaderboardClick) }
                 )
             }
@@ -435,6 +442,7 @@ private fun QuickActionCard(
     icon: ImageVector,
     label: String,
     tint: Color,
+    iconBg: Color,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
@@ -442,12 +450,13 @@ private fun QuickActionCard(
         modifier = modifier
             .height(104.dp)
             .pressInteraction(
-                shape = RoundedCornerShape(20.dp),
-                baseElevation = 0.dp,
+                shape = RoundedCornerShape(24.dp),
+                baseElevation = 4.dp,
                 onClick = onClick
             ),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
@@ -460,7 +469,7 @@ private fun QuickActionCard(
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .background(tint.copy(alpha = 0.15f), shape = CircleShape),
+                    .background(iconBg, shape = CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -476,7 +485,7 @@ private fun QuickActionCard(
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
@@ -489,14 +498,15 @@ private fun RecentEventItem(event: TestingEvent, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .pressInteraction(
-                shape = RoundedCornerShape(16.dp),
-                baseElevation = 0.dp,
+                shape = RoundedCornerShape(20.dp),
+                baseElevation = 2.dp,
                 onClick = onClick
             ),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+            containerColor = MaterialTheme.colorScheme.surface
         ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.08f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
