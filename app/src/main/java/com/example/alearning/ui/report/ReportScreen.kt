@@ -1,5 +1,6 @@
 package com.example.alearning.ui.report
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -17,12 +19,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -33,12 +37,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
-import androidx.compose.material3.TabRowDefaults
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -60,7 +62,9 @@ import com.example.alearning.domain.repository.AiCoachStatus
 import com.example.alearning.ui.aicoach.AiCoachViewModel
 import com.example.alearning.ui.athlete.AthleteBody
 import com.example.alearning.ui.athlete.AthleteDashboardUiState
+import com.example.alearning.ui.components.AppFilterChip
 import com.example.alearning.ui.components.AppTopBar
+import com.example.alearning.ui.components.AppTopBarActionButton
 import com.example.alearning.ui.components.AppTopBarSubtitleColor
 import com.example.alearning.ui.report.components.SessionSwitcherSheet
 import com.example.alearning.ui.session.CoachInsightSheet
@@ -71,10 +75,13 @@ import java.util.Date
 import java.util.Locale
 import com.example.alearning.util.CsvExporter
 import com.example.alearning.domain.model.reports.RecentSessionRow
+import com.example.alearning.ui.theme.BackgroundLight
+import com.example.alearning.ui.theme.OutlineGrey
 import com.example.alearning.ui.theme.SportOrange
 
 @Composable
 fun ReportScreen(
+    onNavigateBack: () -> Unit,
     onNavigateToGroup: (String) -> Unit,
     onNavigateToSession: (String, String) -> Unit,
     onNavigateToAthlete: (String) -> Unit,
@@ -109,29 +116,41 @@ fun ReportScreen(
             AppTopBar(
                 title = {
                     Column {
-                        Text("Reports", style = MaterialTheme.typography.titleLarge)
+                        Text("Reports", style = MaterialTheme.typography.headlineMedium)
                         Text("Performance insights", style = MaterialTheme.typography.labelSmall, color = AppTopBarSubtitleColor)
+                    }
+                },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
                     }
                 },
                 actions = {
                     if (selectedTab == 0 && uiState.athleteData != null) {
                         if (uiState.isExporting) {
-                            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp, color = Color.White)
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.primary)
                         } else {
-                            IconButton(onClick = { viewModel.onAction(ReportsHubAction.ExportAthleteCsv) }) {
-                                Icon(Icons.Default.Download, contentDescription = "Export Athlete CSV")
-                            }
+                            AppTopBarActionButton(
+                                icon = Icons.Default.Download,
+                                contentDescription = "Export Athlete CSV",
+                                onClick = { viewModel.onAction(ReportsHubAction.ExportAthleteCsv) }
+                            )
                         }
                     } else if (selectedTab == 1 && uiState.eventData != null) {
                         IconButton(onClick = { viewModel.onAction(ReportsHubAction.RequestDeleteEvent) }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete Event")
+                            Icon(Icons.Default.Delete, contentDescription = "Delete Event", tint = MaterialTheme.colorScheme.error)
                         }
                         if (uiState.isExporting) {
-                            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp, color = Color.White)
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.primary)
                         } else {
-                            IconButton(onClick = { viewModel.onAction(ReportsHubAction.ExportEventCsv) }) {
-                                Icon(Icons.Default.Download, contentDescription = "Export Event CSV")
-                            }
+                            AppTopBarActionButton(
+                                icon = Icons.Default.Download,
+                                contentDescription = "Export Event CSV",
+                                onClick = { viewModel.onAction(ReportsHubAction.ExportEventCsv) }
+                            )
                         }
                     }
                 }
@@ -238,28 +257,17 @@ private fun ReportsHubContent(
     val tabTitles = listOf("Athlete Profile", "Event Report")
 
     Column(modifier = modifier.fillMaxSize()) {
-        TabRow(
-            selectedTabIndex = selectedTab,
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.primary,
-            indicator = { tabPositions ->
-                TabRowDefaults.SecondaryIndicator(
-                    modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             tabTitles.forEachIndexed { index, title ->
-                Tab(
-                    selected = selectedTab == index,
-                    onClick = { onTabSelected(index) },
-                    text = {
-                        Text(
-                            title,
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Medium
-                        )
-                    }
+                AppFilterChip(
+                    label = title,
+                    isSelected = selectedTab == index,
+                    onClick = { onTabSelected(index) }
                 )
             }
         }
@@ -458,9 +466,10 @@ private fun AthletePickerRow(
 
     Surface(
         modifier = Modifier.fillMaxWidth().clickable { showSheet = true },
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        tonalElevation = 2.dp
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 2.dp,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -494,6 +503,12 @@ private fun AthletePickerRow(
 
     if (showSheet) {
         ModalBottomSheet(onDismissRequest = { showSheet = false }) {
+            var searchQuery by remember { mutableStateOf("") }
+            val filteredAthletes = remember(searchQuery, athletes) {
+                if (searchQuery.isBlank()) athletes
+                else athletes.filter { it.second.contains(searchQuery, ignoreCase = true) }
+            }
+
             Column(modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp)) {
                 Text(
                     "Select Athlete",
@@ -501,21 +516,59 @@ private fun AthletePickerRow(
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
                 )
-                LazyColumn {
-                    items(athletes.size) { index ->
-                        val (id, name) = athletes[index]
-                        ListItem(
-                            headlineContent = { Text(name, fontWeight = if (id == selectedId) FontWeight.Bold else FontWeight.Normal) },
-                            modifier = Modifier.clickable {
-                                onSelect(id)
-                                showSheet = false
-                            },
-                            trailingContent = {
-                                if (id == selectedId) {
-                                    Icon(Icons.Default.Check, contentDescription = "Selected", tint = SportOrange)
-                                }
-                            }
+
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .height(56.dp),
+                    placeholder = { Text("Search athletes...", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedContainerColor = BackgroundLight,
+                        focusedContainerColor = BackgroundLight,
+                        unfocusedBorderColor = OutlineGrey,
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+                    singleLine = true
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                if (filteredAthletes.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "No athletes found matching \"$searchQuery\"",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
                         )
+                    }
+                } else {
+                    LazyColumn(modifier = Modifier.weight(1f, fill = false)) {
+                        items(filteredAthletes.size) { index ->
+                            val (id, name) = filteredAthletes[index]
+                            ListItem(
+                                headlineContent = { Text(name, fontWeight = if (id == selectedId) FontWeight.Bold else FontWeight.Normal) },
+                                modifier = Modifier.clickable {
+                                    onSelect(id)
+                                    showSheet = false
+                                },
+                                trailingContent = {
+                                    if (id == selectedId) {
+                                        Icon(Icons.Default.Check, contentDescription = "Selected", tint = SportOrange)
+                                    }
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -549,9 +602,10 @@ private fun EventPickerRow(
 
     Surface(
         modifier = Modifier.fillMaxWidth().clickable { showSheet = true },
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        tonalElevation = 2.dp
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 2.dp,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),

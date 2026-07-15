@@ -37,73 +37,50 @@ fun RosterTabRow(
     athleteCount: Int,
     groupCount: Int
 ) {
-    Surface(
-        color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 1.dp
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            TabItem(
-                title = "Athletes",
-                count = athleteCount,
-                isSelected = currentTab == RosterTab.ATHLETES,
-                onClick = { onTabSelected(RosterTab.ATHLETES) },
-                modifier = Modifier.weight(1f)
-            )
-            TabItem(
-                title = "Groups",
-                count = groupCount,
-                isSelected = currentTab == RosterTab.GROUPS,
-                onClick = { onTabSelected(RosterTab.GROUPS) },
-                modifier = Modifier.weight(1f)
-            )
-        }
+        RosterFilterChip(
+            label = "Athletes ($athleteCount)",
+            isSelected = currentTab == RosterTab.ATHLETES,
+            onClick = { onTabSelected(RosterTab.ATHLETES) }
+        )
+        RosterFilterChip(
+            label = "Groups ($groupCount)",
+            isSelected = currentTab == RosterTab.GROUPS,
+            onClick = { onTabSelected(RosterTab.GROUPS) }
+        )
     }
 }
 
 @Composable
-fun TabItem(
-    title: String,
-    count: Int,
+fun RosterFilterChip(
+    label: String,
     isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    onClick: () -> Unit
 ) {
-    Column(
-        modifier = modifier
-            .clickable { onClick() }
-            .padding(top = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+    Surface(
+        modifier = Modifier
+            .height(38.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .clickable { onClick() },
+        shape = RoundedCornerShape(20.dp),
+        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                color = if (isSelected) SportOrange else MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-            Surface(
-                color = if (isSelected) SportOrangeContainer else MaterialTheme.colorScheme.background,
-                shape = RoundedCornerShape(10.dp)
-            ) {
-                Text(
-                    text = count.toString(),
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = if (isSelected) SportOrange else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(12.dp))
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(3.dp)
-                .background(if (isSelected) SportOrange else Color.Transparent)
-        )
+            modifier = Modifier.padding(horizontal = 16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface
+            )
+        }
     }
 }
 
@@ -178,7 +155,7 @@ fun SwipeableAthleteCard(
             Box(
                 Modifier
                     .fillMaxSize()
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(20.dp))
                     .background(color)
                     .padding(horizontal = 20.dp),
                 contentAlignment = Alignment.CenterEnd
@@ -212,8 +189,9 @@ fun ModernAthleteCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 2.dp,
         border = BorderStroke(1.5.dp, if (isSelected) SportOrange else MaterialTheme.colorScheme.outline)
     ) {
         Row(
@@ -340,8 +318,9 @@ fun ModernGroupCard(
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 2.dp,
         border = BorderStroke(1.5.dp, if (isExpanded) SportOrange else MaterialTheme.colorScheme.outline)
     ) {
         Column {
@@ -476,12 +455,12 @@ fun SearchBar(query: String, onQueryChange: (String) -> Unit, placeholder: Strin
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
         placeholder = { Text(placeholder, color = MaterialTheme.colorScheme.onSurfaceVariant) },
         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            unfocusedContainerColor = MaterialTheme.colorScheme.background,
-            focusedContainerColor = MaterialTheme.colorScheme.background,
-            unfocusedBorderColor = Color.Transparent,
-            focusedBorderColor = SportOrange
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+            focusedBorderColor = MaterialTheme.colorScheme.primary
         ),
         singleLine = true
     )

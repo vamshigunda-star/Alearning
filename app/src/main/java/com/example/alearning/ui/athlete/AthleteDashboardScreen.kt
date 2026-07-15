@@ -1,5 +1,7 @@
 ﻿package com.example.alearning.ui.athlete
 
+import android.app.Activity
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -40,6 +42,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -210,6 +215,7 @@ fun AthleteDashboardContent(
     }
 }
 
+@OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
 fun AthleteBody(
     uiState: AthleteDashboardUiState,
@@ -221,6 +227,10 @@ fun AthleteBody(
     var perTestExpanded by rememberSaveable { mutableStateOf(false) }
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
+    
+    val context = LocalContext.current
+    val windowSizeClass = calculateWindowSizeClass(context as Activity)
+    val collapsedCount = if (windowSizeClass.widthSizeClass == WindowWidthSizeClass.Compact) 1 else 2
 
     LazyColumn(
         state = listState,
@@ -267,15 +277,16 @@ fun AthleteBody(
             item {
                 PerTestHeader(
                     testCount = data.tiles.size,
+                    collapsedCount = collapsedCount,
                     expanded = perTestExpanded,
                     onToggle = togglePerTest
                 )
             }
-            val visibleTiles = if (perTestExpanded) data.tiles else data.tiles.take(COLLAPSED_BREAKDOWN_ROWS)
+            val visibleTiles = if (perTestExpanded) data.tiles else data.tiles.take(collapsedCount)
             items(visibleTiles, key = { it.test.id }) { tile ->
                 TestBreakdownRow(tile = tile, onClick = { onAction(AthleteDashboardAction.OnNavigateToTest(tile.test.id)) })
             }
-            if (!perTestExpanded && data.tiles.size > COLLAPSED_BREAKDOWN_ROWS) {
+            if (!perTestExpanded && data.tiles.size > collapsedCount) {
                 item {
                     Text(
                         "Show all ${data.tiles.size}",
@@ -339,39 +350,52 @@ fun AthleteAlertCard(athlete: Individual) {
 }
 
 
-private const val COLLAPSED_BREAKDOWN_ROWS = 4
-
 @Composable
 fun TestBreakdownRow(tile: AthleteTestTile, onClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(tile.test.name, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, maxLines = 1, color = MaterialTheme.colorScheme.primary)
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = tile.test.name,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1
+                )
+                
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     val tileLabel = tile.latestResult?.classification?.takeIf { it.isNotBlank() }
                         ?: zoneLabel(tile.classification)
                     ZoneChip(classification = tile.classification, label = tileLabel)
                     PercentileChip(percentile = tile.latestResult?.percentile)
-                    Text("${tile.rawSparkline.size} try${if (tile.rawSparkline.size == 1) "" else "s"}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+                
+                Text(
+                    text = "${tile.rawSparkline.size} attempt${if (tile.rawSparkline.size == 1) "" else "s"}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
-            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            
+            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
                     text = tile.latestResult?.let {
                         val s = if (it.rawScore % 1.0 == 0.0) it.rawScore.toInt().toString() else String.format("%.1f", it.rawScore)
                         "$s ${tile.test.unit}"
                     } ?: "—",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Black
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Black,
+                    color = MaterialTheme.colorScheme.primary
                 )
                 DeltaArrow(deltaPercentile = tile.deltaPercentile)
             }
@@ -384,10 +408,13 @@ fun FlagListRow(flag: AthleteFlag, onClick: () -> Unit) {
     val isActionable = flag.testId != null || flag.testIds.isNotEmpty() || flag.type == FlagType.MISSING_DATA
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = SportOrangeContainer)
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = SportOrangeContainer),
+        border = BorderStroke(1.dp, SportOrange.copy(alpha = 0.12f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().then(if (isActionable) Modifier.clickable(onClick = onClick) else Modifier).padding(12.dp), 
+            modifier = Modifier.fillMaxWidth().then(if (isActionable) Modifier.clickable(onClick = onClick) else Modifier).padding(16.dp), 
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(Icons.Default.Warning, contentDescription = null, tint = SportOrangeVariant)
@@ -420,11 +447,12 @@ fun FlagListRow(flag: AthleteFlag, onClick: () -> Unit) {
 fun MissingTestsCard(tests: List<FitnessTest>, onTestClick: (String) -> Unit, onStartQuickTest: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(modifier = Modifier.fillMaxWidth().padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Column {
                 Text("Missing Tests", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Text("${tests.size} remaining", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -575,7 +603,7 @@ private fun InsightItem(
 }
 
 @Composable
-fun PerTestHeader(testCount: Int, expanded: Boolean, onToggle: () -> Unit) {
+fun PerTestHeader(testCount: Int, collapsedCount: Int, expanded: Boolean, onToggle: () -> Unit) {
     val backgroundColor = if (expanded) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
     val contentColor = if (expanded) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
     
@@ -590,8 +618,13 @@ fun PerTestHeader(testCount: Int, expanded: Boolean, onToggle: () -> Unit) {
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text("Individual Test Breakdown", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = contentColor)
+                val subtitle = if (expanded) {
+                    "Showing all $testCount tests recorded"
+                } else {
+                    "Showing $collapsedCount test${if (collapsedCount == 1) "" else "s"} preview • $testCount tests recorded"
+                }
                 Text(
-                    "$testCount test${if (testCount == 1) "" else "s"} recorded · ${if (expanded) "tap to collapse" else "tap to view all"}",
+                    text = subtitle,
                     style = MaterialTheme.typography.labelSmall,
                     color = if (expanded) contentColor.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
                 )

@@ -19,12 +19,21 @@ data class TestLibraryUiState(
     val categories: List<TestCategory> = emptyList(),
     val selectedCategory: TestCategory? = null,
     val testsForCategory: List<FitnessTest> = emptyList(),
+    val searchQuery: String = "",
     val isLoading: Boolean = true,
     val errorMessage: String? = null
-)
+) {
+    val filteredTests: List<FitnessTest>
+        get() = if (searchQuery.isBlank()) {
+            testsForCategory
+        } else {
+            testsForCategory.filter { it.name.contains(searchQuery, ignoreCase = true) }
+        }
+}
 
 sealed interface TestLibraryAction {
     data class OnSelectCategory(val category: TestCategory) : TestLibraryAction
+    data class OnSearchQueryChanged(val query: String) : TestLibraryAction
     data object OnNavigateBack : TestLibraryAction
     data object OnDismissError : TestLibraryAction
 }
@@ -62,6 +71,7 @@ class TestLibraryViewModel @Inject constructor(
                 _uiState.update { it.copy(selectedCategory = action.category) }
                 loadTests(action.category.id)
             }
+            is TestLibraryAction.OnSearchQueryChanged -> _uiState.update { it.copy(searchQuery = action.query) }
             is TestLibraryAction.OnDismissError -> _uiState.update { it.copy(errorMessage = null) }
             is TestLibraryAction.OnNavigateBack -> Unit
         }

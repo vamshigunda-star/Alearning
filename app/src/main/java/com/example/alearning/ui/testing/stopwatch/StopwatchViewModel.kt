@@ -453,8 +453,6 @@ class StopwatchViewModel @Inject constructor(
         val state = _uiState.value
         if (state.pendingResults.isEmpty() || state.isSubmitting) return
 
-        val minCompletedBefore = getMinimumCompletedTrials()
-
         _uiState.update { it.copy(isSubmitting = true) }
         viewModelScope.launch {
             try {
@@ -465,8 +463,7 @@ class StopwatchViewModel @Inject constructor(
                     completionState[athleteId] = (completionState[athleteId] ?: 0) + 1
                 }
                 
-                val minCompletedAfter = getMinimumCompletedTrials()
-                val shouldShowMessage = state.mode == TimingMode.INDIVIDUAL && minCompletedAfter > minCompletedBefore
+                val shouldShowMessage = state.mode == TimingMode.INDIVIDUAL
 
                 if (state.mode == TimingMode.GROUP_START) {
                     tickerJob?.cancel()

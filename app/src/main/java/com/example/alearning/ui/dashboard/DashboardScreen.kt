@@ -2,6 +2,7 @@ package com.example.alearning.ui.dashboard
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -17,23 +18,25 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.alearning.domain.model.testing.TestingEvent
-import com.example.alearning.ui.components.AppTopBar
 import com.example.alearning.ui.theme.*
 import com.example.alearning.ui.theme.PeachIconBg
 import com.example.alearning.ui.theme.BlueIconBg
@@ -41,6 +44,9 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+
+/** Local-only tint for the light header's icon-button chips. Not promoted to Color.kt per design system rules. */
+private val HeaderIconChipBg = Color(0xFFF1F5FF)
 
 @Composable
 fun DashboardScreen(
@@ -98,22 +104,9 @@ fun DashboardContent(
     Scaffold(
         modifier = modifier,
         topBar = {
-            AppTopBar(
-                title = "ALearning",
-                actions = {
-                    IconButton(onClick = { onAction(DashboardAction.OnSettingsClick) }) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings"
-                        )
-                    }
-                    IconButton(onClick = { onAction(DashboardAction.OnSignOutClick) }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Logout,
-                            contentDescription = "Sign out"
-                        )
-                    }
-                }
+            DashboardHeader(
+                onSettingsClick = { onAction(DashboardAction.OnSettingsClick) },
+                onSignOutClick = { onAction(DashboardAction.OnSignOutClick) }
             )
         },
         containerColor = MaterialTheme.colorScheme.background
@@ -296,7 +289,7 @@ private fun LeaderboardEventPickerSheet(
                             )
                             Spacer(modifier = Modifier.width(16.dp))
                             Text(
-                                text = formatEventDate(event.date, event.name),
+                                text = "${formatEventMetadata(event.date)} • ${event.name}",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurface,
@@ -312,6 +305,91 @@ private fun LeaderboardEventPickerSheet(
                 }
             }
         }
+    }
+}
+
+/**
+ * Lightweight, left-aligned Dashboard header. Deliberately does NOT reuse the shared
+ * [com.example.alearning.ui.components.AppTopBar] (solid-primary, centered, white title)
+ * since that contract is shared across other screens — this is a Dashboard-local visual
+ * treatment only, with no navigation/behavior change.
+ */
+@Composable
+private fun DashboardHeader(
+    onSettingsClick: () -> Unit,
+    onSignOutClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(SurfaceWhite)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .background(ElectricBlue, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.EmojiEvents,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    "ALearning",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextPrimary
+                )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                DashboardHeaderIconButton(
+                    icon = Icons.Default.Settings,
+                    contentDescription = "Settings",
+                    onClick = onSettingsClick
+                )
+                DashboardHeaderIconButton(
+                    icon = Icons.AutoMirrored.Filled.Logout,
+                    contentDescription = "Sign out",
+                    onClick = onSignOutClick
+                )
+            }
+        }
+        HorizontalDivider(color = OutlineGrey, thickness = 1.dp)
+    }
+}
+
+@Composable
+private fun DashboardHeaderIconButton(
+    icon: ImageVector,
+    contentDescription: String,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .size(40.dp)
+            .background(HeaderIconChipBg, CircleShape)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            icon,
+            contentDescription = contentDescription,
+            tint = ElectricBlue,
+            modifier = Modifier.size(20.dp)
+        )
     }
 }
 
@@ -339,12 +417,26 @@ private fun ContextHeaderCard(
             .format(Date())
     }
 
+    val headerGradient = remember {
+        Brush.linearGradient(
+            colors = listOf(ElectricBlue, lerp(ElectricBlue, AquaCyan, 0.35f))
+        )
+    }
+
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(elevation = 3.dp, shape = RoundedCornerShape(24.dp), clip = false),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = NavyPrimary)
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(modifier = Modifier.padding(24.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(headerGradient)
+                .padding(horizontal = 18.dp, vertical = 16.dp)
+        ) {
             Text(
                 dateStr.uppercase(),
                 style = MaterialTheme.typography.labelMedium,
@@ -352,31 +444,19 @@ private fun ContextHeaderCard(
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(2.dp))
             Text(
                 greeting,
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.titleLarge,
                 color = Color.White,
                 fontWeight = FontWeight.ExtraBold
             )
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Person, contentDescription = null, tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    "$athleteCount athletes",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.8f)
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-                Icon(Icons.Default.Event, contentDescription = null, tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    "$eventCount events",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.8f)
-                )
-            }
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                "$athleteCount Athletes  •  $eventCount Events",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.White.copy(alpha = 0.85f)
+            )
         }
     }
 }
@@ -389,45 +469,69 @@ private fun HeroCard(onClick: () -> Unit) {
             .minimumInteractiveComponentSize()
             .pressInteraction(
                 shape = RoundedCornerShape(24.dp),
-                baseElevation = 4.dp,
+                baseElevation = 2.dp,
                 onClick = onClick
             ),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = SportOrange),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp) // Handled by pressInteraction
     ) {
         Row(
             modifier = Modifier
-                .padding(horizontal = 24.dp, vertical = 24.dp)
+                .padding(horizontal = 18.dp, vertical = 16.dp)
                 .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .background(SportOrangeContainer, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Default.PlayArrow,
+                    contentDescription = null,
+                    tint = SportOrange,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     "Start Testing Event",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = Color.White,
-                    fontWeight = FontWeight.ExtraBold
+                    style = MaterialTheme.typography.titleMedium,
+                    color = TextPrimary,
+                    fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    "Select group → pick tests → begin",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = Color.White.copy(alpha = 0.9f)
+                    "Create and launch a test session",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary
                 )
             }
+            Spacer(modifier = Modifier.width(12.dp))
             Surface(
-                modifier = Modifier.size(56.dp),
-                shape = CircleShape,
-                color = Color.White.copy(alpha = 0.25f)
+                shape = RoundedCornerShape(50),
+                color = SportOrange
             ) {
-                Box(contentAlignment = Alignment.Center) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Icon(
                         Icons.Default.PlayArrow,
                         contentDescription = "Start",
                         tint = Color.White,
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        "Start",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
@@ -497,6 +601,7 @@ private fun RecentEventItem(event: TestingEvent, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .height(80.dp)
             .pressInteraction(
                 shape = RoundedCornerShape(20.dp),
                 baseElevation = 2.dp,
@@ -510,7 +615,9 @@ private fun RecentEventItem(event: TestingEvent, onClick: () -> Unit) {
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -520,13 +627,21 @@ private fun RecentEventItem(event: TestingEvent, onClick: () -> Unit) {
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(16.dp))
-            Text(
-                text = formatEventDate(event.date, event.name),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1f)
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = event.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = formatEventMetadata(event.date),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
             Icon(
                 imageVector = Icons.Default.ChevronRight,
                 contentDescription = "Details",
@@ -536,7 +651,7 @@ private fun RecentEventItem(event: TestingEvent, onClick: () -> Unit) {
     }
 }
 
-private fun formatEventDate(timestamp: Long, eventName: String): String {
+private fun formatEventMetadata(timestamp: Long): String {
     val calendar = Calendar.getInstance().apply { timeInMillis = timestamp }
     val today = Calendar.getInstance()
     val yesterday = Calendar.getInstance().apply { add(Calendar.DATE, -1) }
@@ -546,10 +661,10 @@ private fun formatEventDate(timestamp: Long, eventName: String): String {
     val dayString = when {
         calendar.get(Calendar.YEAR) == today.get(Calendar.YEAR) && calendar.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR) -> "Today"
         calendar.get(Calendar.YEAR) == yesterday.get(Calendar.YEAR) && calendar.get(Calendar.DAY_OF_YEAR) == yesterday.get(Calendar.DAY_OF_YEAR) -> "Yesterday"
-        else -> SimpleDateFormat("MMMM d", Locale.getDefault()).format(calendar.time)
+        else -> SimpleDateFormat("MMM d", Locale.getDefault()).format(calendar.time)
     }
 
-    return "$dayString, ${timeFormat.format(calendar.time)} • $eventName"
+    return "$dayString • ${timeFormat.format(calendar.time)}"
 }
 
 @Composable

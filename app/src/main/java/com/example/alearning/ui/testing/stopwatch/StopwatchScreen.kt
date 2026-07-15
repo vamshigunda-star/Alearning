@@ -5,6 +5,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -435,7 +436,7 @@ private fun IndividualModeContent(
                 modifier = Modifier.padding(vertical = 8.dp, horizontal = 24.dp).fillMaxWidth()
             ) {
                 Text(
-                    "Trial completed. Proceed to next trial.",
+                    "Result saved. Moving to next athlete...",
                     modifier = Modifier.padding(12.dp),
                     textAlign = TextAlign.Center,
                     fontWeight = FontWeight.Bold,
@@ -594,7 +595,8 @@ private fun AthleteGridCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 4.dp),
+            .padding(horizontal = 12.dp, vertical = 4.dp)
+            .clickable(enabled = !isAbsent) { onClick() },
         colors = CardDefaults.cardColors(containerColor = containerColor),
         shape = RoundedCornerShape(12.dp),
         border = BorderStroke(if (isSelected) 3.dp else 1.dp, borderColor),

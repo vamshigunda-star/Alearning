@@ -199,6 +199,7 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
         composable(Screen.Report.route) {
 
             ReportScreen(
+                onNavigateBack = { navController.popBackStack() },
                 onNavigateToGroup = { groupId ->
                     navController.navigate(Screen.GroupOverview.createRoute(groupId))
                 },

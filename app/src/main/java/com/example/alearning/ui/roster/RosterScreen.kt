@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.alearning.ui.athlete.AthleteDashboardScreen
 import com.example.alearning.ui.components.AppTopBar
+import com.example.alearning.ui.components.AppTopBarActionButton
 import com.example.alearning.ui.theme.SportOrange
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
@@ -126,9 +127,11 @@ fun RosterContent(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { onAction(RosterAction.OnShowRegisterAthleteDialog) }) {
-                        Icon(Icons.Default.PersonAdd, contentDescription = "Register Athlete")
-                    }
+                    AppTopBarActionButton(
+                        icon = Icons.Default.PersonAdd,
+                        contentDescription = "Register Athlete",
+                        onClick = { onAction(RosterAction.OnShowRegisterAthleteDialog) }
+                    )
                 }
             )
         },
