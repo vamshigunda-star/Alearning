@@ -1,4 +1,6 @@
-﻿package com.example.alearning.ui.testing.stopwatch
+@file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+
+package com.example.alearning.ui.testing.stopwatch
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -8,7 +10,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -28,8 +32,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.alearning.domain.model.standards.TimingMode
 import com.example.alearning.ui.components.AppTopBar
+import com.example.alearning.ui.components.AppTopBarSubtitleColor
 import com.example.alearning.ui.components.InlineErrorBanner
 import com.example.alearning.ui.theme.*
 
@@ -45,16 +51,39 @@ fun StopwatchScreen(
     onNavigateBack: () -> Unit,
     viewModel: StopwatchViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val listState = rememberLazyListState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     // Intercept system back so unsaved drafts trigger the discard dialog before leaving.
     BackHandler(enabled = uiState.hasPendingChanges) {
         viewModel.onAction(StopwatchAction.OnRequestBack)
     }
 
+    LaunchedEffect(viewModel) {
+        viewModel.uiEvents.collect { event ->
+            when (event) {
+                is StopwatchUiEvent.ScrollToAthlete -> {
+                    val index = uiState.allAthletes.indexOfFirst { it.athleteId == event.athleteId }
+                    if (index >= 0) {
+                        val alreadyVisible = listState.layoutInfo.visibleItemsInfo.any { it.index == index }
+                        if (!alreadyVisible) {
+                            listState.animateScrollToItem(index)
+                        }
+                    }
+                }
+                is StopwatchUiEvent.ShowSnackbar -> {
+                    snackbarHostState.showSnackbar(event.message)
+                }
+            }
+        }
+    }
+
     StopwatchContent(
         uiState = uiState,
-        allAthletes = viewModel.getAllAthletes(),
+        allAthletes = uiState.allAthletes,
+        listState = listState,
+        snackbarHostState = snackbarHostState,
         onAction = { action ->
             when (action) {
                 is StopwatchAction.OnNavigateBack -> {
@@ -69,6 +98,7 @@ fun StopwatchScreen(
         }
     )
 
+    // Auto-navigate back when the session is marked complete in the ViewModel.
     LaunchedEffect(uiState.isSessionComplete) {
         if (uiState.isSessionComplete) {
             onNavigateBack()
@@ -114,108 +144,15 @@ private fun DiscardPendingDialog(count: Int, onConfirm: () -> Unit, onDismiss: (
 private fun StopwatchContent(
     uiState: StopwatchUiState,
     allAthletes: List<AthleteQueueItem>,
+    listState: LazyListState,
+    snackbarHostState: SnackbarHostState,
     onAction: (StopwatchAction) -> Unit
 ) {
     Scaffold(
         topBar = {
-            Column(modifier = Modifier.background(NavyPrimary)) {
-                AppTopBar(
-                    title = {
-                        Column {
-                            Text(
-                                uiState.testName,
-                                style = MaterialTheme.typography.titleLarge,
-                                color = Color.White
-                            )
-                            if (uiState.eventName.isNotEmpty()) {
-                                Text(
-                                    uiState.eventName,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = Color.White.copy(alpha = 0.7f)
-                                )
-                            }
-                        }
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = { onAction(StopwatchAction.OnNavigateBack) }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
-                        }
-                    },
-                    actions = {
-                        // Compact Timer Badge in Header
-                        Surface(
-                            color = Color.White.copy(alpha = 0.15f),
-                            shape = RoundedCornerShape(20.dp),
-                            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.12f))
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                Box(
-                                    Modifier.size(8.dp).background(
-                                        if (uiState.stopwatchPhase == StopwatchPhase.RUNNING) SportOrange else Color.Gray,
-                                        CircleShape
-                                    )
-                                )
-                                Text(
-                                    formatTimeDisplay(uiState.elapsedMs),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = Color.White,
-                                    fontFamily = FontFamily.Monospace
-                                )
-                            }
-                        }
-                        Spacer(Modifier.width(8.dp))
-                    }
-                )
-
-                // Progress Section
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        val progress = if (uiState.totalCount > 0) uiState.completedCount.toFloat() / uiState.totalCount else 0f
-                        LinearProgressIndicator(
-                            progress = { progress },
-                            modifier = Modifier.width(100.dp).height(8.dp),
-                            color = SportBlue,
-                            trackColor = Color.White.copy(alpha = 0.2f),
-                            strokeCap = StrokeCap.Round
-                        )
-                        Text(
-                            "${(progress * 100).toInt()}%",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    Surface(
-                        color = Color.White.copy(alpha = 0.1f),
-                        shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Icon(Icons.Default.Check, null, modifier = Modifier.size(14.dp), tint = Color.White)
-                            Text(
-                                "${uiState.completedCount} of ${uiState.totalCount} Saved",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = Color.White
-                            )
-                        }
-                    }
-                }
-                Spacer(Modifier.height(8.dp))
-            }
+            StopwatchTopBar(uiState = uiState, onBack = { onAction(StopwatchAction.OnNavigateBack) })
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             if (uiState.hasPendingChanges) {
                 SubmitBar(
@@ -236,13 +173,13 @@ private fun StopwatchContent(
             when {
                 uiState.isLoading -> LoadingBox(PaddingValues(0.dp))
                 !uiState.sessionLoaded -> ErrorBox(uiState.errorMessage ?: "Something went wrong", onAction, PaddingValues(0.dp))
+                uiState.mode == TimingMode.INDIVIDUAL -> IndividualModeContent(uiState, allAthletes, listState, onAction, PaddingValues(0.dp))
                 uiState.isSessionComplete -> {
-                    // Navigate back automatically handled by LaunchedEffect
+                    // GROUP_START: navigate-back handled by LaunchedEffect in StopwatchScreen
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator()
                     }
                 }
-                uiState.mode == TimingMode.INDIVIDUAL -> IndividualModeContent(uiState, allAthletes, onAction, PaddingValues(0.dp))
                 uiState.mode == TimingMode.GROUP_START -> GroupStartModeContent(uiState, onAction, PaddingValues(0.dp))
             }
         }
@@ -263,6 +200,74 @@ private fun StopwatchContent(
                 onSave = { newTime -> onAction(StopwatchAction.OnSaveEditedTime(athlete.athleteId, newTime, uiState.editingResultId)) },
                 onClear = { onAction(StopwatchAction.OnClearEntry(athlete.athleteId, uiState.editingResultId)) }
             )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun StopwatchTopBar(uiState: StopwatchUiState, onBack: () -> Unit) {
+    Column {
+        AppTopBar(
+            title = {
+                Column {
+                    Text(uiState.testName, style = MaterialTheme.typography.headlineMedium)
+                    Text(
+                        buildSessionContextLine(uiState),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = AppTopBarSubtitleColor
+                    )
+                }
+            },
+            navigationIcon = {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                }
+            }
+        )
+        SaveProgressIndicator(completedCount = uiState.completedCount, totalCount = uiState.totalCount)
+    }
+}
+
+private fun buildSessionContextLine(uiState: StopwatchUiState): String {
+    val athleteCount = if (uiState.mode == TimingMode.INDIVIDUAL) uiState.allAthletes.size else uiState.heatAthletes.size
+    val base = "$athleteCount Athletes • ${uiState.trialsPerAthlete} Trials"
+    return if (!uiState.groupName.isNullOrBlank()) "${uiState.groupName} • $base" else base
+}
+
+@Composable
+private fun SaveProgressIndicator(completedCount: Int, totalCount: Int) {
+    val progress = if (totalCount > 0) completedCount.toFloat() / totalCount else 0f
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        LinearProgressIndicator(
+            progress = { progress },
+            modifier = Modifier.weight(1f).height(8.dp).padding(end = 12.dp),
+            color = SportBlue,
+            trackColor = SportBlue.copy(alpha = 0.15f),
+            strokeCap = StrokeCap.Round
+        )
+        Surface(
+            color = PerformanceGreen.copy(alpha = 0.15f),
+            shape = RoundedCornerShape(12.dp),
+            border = BorderStroke(1.dp, PerformanceGreen)
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp), tint = PerformanceGreenText)
+                Text(
+                    "$completedCount of $totalCount Saved",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = PerformanceGreenText
+                )
+            }
         }
     }
 }
@@ -333,41 +338,26 @@ private fun ErrorBox(message: String, onAction: (StopwatchAction) -> Unit, paddi
     }
 }
 
-// Removed SessionCompleteContent
-
 @Composable
 private fun IndividualModeContent(
     uiState: StopwatchUiState,
     allAthletes: List<AthleteQueueItem>,
+    listState: LazyListState,
     onAction: (StopwatchAction) -> Unit,
     padding: PaddingValues
 ) {
-    val haptic = LocalHapticFeedback.current
     val currentAthlete = allAthletes.find { it.athleteId == uiState.selectedAthleteId }
-    val currentIndex = allAthletes.indexOfFirst { it.athleteId == uiState.selectedAthleteId }
-    
-    val nextWaitingAthlete = if (currentIndex != -1) {
-        allAthletes.drop(currentIndex + 1).find { it.status == AthleteStatus.WAITING }
-            ?: allAthletes.take(currentIndex).find { it.status == AthleteStatus.WAITING }
-    } else {
-        allAthletes.find { it.status == AthleteStatus.WAITING }
-    }
-
-    val totalTrials = allAthletes.firstOrNull()?.totalTrials ?: 1
 
     Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-        Spacer(Modifier.height(16.dp))
-
-        // Sticky Stopwatch display
-        StopwatchDisplay(elapsedMs = uiState.elapsedMs)
-
-        Spacer(Modifier.height(16.dp))
-
-        // Selected Athlete Info & Action
+        // Sticky control panel: timer, active athlete, start/stop — compressed and centered.
         Column(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            StopwatchDisplay(elapsedMs = uiState.elapsedMs)
+
+            Spacer(Modifier.height(4.dp))
+
             if (currentAthlete != null) {
                 Text(
                     text = currentAthlete.name,
@@ -391,17 +381,16 @@ private fun IndividualModeContent(
 
             Spacer(Modifier.height(8.dp))
 
-            // Main action button
             if (uiState.stopwatchPhase != StopwatchPhase.CONFIRMING) {
                 val isRunning = uiState.stopwatchPhase == StopwatchPhase.RUNNING
+                val isEnabled = currentAthlete != null || isRunning
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(64.dp)
+                        .height(56.dp)
+                        .alpha(if (isEnabled) 1f else 0.5f)
                         .acceleratorClick(
-                            onClick = {
-                                onAction(StopwatchAction.OnStartStop)
-                            }
+                            onClick = { if (isEnabled) onAction(StopwatchAction.OnStartStop) }
                         ),
                     shape = RoundedCornerShape(16.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -412,7 +401,7 @@ private fun IndividualModeContent(
                     Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                         Text(
                             if (isRunning) "STOP" else "START",
-                            fontSize = 24.sp,
+                            fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
@@ -433,11 +422,11 @@ private fun IndividualModeContent(
                 color = PerformanceGreen.copy(alpha = 0.1f),
                 border = BorderStroke(1.dp, PerformanceGreen),
                 shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.padding(vertical = 8.dp, horizontal = 24.dp).fillMaxWidth()
+                modifier = Modifier.padding(vertical = 4.dp, horizontal = 24.dp).fillMaxWidth()
             ) {
                 Text(
-                    "Result saved. Moving to next athlete...",
-                    modifier = Modifier.padding(12.dp),
+                    if (uiState.isSessionComplete) "Result saved. Session complete. Finishing..." else "Result saved. Moving to next athlete...",
+                    modifier = Modifier.padding(10.dp),
                     textAlign = TextAlign.Center,
                     fontWeight = FontWeight.Bold,
                     color = PerformanceGreenText
@@ -445,26 +434,81 @@ private fun IndividualModeContent(
             }
         }
 
-        Spacer(Modifier.height(16.dp))
-
-        // Testing Grid Labels
-        TestingGridLabels(trialCount = totalTrials)
+        if (uiState.isSessionComplete) {
+            CompletionSummaryCard(
+                completedCount = allAthletes.count { it.status == AthleteStatus.COMPLETED },
+                absentCount = uiState.absentCount,
+                pendingCount = uiState.pendingReviewCount,
+                totalCount = allAthletes.size,
+                onFinish = { onAction(StopwatchAction.OnNavigateBack) }
+            )
+        }
 
         LazyColumn(
+            state = listState,
             modifier = Modifier.fillMaxWidth().weight(1f),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            contentPadding = PaddingValues(bottom = 80.dp)
+            contentPadding = PaddingValues(bottom = 80.dp, top = 4.dp)
         ) {
-            items(allAthletes) { athlete ->
-                AthleteGridCard(
-                    athlete = athlete,
-                    isSelected = athlete.athleteId == uiState.selectedAthleteId,
-                    onClick = { onAction(StopwatchAction.OnSelectAthlete(athlete.athleteId)) },
-                    onEditTrial = { resultId -> onAction(StopwatchAction.OnOpenEditDialog(athlete.athleteId, resultId)) },
-                    onToggleAbsent = { onAction(StopwatchAction.OnToggleAbsent(athlete.athleteId)) }
-                )
+            items(allAthletes, key = { it.athleteId }) { athlete ->
+                if (athlete.status == AthleteStatus.COMPLETED) {
+                    CompletedAthleteRow(
+                        athlete = athlete,
+                        onEditTrial = { resultId -> onAction(StopwatchAction.OnOpenEditDialog(athlete.athleteId, resultId)) }
+                    )
+                } else {
+                    AthleteGridCard(
+                        athlete = athlete,
+                        isSelected = athlete.athleteId == uiState.selectedAthleteId,
+                        onClick = { onAction(StopwatchAction.OnSelectAthlete(athlete.athleteId)) },
+                        onEditTrial = { resultId -> onAction(StopwatchAction.OnOpenEditDialog(athlete.athleteId, resultId)) },
+                        onToggleAbsent = { onAction(StopwatchAction.OnToggleAbsent(athlete.athleteId)) }
+                    )
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun CompletionSummaryCard(
+    completedCount: Int,
+    absentCount: Int,
+    pendingCount: Int,
+    totalCount: Int,
+    onFinish: () -> Unit
+) {
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                "$completedCount of $totalCount Athletes Completed",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(Modifier.height(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                SummaryStat(label = "Completed", value = completedCount, color = PerformanceGreenText)
+                SummaryStat(label = "Absent", value = absentCount, color = MaterialTheme.colorScheme.error)
+                SummaryStat(label = "Pending", value = pendingCount, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Spacer(Modifier.height(16.dp))
+            Button(onClick = onFinish, modifier = Modifier.fillMaxWidth()) {
+                Text("Finish Session", fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+@Composable
+private fun SummaryStat(label: String, value: Int, color: Color) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value.toString(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = color)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -476,7 +520,7 @@ private fun GroupStartModeContent(uiState: StopwatchUiState, onAction: (Stopwatc
         Spacer(Modifier.height(16.dp))
         StopwatchDisplay(elapsedMs = uiState.elapsedMs)
         Spacer(Modifier.height(16.dp))
-        
+
         if (uiState.stopwatchPhase == StopwatchPhase.READY) {
             Card(
                 modifier = Modifier
@@ -487,26 +531,26 @@ private fun GroupStartModeContent(uiState: StopwatchUiState, onAction: (Stopwatc
                         onClick = { onAction(StopwatchAction.OnStartStop) }
                     ),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = PerformanceGreen)
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF2E7D32))
             ) { Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) { Text("START SESSION", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White) } }
         }
 
         Spacer(Modifier.height(16.dp))
         LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 24.dp)) {
-            items(uiState.heatAthletes) { athlete ->
+            items(uiState.heatAthletes, key = { it.athleteId }) { athlete ->
                 HeatAthleteRow(
                     athlete = athlete,
                     isRunning = uiState.stopwatchPhase == StopwatchPhase.RUNNING,
                     onToggleAbsent = { onAction(StopwatchAction.OnToggleAbsent(athlete.athleteId)) },
-                    onCapture = { 
+                    onCapture = {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onAction(StopwatchAction.OnCaptureTime(athlete.athleteId)) 
+                        onAction(StopwatchAction.OnCaptureTime(athlete.athleteId))
                     },
                     onEdit = { onAction(StopwatchAction.OnOpenEditDialog(athlete.athleteId)) }
                 )
             }
         }
-        
+
     }
 
     if (uiState.showMissingEntriesDialog) {
@@ -515,9 +559,9 @@ private fun GroupStartModeContent(uiState: StopwatchUiState, onAction: (Stopwatc
             title = { Text("Missing Entries") },
             text = { Text("Some athletes do not have recorded times. What would you like to do?") },
             confirmButton = {
-                TextButton(onClick = { 
+                TextButton(onClick = {
                     onAction(StopwatchAction.OnDismissMissingEntriesDialog)
-                    onAction(StopwatchAction.OnSubmitPending) 
+                    onAction(StopwatchAction.OnSubmitPending)
                 }) {
                     Text("Leave as Pending")
                 }
@@ -542,48 +586,24 @@ private fun StopwatchDisplay(elapsedMs: Long) {
         fontSize = 64.sp,
         fontWeight = FontWeight.Bold,
         fontFamily = FontFamily.Monospace,
-        color = MaterialTheme.colorScheme.onSurface
+        color = MaterialTheme.colorScheme.onSurface,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth()
     )
 }
 
-// Removed ConfirmationFlash
-
-@Composable
-private fun TestingGridLabels(trialCount: Int) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Spacer(Modifier.width(96.dp)) // Matches athlete info width
-        Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            repeat(trialCount) { index ->
-                Text(
-                    text = "TRIAL\n${index + 1}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f),
-                    lineHeight = 12.sp
-                )
-            }
-        }
-    }
-}
-
-@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 private fun AthleteGridCard(
-    athlete: AthleteQueueItem, 
-    isSelected: Boolean, 
-    onClick: () -> Unit, 
+    athlete: AthleteQueueItem,
+    isSelected: Boolean,
+    onClick: () -> Unit,
     onEditTrial: (String?) -> Unit,
     onToggleAbsent: () -> Unit
 ) {
     val isAbsent = athlete.status == AthleteStatus.ABSENT
     val containerColor = when {
         isAbsent -> Color.LightGray.copy(alpha = 0.2f)
-        isSelected -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+        isSelected -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
         else -> Color.White
     }
     val borderColor = when {
@@ -603,65 +623,44 @@ private fun AthleteGridCard(
         elevation = CardDefaults.cardElevation(defaultElevation = if (isAbsent) 0.dp else if (isSelected) 4.dp else 2.dp)
     ) {
         Row(
-            modifier = Modifier.padding(8.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Athlete Info (Left Column)
+            // Athlete Info (Left Column) — name + absent toggle
             Column(
-                modifier = Modifier.width(96.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.weight(0.35f),
+                horizontalAlignment = Alignment.Start,
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                // Avatar
-                val initials = athlete.name.split(" ").let { parts ->
-                    if (parts.size >= 2) "${parts[0].take(1)}${parts[1].take(1)}"
-                    else athlete.name.take(2)
-                }.uppercase()
-                
-                Surface(
-                    modifier = Modifier.size(42.dp),
-                    shape = CircleShape,
-                    color = if (isSelected) MaterialTheme.colorScheme.primary else Color.LightGray
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(
-                            initials,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-                
                 Text(
                     athlete.name,
-                    style = MaterialTheme.typography.labelSmall,
+                    style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold,
-                    textAlign = TextAlign.Center,
+                    textAlign = TextAlign.Start,
                     maxLines = 2,
-                    lineHeight = 12.sp,
+                    lineHeight = 14.sp,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     color = if (isAbsent) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f) else MaterialTheme.colorScheme.onSurface
                 )
-                
+
                 if (isAbsent) {
                     Text("Absent", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
                 }
 
-                // Absent toggle
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Absent?", style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp))
                     Spacer(Modifier.width(4.dp))
                     Switch(
                         checked = isAbsent,
                         onCheckedChange = { onToggleAbsent() },
-                        modifier = Modifier.height(24.dp).scale(0.6f)
+                        modifier = Modifier.height(20.dp).scale(0.6f)
                     )
                 }
             }
 
             Spacer(Modifier.width(12.dp))
 
-            // Trial Chips (Right Column)
+            // Trial Chips (Right Column) — trial number integrated into each chip
             Row(
                 modifier = Modifier.weight(1f),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -669,32 +668,31 @@ private fun AthleteGridCard(
                 repeat(athlete.totalTrials) { index ->
                     val trialNumber = index + 1
                     val historicalResult = athlete.historicalTrials.getOrNull(index)
-                    
-                    val status = when {
-                        historicalResult != null -> AthleteStatus.COMPLETED
-                        trialNumber == athlete.currentTrial && athlete.status == AthleteStatus.CAPTURED -> AthleteStatus.CAPTURED
-                        trialNumber == athlete.currentTrial && athlete.status == AthleteStatus.ABSENT -> AthleteStatus.ABSENT
-                        else -> AthleteStatus.WAITING
+
+                    val chipStatus = when {
+                        historicalResult != null -> TrialChipStatus.COMPLETED
+                        trialNumber == athlete.currentTrial && athlete.status == AthleteStatus.CAPTURED -> TrialChipStatus.IN_PROGRESS
+                        else -> TrialChipStatus.NOT_STARTED
                     }
-                    
-                    val displayTimeMs = when (status) {
-                        AthleteStatus.COMPLETED -> (historicalResult!!.rawScore * 1000).toLong()
-                        AthleteStatus.CAPTURED -> athlete.capturedTimeMs
+
+                    val displayTimeMs = when (chipStatus) {
+                        TrialChipStatus.COMPLETED -> (historicalResult!!.rawScore * 1000).toLong()
+                        TrialChipStatus.IN_PROGRESS -> athlete.capturedTimeMs
                         else -> null
                     }
-                    
+
                     val resultId = historicalResult?.id
-                    
                     val chipAlpha = if (isAbsent) 0.3f else 1f
-                    
+
                     TrialChip(
-                        status = status,
+                        trialNumber = trialNumber,
+                        status = chipStatus,
                         timeMs = displayTimeMs,
                         modifier = Modifier.weight(1f).alpha(chipAlpha)
                             .combinedClickable(
                                 onClick = { if (!isAbsent) onClick() },
                                 onLongClick = {
-                                    if (!isAbsent && (status == AthleteStatus.COMPLETED || status == AthleteStatus.CAPTURED)) {
+                                    if (!isAbsent && (chipStatus == TrialChipStatus.COMPLETED || chipStatus == TrialChipStatus.IN_PROGRESS)) {
                                         onEditTrial(resultId)
                                     }
                                 }
@@ -707,38 +705,89 @@ private fun AthleteGridCard(
 }
 
 @Composable
-private fun TrialChip(status: AthleteStatus, timeMs: Long?, modifier: Modifier = Modifier) {
-    val (bgColor, borderColor, iconColor) = when (status) {
-        AthleteStatus.COMPLETED -> Triple(PerformanceGreen.copy(alpha = 0.1f), PerformanceGreen, PerformanceGreenText)
-        AthleteStatus.CAPTURED -> Triple(PerformanceYellow.copy(alpha = 0.15f), PerformanceYellow, PerformanceYellowText)
-        else -> Triple(Color.LightGray.copy(alpha = 0.1f), Color.LightGray.copy(alpha = 0.5f), Color.Gray)
+private fun CompletedAthleteRow(
+    athlete: AthleteQueueItem,
+    onEditTrial: (String?) -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 3.dp),
+        shape = RoundedCornerShape(10.dp),
+        color = PerformanceGreen.copy(alpha = 0.06f),
+        border = BorderStroke(1.dp, PerformanceGreen.copy(alpha = 0.4f))
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Default.Check, contentDescription = null, tint = PerformanceGreenText, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(
+                athlete.name,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.weight(1f)
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                athlete.historicalTrials.take(athlete.totalTrials).forEach { result ->
+                    Text(
+                        formatTimeDisplay((result.rawScore * 1000).toLong()),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontFamily = FontFamily.Monospace,
+                        fontWeight = FontWeight.Bold,
+                        color = PerformanceGreenText,
+                        modifier = Modifier.combinedClickable(
+                            onClick = {},
+                            onLongClick = { onEditTrial(result.id) }
+                        )
+                    )
+                }
+            }
+        }
+    }
+}
+
+private enum class TrialChipStatus { NOT_STARTED, IN_PROGRESS, COMPLETED }
+
+@Composable
+private fun TrialChip(trialNumber: Int, status: TrialChipStatus, timeMs: Long?, modifier: Modifier = Modifier) {
+    val (bgColor, borderColor, contentColor) = when (status) {
+        TrialChipStatus.COMPLETED -> Triple(PerformanceGreen.copy(alpha = 0.1f), PerformanceGreen, PerformanceGreenText)
+        TrialChipStatus.IN_PROGRESS -> Triple(SportBlue.copy(alpha = 0.12f), SportBlue, SportBlue)
+        TrialChipStatus.NOT_STARTED -> Triple(Color.LightGray.copy(alpha = 0.1f), Color.LightGray.copy(alpha = 0.5f), Color.Gray)
     }
 
     Surface(
-        modifier = modifier.height(40.dp),
+        modifier = modifier.height(44.dp),
         shape = RoundedCornerShape(8.dp),
         color = bgColor,
-        border = BorderStroke(if (status == AthleteStatus.WAITING) 1.dp else 2.dp, borderColor)
+        border = BorderStroke(if (status == TrialChipStatus.NOT_STARTED) 1.dp else 2.dp, borderColor)
     ) {
-        Row(
+        Column(
             modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Icon(
-                imageVector = if (status == AthleteStatus.COMPLETED) Icons.Default.Check else Icons.Default.Timer,
-                contentDescription = null,
-                tint = iconColor,
-                modifier = Modifier.size(16.dp)
-            )
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                Icon(
+                    imageVector = if (status == TrialChipStatus.COMPLETED) Icons.Default.Check else Icons.Default.Timer,
+                    contentDescription = null,
+                    tint = contentColor,
+                    modifier = Modifier.size(13.dp)
+                )
+                Text(
+                    "T$trialNumber",
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                    fontWeight = FontWeight.Bold,
+                    color = contentColor
+                )
+            }
             if (timeMs != null) {
-                Spacer(Modifier.width(4.dp))
                 Text(
                     formatTimeDisplay(timeMs),
                     style = MaterialTheme.typography.labelSmall,
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Bold,
-                    color = iconColor
+                    color = contentColor
                 )
             }
         }

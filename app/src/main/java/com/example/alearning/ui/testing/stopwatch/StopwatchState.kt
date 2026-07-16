@@ -7,14 +7,19 @@ data class StopwatchUiState(
     val eventName: String = "",
     val testName: String = "",
     val testUnit: String = "",
+    val groupName: String? = null, // Session header context; null if event has no group or lookup failed
     val stopwatchPhase: StopwatchPhase = StopwatchPhase.READY,
     val elapsedMs: Long = 0L,
     val currentAthlete: AthleteQueueItem? = null,
+    val allAthletes: List<AthleteQueueItem> = emptyList(), // INDIVIDUAL mode roster; single source of truth, kept in sync by the ViewModel on every mutation
     val heatAthletes: List<AthleteQueueItem> = emptyList(),
     val currentHeatNumber: Int = 1,
     val totalHeats: Int = 1,
     val completedCount: Int = 0,
     val totalCount: Int = 0,
+    val absentCount: Int = 0,
+    val pendingReviewCount: Int = 0,
+    val trialsPerAthlete: Int = 0,
     val confirmationData: ConfirmationData? = null,
     val canUndo: Boolean = false,
     val isLoading: Boolean = true,
@@ -78,6 +83,11 @@ sealed interface StopwatchAction {
     data object OnDismissMissingEntriesDialog : StopwatchAction
     data object OnSubmitPending : StopwatchAction
     data object OnDismissTrialMessage : StopwatchAction
+}
+
+sealed interface StopwatchUiEvent {
+    data class ScrollToAthlete(val athleteId: String) : StopwatchUiEvent
+    data class ShowSnackbar(val message: String) : StopwatchUiEvent
 }
 
 
