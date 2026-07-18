@@ -10,6 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.alearning.domain.model.reports.Classification
+import com.example.alearning.domain.usecase.reports.ClassifyPercentileUseCase
 import com.example.alearning.ui.theme.PerformanceGreen
 import com.example.alearning.ui.theme.PerformanceGreenText
 import com.example.alearning.ui.theme.PerformanceGrey
@@ -19,10 +21,12 @@ import com.example.alearning.ui.theme.PerformanceRedText
 import com.example.alearning.ui.theme.PerformanceYellow
 import com.example.alearning.ui.theme.PerformanceYellowText
 
+private val classifyPercentile = ClassifyPercentileUseCase()
+
 @Composable
 fun PercentileChip(percentile: Int?, modifier: Modifier = Modifier) {
     val label = percentile?.let { "${ordinal(it)}" } ?: "—"
-    val (bg, fg) = percentileChipColors(percentile)
+    val (bg, fg) = percentileChipColors(classifyPercentile(percentile))
     Text(
         text = label,
         modifier = modifier
@@ -34,12 +38,11 @@ fun PercentileChip(percentile: Int?, modifier: Modifier = Modifier) {
     )
 }
 
-// Four-zone color contract: Green ≥60, Yellow 30–59, Red <30, Grey = no data.
-private fun percentileChipColors(percentile: Int?): Pair<Color, Color> = when {
-    percentile == null -> PerformanceGrey to PerformanceGreyText
-    percentile >= 60 -> PerformanceGreen to PerformanceGreenText
-    percentile >= 30 -> PerformanceYellow to PerformanceYellowText
-    else -> PerformanceRed to PerformanceRedText
+private fun percentileChipColors(classification: Classification): Pair<Color, Color> = when (classification) {
+    Classification.NO_DATA -> PerformanceGrey to PerformanceGreyText
+    Classification.SUPERIOR -> PerformanceGreen to PerformanceGreenText
+    Classification.HEALTHY -> PerformanceYellow to PerformanceYellowText
+    Classification.NEEDS_IMPROVEMENT -> PerformanceRed to PerformanceRedText
 }
 
 private fun ordinal(n: Int): String {
