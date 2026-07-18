@@ -1,0 +1,45 @@
+# Build outputs
+/build
+/app/build
+/captures
+.externalNativeBuild
+.cxx
+
+# Local machine config (never shared)
+local.properties
+/local.properties
+
+# IDE / tooling caches
+*.iml
+.gradle
+/.gradle
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+/.kotlin
+/.android
+
+# AI coding tool config/scratch — not app content
+/.claude
+/.gemini
+/.agents
+/.artifacts
+/**/.artifacts
+GEMINI.md
+
+# Release signing (never commit real keystores/passwords)
+*.jks
+*.keystore
+keystore.properties
+
+# Dev scratch / personal / non-source content
+/PD documents
+/build_output.txt
+/test_nav.kt
+/tempAicore
+/app/.git.bak
+
+.DS_Store
