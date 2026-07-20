@@ -32,9 +32,9 @@ All routes are defined as objects in [Screen.kt](file:///c:/Users/APF/AndroidStu
 
 | Screen | Nav Route | ViewModel | Primary Responsibility |
 |---|---|---|---|
-| **SignIn** | `"sign_in"` | `SignInViewModel` | Authenticate coach using PBKDF2 hash check. |
-| **SignUp** | `"sign_up"` | `SignUpViewModel` | Register first/additional coaches with passwords. |
-| **ResetPassword** | `"reset_password"` | `ResetPasswordViewModel` | Securely reset password via registered security question. |
+| **Unlock** | `"unlock"` | `UnlockViewModel` | Returning-coach "Welcome back" password unlock (PBKDF2 hash check), keyed by resolved account ID rather than a typed username. |
+| **Onboarding** | `"onboarding"` | `OnboardingViewModel` | First-launch account creation: Coach Name + Password (+ optional Email for Drive backup). Generates a username automatically. |
+| **RestoreBackup** | `"restore_backup"` | `RestoreBackupViewModel` | Pre-auth Google Drive restore for a reinstalling coach; re-establishes account + session without a password. |
 | **Dashboard** | `"dashboard"` | `DashboardViewModel` | Home hub: displays statistics, recent events, and quick actions. |
 | **Roster** | `"roster"` | `RosterViewModel` | Group creation, athlete registration, and roster management. |
 | **Athletes** | `"athletes"` | (Shared/Roster UI) | Read-only listing of all athletes with navigation to dashboards. |
@@ -74,7 +74,7 @@ Contains the pure business logic. It defines the models, repositories, and use c
 
 ### Functional Use Cases
 Use cases are divided into namespaces corresponding to core areas:
-- **`auth`**: `SignInUseCase`, `SignUpUseCase`, `SignOutUseCase`, `ResetPasswordUseCase`, `ValidateNameUseCase`, `ValidatePasswordUseCase`, `ValidateUsernameUseCase`
+- **`auth`**: `OnboardingUseCase`, `UnlockUseCase`, `SignOutUseCase`, `GenerateUsernameUseCase`, `GetPrimaryAccountUseCase`, `ListAccountsUseCase`, `CompleteRestoreUseCase`, `ObserveCurrentUserUseCase`, `ValidateNameUseCase`, `ValidatePasswordUseCase`, `ValidateUsernameUseCase`
 - **`people`**: `RegisterAthleteUseCase`, `CreateGroupUseCase`, `ManageRosterUseCase`
 - **`standards`**: `CalculatePercentileUseCase`, `GetTestLibraryUseCase`, `ImportStandardsUseCase`
 - **`testing`**: 
@@ -90,7 +90,7 @@ Use cases are divided into namespaces corresponding to core areas:
 
 Handles data persistence, mappings, and external data parsing.
 
-### Local Room Database (`AppDatabase` - Version 8)
+### Local Room Database (`AppDatabase` - Version 11)
 An offline-first Room SQLite implementation containing the following tables:
 - `individuals`: Athlete profile records.
 - `groups`: Group records.
@@ -101,7 +101,7 @@ An offline-first Room SQLite implementation containing the following tables:
 - `testing_events`: Testing event sessions.
 - `event_test_cross_ref`: Many-to-many event-test relationships.
 - `test_results`: Finalized result scores with percentile snapshots.
-- `users`: Registered coaches (IDs, user names, salt/password hashes, security credentials).
+- `users`: Registered coaches (IDs, user names, salt/password hashes, optional email, legacy security-question credentials).
 - `pending_test_entries`: Staged, in-flight grid scores that survive app process death during live testing sessions.
 
 ### Seeding Mechanism
@@ -196,10 +196,10 @@ sequenceDiagram
         Nav->>Nav: Set startDestination = Screen.Dashboard.route
     else Unauthenticated & Database has Users
         VM-->>Nav: State = UnauthenticatedHasUsers
-        Nav->>Nav: Set startDestination = Screen.SignIn.route
+        Nav->>Nav: Set startDestination = Screen.Unlock.route
     else Unauthenticated & Database is Empty
         VM-->>Nav: State = UnauthenticatedNoUsers
-        Nav->>Nav: Set startDestination = Screen.SignUp.route
+        Nav->>Nav: Set startDestination = Screen.Onboarding.route
     end
 ```
 
