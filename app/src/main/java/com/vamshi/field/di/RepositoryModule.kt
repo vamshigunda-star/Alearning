@@ -54,12 +54,6 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
-    abstract fun bindAiCoachRepository(
-        aiCoachRepositoryImpl: com.vamshi.field.data.repository.AiCoachRepositoryImpl
-    ): com.vamshi.field.domain.repository.AiCoachRepository
-
-    @Binds
-    @Singleton
     abstract fun bindRecommendationRepository(
         recommendationRepositoryImpl: RecommendationRepositoryImpl
     ): RecommendationRepository

@@ -7,12 +7,12 @@ import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 import dagger.hilt.testing.TestInstallIn
-import com.vamshi.field.di.RepositoryModule
+import com.vamshi.field.di.AiCoachModule
 
 @Module
 @TestInstallIn(
     components = [SingletonComponent::class],
-    replaces = [RepositoryModule::class]
+    replaces = [AiCoachModule::class]
 )
 abstract class TestAiCoachModule {
 
