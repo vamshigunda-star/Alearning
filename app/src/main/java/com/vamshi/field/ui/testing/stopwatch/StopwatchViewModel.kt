@@ -1,15 +1,15 @@
-package com.example.alearning.ui.testing.stopwatch
+package com.vamshi.field.ui.testing.stopwatch
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.alearning.domain.model.people.Individual
-import com.example.alearning.domain.model.standards.TimingMode
-import com.example.alearning.domain.model.testing.CaptureMethod
-import com.example.alearning.domain.repository.PeopleRepository
-import com.example.alearning.domain.repository.TestingRepository
-import com.example.alearning.domain.usecase.testing.RecordTestResultUseCase
-import com.example.alearning.domain.usecase.testing.StopwatchSessionUseCase
+import com.vamshi.field.domain.model.people.Individual
+import com.vamshi.field.domain.model.standards.TimingMode
+import com.vamshi.field.domain.model.testing.CaptureMethod
+import com.vamshi.field.domain.repository.PeopleRepository
+import com.vamshi.field.domain.repository.TestingRepository
+import com.vamshi.field.domain.usecase.testing.RecordTestResultUseCase
+import com.vamshi.field.domain.usecase.testing.StopwatchSessionUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -146,7 +146,7 @@ class StopwatchViewModel @Inject constructor(
         }
     }
 
-    private fun findFirstIncompleteHeat(session: com.example.alearning.domain.usecase.testing.StopwatchSession): Int {
+    private fun findFirstIncompleteHeat(session: com.vamshi.field.domain.usecase.testing.StopwatchSession): Int {
         for (i in heats.indices) {
             val hasIncomplete = heats[i].any { (completionState[it.id] ?: 0) < session.trialsPerAthlete }
             if (hasIncomplete) return i

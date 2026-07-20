@@ -1,4 +1,4 @@
-﻿package com.example.alearning.ui.components.charts
+﻿package com.vamshi.field.ui.components.charts
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.Brush
-import com.example.alearning.domain.usecase.testing.AthleteRadarData
+import com.vamshi.field.domain.usecase.testing.AthleteRadarData
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin

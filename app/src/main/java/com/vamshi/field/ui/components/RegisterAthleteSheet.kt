@@ -1,4 +1,4 @@
-package com.example.alearning.ui.components
+package com.vamshi.field.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -40,7 +40,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.alearning.domain.model.people.BiologicalSex
+import com.vamshi.field.domain.model.people.BiologicalSex
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

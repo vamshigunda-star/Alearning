@@ -1,8 +1,8 @@
-package com.example.alearning.data.repository
+package com.vamshi.field.data.repository
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.example.alearning.domain.repository.SessionManager
+import com.vamshi.field.domain.repository.SessionManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose

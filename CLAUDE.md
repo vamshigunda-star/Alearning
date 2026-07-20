@@ -4,10 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ---
 
 ## Central Source of Truth
-**CRITICAL**: The definitive architecture reference for ALearning is `DEVELOPMENT_CONTEXT.md`. Always read it before making structural changes. 
+**CRITICAL**: The definitive architecture reference for Field is `DEVELOPMENT_CONTEXT.md`. Always read it before making structural changes. 
 
 ## App Overview
-**ALearning** is an offline-first fitness testing and performance tracking app for coaches and fitness professionals.
+**Field** is an offline-first fitness testing and performance tracking app for coaches and fitness professionals.
 **Primary user:** A single coach managing multiple athlete groups.
 **Platform:** Android (Kotlin, Jetpack Compose, Material 3).
 **Data:** Fully offline. Room database (Current Version: 8).

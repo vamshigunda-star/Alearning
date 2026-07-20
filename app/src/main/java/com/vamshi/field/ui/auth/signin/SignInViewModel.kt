@@ -1,9 +1,9 @@
-package com.example.alearning.ui.auth.signin
+package com.vamshi.field.ui.auth.signin
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.alearning.domain.model.auth.AuthResult
-import com.example.alearning.domain.usecase.auth.SignInUseCase
+import com.vamshi.field.domain.model.auth.AuthResult
+import com.vamshi.field.domain.usecase.auth.SignInUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

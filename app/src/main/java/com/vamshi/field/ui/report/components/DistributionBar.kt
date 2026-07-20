@@ -1,4 +1,4 @@
-package com.example.alearning.ui.report.components
+package com.vamshi.field.ui.report.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -12,7 +12,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.example.alearning.domain.model.reports.Distribution
+import com.vamshi.field.domain.model.reports.Distribution
 
 @Composable
 fun DistributionBar(

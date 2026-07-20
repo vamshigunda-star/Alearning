@@ -1,7 +1,7 @@
-package com.example.alearning.domain.usecase.analytics
+package com.vamshi.field.domain.usecase.analytics
 
-import com.example.alearning.domain.model.analytics.*
-import com.example.alearning.domain.usecase.testing.AthleteRadarData
+import com.vamshi.field.domain.model.analytics.*
+import com.vamshi.field.domain.usecase.testing.AthleteRadarData
 import javax.inject.Inject
 import kotlin.math.abs
 

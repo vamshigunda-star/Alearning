@@ -1,15 +1,15 @@
-package com.example.alearning.data.repository
+package com.vamshi.field.data.repository
 
 import android.database.sqlite.SQLiteConstraintException
-import com.example.alearning.data.auth.PasswordHasher
-import com.example.alearning.data.local.daos.auth.UserDao
-import com.example.alearning.data.local.entities.auth.UserEntity
-import com.example.alearning.data.mapper.auth.toDomain
-import com.example.alearning.domain.model.auth.AuthError
-import com.example.alearning.domain.model.auth.AuthResult
-import com.example.alearning.domain.model.auth.User
-import com.example.alearning.domain.repository.AuthRepository
-import com.example.alearning.domain.repository.SessionManager
+import com.vamshi.field.data.auth.PasswordHasher
+import com.vamshi.field.data.local.daos.auth.UserDao
+import com.vamshi.field.data.local.entities.auth.UserEntity
+import com.vamshi.field.data.mapper.auth.toDomain
+import com.vamshi.field.domain.model.auth.AuthError
+import com.vamshi.field.domain.model.auth.AuthResult
+import com.vamshi.field.domain.model.auth.User
+import com.vamshi.field.domain.repository.AuthRepository
+import com.vamshi.field.domain.repository.SessionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow

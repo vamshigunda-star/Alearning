@@ -1,6 +1,6 @@
-package com.example.alearning.domain.usecase.testing
+package com.vamshi.field.domain.usecase.testing
 
-import com.example.alearning.domain.repository.PendingTestEntryRepository
+import com.vamshi.field.domain.repository.PendingTestEntryRepository
 import javax.inject.Inject
 
 class DiscardPendingEntriesUseCase @Inject constructor(

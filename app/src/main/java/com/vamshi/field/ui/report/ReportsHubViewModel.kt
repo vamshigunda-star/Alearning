@@ -1,11 +1,11 @@
-package com.example.alearning.ui.report
+package com.vamshi.field.ui.report
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.alearning.domain.model.reports.AthleteDashboardData
-import com.example.alearning.domain.model.reports.ReportsHomeData
-import com.example.alearning.domain.model.reports.SessionReportData
-import com.example.alearning.domain.repository.ReportsRepository
+import com.vamshi.field.domain.model.reports.AthleteDashboardData
+import com.vamshi.field.domain.model.reports.ReportsHomeData
+import com.vamshi.field.domain.model.reports.SessionReportData
+import com.vamshi.field.domain.repository.ReportsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,16 +16,16 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-import com.example.alearning.domain.repository.PeopleRepository
-import com.example.alearning.domain.repository.StandardsRepository
-import com.example.alearning.domain.repository.TestingRepository
-import com.example.alearning.domain.usecase.testing.AthleteRadarData
-import com.example.alearning.domain.usecase.testing.GetAthleteRadarDataUseCase
+import com.vamshi.field.domain.repository.PeopleRepository
+import com.vamshi.field.domain.repository.StandardsRepository
+import com.vamshi.field.domain.repository.TestingRepository
+import com.vamshi.field.domain.usecase.testing.AthleteRadarData
+import com.vamshi.field.domain.usecase.testing.GetAthleteRadarDataUseCase
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.first
-import com.example.alearning.domain.model.people.Individual
-import com.example.alearning.domain.model.testing.TestResult
-import com.example.alearning.domain.model.standards.FitnessTest
+import com.vamshi.field.domain.model.people.Individual
+import com.vamshi.field.domain.model.testing.TestResult
+import com.vamshi.field.domain.model.standards.FitnessTest
 
 // ── UI State ──────────────────────────────────────────────────────────────────
 

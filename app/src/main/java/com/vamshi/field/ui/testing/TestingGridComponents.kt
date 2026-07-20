@@ -1,4 +1,4 @@
-﻿package com.example.alearning.ui.testing
+﻿package com.vamshi.field.ui.testing
 
 import android.util.Log
 import androidx.compose.foundation.background
@@ -56,12 +56,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.alearning.domain.model.people.Individual
-import com.example.alearning.domain.model.standards.FitnessTest
-import com.example.alearning.domain.model.standards.TimingMode
-import com.example.alearning.domain.model.testing.TestResult
-import com.example.alearning.ui.theme.*
-import com.example.alearning.ui.components.testing.TestInputSwitcher
+import com.vamshi.field.domain.model.people.Individual
+import com.vamshi.field.domain.model.standards.FitnessTest
+import com.vamshi.field.domain.model.standards.TimingMode
+import com.vamshi.field.domain.model.testing.TestResult
+import com.vamshi.field.ui.theme.*
+import com.vamshi.field.ui.components.testing.TestInputSwitcher
 import java.util.Locale
 
 @Composable
@@ -412,7 +412,7 @@ fun ScoreEntryDialog(
     testName: String,
     unit: String,
     testDescription: String?,
-    inputParadigm: com.example.alearning.domain.model.standards.InputParadigm,
+    inputParadigm: com.vamshi.field.domain.model.standards.InputParadigm,
     currentResult: TestResult?,
     onDismiss: () -> Unit,
     onSave: (Double) -> Unit,

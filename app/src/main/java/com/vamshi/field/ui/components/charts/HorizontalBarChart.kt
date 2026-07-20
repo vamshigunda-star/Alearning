@@ -1,4 +1,4 @@
-package com.example.alearning.ui.components.charts
+package com.vamshi.field.ui.components.charts
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -20,8 +20,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.example.alearning.domain.model.reports.LeaderboardRow
-import com.example.alearning.ui.report.components.zoneColors
+import com.vamshi.field.domain.model.reports.LeaderboardRow
+import com.vamshi.field.ui.report.components.zoneColors
 
 /**
  * A clean, high-density horizontal bar chart for mobile rosters.

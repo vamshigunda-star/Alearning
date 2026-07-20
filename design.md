@@ -1,6 +1,6 @@
-# ALearning Design System & UI Architecture
+# Field Design System & UI Architecture
 
-This document serves as the single source of truth for the UI/UX design and frontend architecture of the ALearning application. Future UI changes, component modifications, and flow optimizations should be driven by the rules and structures defined here.
+This document serves as the single source of truth for the UI/UX design and frontend architecture of the Field application. Future UI changes, component modifications, and flow optimizations should be driven by the rules and structures defined here.
 
 ## 1. Design System Overview
 

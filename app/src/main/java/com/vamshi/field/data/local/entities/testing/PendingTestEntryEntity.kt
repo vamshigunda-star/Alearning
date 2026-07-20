@@ -1,4 +1,4 @@
-package com.example.alearning.data.local.entities.testing
+package com.vamshi.field.data.local.entities.testing
 
 import androidx.room.Entity
 import androidx.room.ForeignKey

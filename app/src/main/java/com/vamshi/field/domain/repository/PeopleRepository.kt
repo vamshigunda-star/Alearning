@@ -1,7 +1,7 @@
-package com.example.alearning.domain.repository
+package com.vamshi.field.domain.repository
 
-import com.example.alearning.domain.model.people.Group
-import com.example.alearning.domain.model.people.Individual
+import com.vamshi.field.domain.model.people.Group
+import com.vamshi.field.domain.model.people.Individual
 
 import kotlinx.coroutines.flow.Flow
 

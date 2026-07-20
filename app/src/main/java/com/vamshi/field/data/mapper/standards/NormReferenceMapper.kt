@@ -1,7 +1,7 @@
-package com.example.alearning.data.mapper.standards
+package com.vamshi.field.data.mapper.standards
 
-import com.example.alearning.data.local.entities.standards.NormReferenceEntity
-import com.example.alearning.domain.model.standards.NormReference
+import com.vamshi.field.data.local.entities.standards.NormReferenceEntity
+import com.vamshi.field.domain.model.standards.NormReference
 
 fun NormReferenceEntity.toDomain(): NormReference {
     return NormReference(

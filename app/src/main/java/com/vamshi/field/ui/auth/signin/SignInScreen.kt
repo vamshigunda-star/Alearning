@@ -1,4 +1,4 @@
-package com.example.alearning.ui.auth.signin
+package com.vamshi.field.ui.auth.signin
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -42,9 +42,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.alearning.R
-import com.example.alearning.ui.auth.signup.AuthErrorBanner
-import com.example.alearning.ui.components.AppTopBar
+import com.vamshi.field.R
+import com.vamshi.field.ui.auth.signup.AuthErrorBanner
+import com.vamshi.field.ui.components.AppTopBar
 
 @Composable
 fun SignInScreen(

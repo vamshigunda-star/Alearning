@@ -1,8 +1,8 @@
-package com.example.alearning.domain.usecase.auth
+package com.vamshi.field.domain.usecase.auth
 
-import com.example.alearning.domain.model.auth.AuthError
-import com.example.alearning.domain.model.auth.AuthResult
-import com.example.alearning.domain.repository.AuthRepository
+import com.vamshi.field.domain.model.auth.AuthError
+import com.vamshi.field.domain.model.auth.AuthResult
+import com.vamshi.field.domain.repository.AuthRepository
 import javax.inject.Inject
 
 /**

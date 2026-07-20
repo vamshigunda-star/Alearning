@@ -1,7 +1,7 @@
-package com.example.alearning.data.mapper.testing
+package com.vamshi.field.data.mapper.testing
 
-import com.example.alearning.data.local.entities.testing.TestingEventEntity
-import com.example.alearning.domain.model.testing.TestingEvent
+import com.vamshi.field.data.local.entities.testing.TestingEventEntity
+import com.vamshi.field.domain.model.testing.TestingEvent
 
 fun TestingEventEntity.toDomain(): TestingEvent {
     return TestingEvent(

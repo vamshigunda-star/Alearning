@@ -1,10 +1,10 @@
-package com.example.alearning.domain.usecase.testing
+package com.vamshi.field.domain.usecase.testing
 
-import com.example.alearning.domain.model.analytics.AtRiskAthlete
-import com.example.alearning.domain.model.analytics.DomainPattern
-import com.example.alearning.domain.repository.PeopleRepository
-import com.example.alearning.domain.repository.StandardsRepository
-import com.example.alearning.domain.repository.TestingRepository
+import com.vamshi.field.domain.model.analytics.AtRiskAthlete
+import com.vamshi.field.domain.model.analytics.DomainPattern
+import com.vamshi.field.domain.repository.PeopleRepository
+import com.vamshi.field.domain.repository.StandardsRepository
+import com.vamshi.field.domain.repository.TestingRepository
 import kotlinx.coroutines.flow.first
 import java.time.Instant
 import java.time.ZoneId

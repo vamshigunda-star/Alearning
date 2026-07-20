@@ -1,8 +1,8 @@
-package com.example.alearning.domain.usecase.standards
+package com.vamshi.field.domain.usecase.standards
 
-import com.example.alearning.domain.model.standards.FitnessTest
-import com.example.alearning.domain.model.standards.TestCategory
-import com.example.alearning.domain.repository.StandardsRepository
+import com.vamshi.field.domain.model.standards.FitnessTest
+import com.vamshi.field.domain.model.standards.TestCategory
+import com.vamshi.field.domain.repository.StandardsRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 

@@ -1,11 +1,11 @@
-package com.example.alearning.e2e.aicoach
+package com.vamshi.field.e2e.aicoach
 
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.*
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
-import com.example.alearning.MainActivity
-import com.example.alearning.data.seed.SeedDataManager
-import com.example.alearning.domain.repository.AiCoachStatus
+import com.vamshi.field.MainActivity
+import com.vamshi.field.data.seed.SeedDataManager
+import com.vamshi.field.domain.repository.AiCoachStatus
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.runBlocking

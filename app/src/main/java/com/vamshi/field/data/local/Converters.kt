@@ -1,7 +1,7 @@
-package com.example.alearning.data.local
+package com.vamshi.field.data.local
 
 import androidx.room.TypeConverter
-import com.example.alearning.domain.model.people.BiologicalSex
+import com.vamshi.field.domain.model.people.BiologicalSex
 
 object Converters {
     @TypeConverter

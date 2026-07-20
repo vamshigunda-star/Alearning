@@ -1,4 +1,4 @@
-package com.example.alearning.ui.report.components
+package com.vamshi.field.ui.report.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,7 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.alearning.domain.model.reports.LeaderboardRow
+import com.vamshi.field.domain.model.reports.LeaderboardRow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,7 +71,7 @@ fun AthleteLeaderRow(
                 ZoneChip(
                     classification = row.classification,
                     label = row.classificationLabel?.takeIf { it.isNotBlank() }
-                        ?: com.example.alearning.ui.report.components.zoneLabel(row.classification)
+                        ?: com.vamshi.field.ui.report.components.zoneLabel(row.classification)
                 )
                 if (row.percentile != null) {
                     Text(

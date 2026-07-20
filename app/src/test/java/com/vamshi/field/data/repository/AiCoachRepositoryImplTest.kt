@@ -1,9 +1,9 @@
-package com.example.alearning.data.repository
+package com.vamshi.field.data.repository
 
 import android.content.Context
 import android.os.Build
 import androidx.test.core.app.ApplicationProvider
-import com.example.alearning.domain.repository.AiCoachStatus
+import com.vamshi.field.domain.repository.AiCoachStatus
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals

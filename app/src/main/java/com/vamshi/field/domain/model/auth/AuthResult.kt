@@ -1,4 +1,4 @@
-package com.example.alearning.domain.model.auth
+package com.vamshi.field.domain.model.auth
 
 /**
  * Typed result wrapper for auth operations.

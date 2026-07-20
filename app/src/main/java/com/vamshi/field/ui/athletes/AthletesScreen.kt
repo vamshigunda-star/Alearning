@@ -1,4 +1,4 @@
-package com.example.alearning.ui.athletes
+package com.vamshi.field.ui.athletes
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
@@ -15,12 +15,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.alearning.ui.components.AppTopBar
-import com.example.alearning.ui.roster.AthleteTabContent
-import com.example.alearning.ui.roster.RosterAction
-import com.example.alearning.ui.roster.RosterDialogs
-import com.example.alearning.ui.roster.RosterViewModel
-import com.example.alearning.ui.theme.SportOrange
+import com.vamshi.field.ui.components.AppTopBar
+import com.vamshi.field.ui.roster.AthleteTabContent
+import com.vamshi.field.ui.roster.RosterAction
+import com.vamshi.field.ui.roster.RosterDialogs
+import com.vamshi.field.ui.roster.RosterViewModel
+import com.vamshi.field.ui.theme.SportOrange
 
 @Composable
 fun AthletesScreen(

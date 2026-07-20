@@ -1,2 +1,2 @@
-package com.example.alearning.e2e.aicoach
+package com.vamshi.field.e2e.aicoach
 class Test1 {}

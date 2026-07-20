@@ -1,7 +1,7 @@
-package com.example.alearning.domain.usecase.reports
+package com.vamshi.field.domain.usecase.reports
 
-import com.example.alearning.domain.model.reports.AthleteDashboardData
-import com.example.alearning.domain.repository.ReportsRepository
+import com.vamshi.field.domain.model.reports.AthleteDashboardData
+import com.vamshi.field.domain.repository.ReportsRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 

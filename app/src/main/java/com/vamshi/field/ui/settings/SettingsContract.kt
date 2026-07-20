@@ -1,4 +1,4 @@
-package com.example.alearning.ui.settings
+package com.vamshi.field.ui.settings
 
 sealed interface SettingsAction {
     object ConnectDrive : SettingsAction

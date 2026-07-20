@@ -1,7 +1,7 @@
-package com.example.alearning.data.mapper.people
+package com.vamshi.field.data.mapper.people
 
-import com.example.alearning.data.local.entities.people.IndividualEntity
-import com.example.alearning.domain.model.people.Individual
+import com.vamshi.field.data.local.entities.people.IndividualEntity
+import com.vamshi.field.domain.model.people.Individual
 
 fun IndividualEntity.toDomain(): Individual {
     return Individual(

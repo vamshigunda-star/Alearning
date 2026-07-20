@@ -1,4 +1,4 @@
-package com.example.alearning.domain.model.reports
+package com.vamshi.field.domain.model.reports
 
 enum class Classification { SUPERIOR, HEALTHY, NEEDS_IMPROVEMENT, NO_DATA }
 

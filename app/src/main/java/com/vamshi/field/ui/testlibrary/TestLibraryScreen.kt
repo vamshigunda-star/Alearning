@@ -1,4 +1,4 @@
-package com.example.alearning.ui.testlibrary
+package com.vamshi.field.ui.testlibrary
 
 import android.content.Intent
 import android.net.Uri
@@ -40,9 +40,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
-import com.example.alearning.domain.model.standards.FitnessTest
-import com.example.alearning.ui.components.AppFilterChip
-import com.example.alearning.ui.components.AppTopBar
+import com.vamshi.field.domain.model.standards.FitnessTest
+import com.vamshi.field.ui.components.AppFilterChip
+import com.vamshi.field.ui.components.AppTopBar
 
 @Composable
 fun TestLibraryScreen(

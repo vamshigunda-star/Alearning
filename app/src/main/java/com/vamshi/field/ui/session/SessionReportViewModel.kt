@@ -1,9 +1,9 @@
-﻿package com.example.alearning.ui.session
+﻿package com.vamshi.field.ui.session
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.alearning.domain.model.reports.SessionReportData
+import com.vamshi.field.domain.model.reports.SessionReportData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,9 +13,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-import com.example.alearning.domain.repository.PeopleRepository
-import com.example.alearning.domain.repository.TestingRepository
-import com.example.alearning.domain.repository.StandardsRepository
+import com.vamshi.field.domain.repository.PeopleRepository
+import com.vamshi.field.domain.repository.TestingRepository
+import com.vamshi.field.domain.repository.StandardsRepository
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.first
 
@@ -51,7 +51,7 @@ sealed interface SessionReportAction {
 @HiltViewModel
 class SessionReportViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
-    private val observeSessionReport: com.example.alearning.domain.usecase.reports.ObserveSessionReportUseCase,
+    private val observeSessionReport: com.vamshi.field.domain.usecase.reports.ObserveSessionReportUseCase,
     private val testingRepository: TestingRepository,
     private val peopleRepository: PeopleRepository,
     private val standardsRepository: StandardsRepository
@@ -69,8 +69,8 @@ class SessionReportViewModel @Inject constructor(
     sealed interface ExportRequest {
         data class Event(
             val eventName: String,
-            val results: List<Pair<com.example.alearning.domain.model.people.Individual, com.example.alearning.domain.model.testing.TestResult>>,
-            val tests: Map<String, com.example.alearning.domain.model.standards.FitnessTest>
+            val results: List<Pair<com.vamshi.field.domain.model.people.Individual, com.vamshi.field.domain.model.testing.TestResult>>,
+            val tests: Map<String, com.vamshi.field.domain.model.standards.FitnessTest>
         ) : ExportRequest
     }
 

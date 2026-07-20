@@ -1,4 +1,4 @@
-package com.example.alearning.domain.usecase.auth
+package com.vamshi.field.domain.usecase.auth
 
 import javax.inject.Inject
 

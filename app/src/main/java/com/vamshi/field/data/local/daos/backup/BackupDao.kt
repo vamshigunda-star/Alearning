@@ -1,17 +1,17 @@
-package com.example.alearning.data.local.daos.backup
+package com.vamshi.field.data.local.daos.backup
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
-import com.example.alearning.data.local.entities.auth.UserEntity
-import com.example.alearning.data.local.entities.people.GroupEntity
-import com.example.alearning.data.local.entities.people.GroupMemberCrossRef
-import com.example.alearning.data.local.entities.people.IndividualEntity
-import com.example.alearning.data.local.entities.testing.EventTestCrossRef
-import com.example.alearning.data.local.entities.testing.TestResultEntity
-import com.example.alearning.data.local.entities.testing.TestingEventEntity
+import com.vamshi.field.data.local.entities.auth.UserEntity
+import com.vamshi.field.data.local.entities.people.GroupEntity
+import com.vamshi.field.data.local.entities.people.GroupMemberCrossRef
+import com.vamshi.field.data.local.entities.people.IndividualEntity
+import com.vamshi.field.data.local.entities.testing.EventTestCrossRef
+import com.vamshi.field.data.local.entities.testing.TestResultEntity
+import com.vamshi.field.data.local.entities.testing.TestingEventEntity
 
 @Dao
 interface BackupDao {

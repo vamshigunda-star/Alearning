@@ -1,4 +1,4 @@
-package com.example.alearning.ui.auth.reset
+package com.vamshi.field.ui.auth.reset
 
 /** All user-initiated events from the password reset screen. */
 sealed interface ResetPasswordAction {

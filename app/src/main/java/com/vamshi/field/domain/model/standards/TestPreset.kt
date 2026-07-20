@@ -1,4 +1,4 @@
-package com.example.alearning.domain.model.standards
+package com.vamshi.field.domain.model.standards
 
 data class TestPreset(
     val id: String,

@@ -1,4 +1,4 @@
-package com.example.alearning.ui.report
+package com.vamshi.field.ui.report
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -58,26 +58,26 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.alearning.domain.repository.AiCoachStatus
-import com.example.alearning.ui.aicoach.AiCoachViewModel
-import com.example.alearning.ui.athlete.AthleteBody
-import com.example.alearning.ui.athlete.AthleteDashboardUiState
-import com.example.alearning.ui.components.AppFilterChip
-import com.example.alearning.ui.components.AppTopBar
-import com.example.alearning.ui.components.AppTopBarActionButton
-import com.example.alearning.ui.components.AppTopBarSubtitleColor
-import com.example.alearning.ui.report.components.SessionSwitcherSheet
-import com.example.alearning.ui.session.CoachInsightSheet
-import com.example.alearning.ui.session.SessionReportBody
-import com.example.alearning.ui.session.SessionReportUiState
+import com.vamshi.field.domain.repository.AiCoachStatus
+import com.vamshi.field.ui.aicoach.AiCoachViewModel
+import com.vamshi.field.ui.athlete.AthleteBody
+import com.vamshi.field.ui.athlete.AthleteDashboardUiState
+import com.vamshi.field.ui.components.AppFilterChip
+import com.vamshi.field.ui.components.AppTopBar
+import com.vamshi.field.ui.components.AppTopBarActionButton
+import com.vamshi.field.ui.components.AppTopBarSubtitleColor
+import com.vamshi.field.ui.report.components.SessionSwitcherSheet
+import com.vamshi.field.ui.session.CoachInsightSheet
+import com.vamshi.field.ui.session.SessionReportBody
+import com.vamshi.field.ui.session.SessionReportUiState
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import com.example.alearning.util.CsvExporter
-import com.example.alearning.domain.model.reports.RecentSessionRow
-import com.example.alearning.ui.theme.BackgroundLight
-import com.example.alearning.ui.theme.OutlineGrey
-import com.example.alearning.ui.theme.SportOrange
+import com.vamshi.field.util.CsvExporter
+import com.vamshi.field.domain.model.reports.RecentSessionRow
+import com.vamshi.field.ui.theme.BackgroundLight
+import com.vamshi.field.ui.theme.OutlineGrey
+import com.vamshi.field.ui.theme.SportOrange
 
 @Composable
 fun ReportScreen(
@@ -173,7 +173,7 @@ fun ReportScreen(
                 modifier = Modifier.fillMaxSize()
             )
             
-            com.example.alearning.ui.aicoach.components.DraggableAiFab(
+            com.vamshi.field.ui.aicoach.components.DraggableAiFab(
                 isVisible = isAiCoachVisible,
                 onClick = {
                     val contextString = if (selectedTab == 0) {
@@ -340,12 +340,12 @@ private fun AthleteProfileTab(
                 padding = PaddingValues(0.dp),
                 onAction = { action ->
                     when (action) {
-                        is com.example.alearning.ui.athlete.AthleteDashboardAction.OnStartQuickTest -> {
+                        is com.vamshi.field.ui.athlete.AthleteDashboardAction.OnStartQuickTest -> {
                             uiState.selectedAthleteId?.let { athleteId ->
                                 onAction(ReportsHubAction.OnStartQuickTest(athleteId, action.testIds))
                             }
                         }
-                        is com.example.alearning.ui.athlete.AthleteDashboardAction.OnNavigateToTest -> {
+                        is com.vamshi.field.ui.athlete.AthleteDashboardAction.OnNavigateToTest -> {
                             uiState.selectedAthleteId?.let { athleteId ->
                                 onNavigateToTest(athleteId, action.testId)
                             }
@@ -428,8 +428,8 @@ private fun EventReportTab(
                 padding = PaddingValues(0.dp),
                 onAction = { sessionAction ->
                     when (sessionAction) {
-                        is com.example.alearning.ui.session.SessionReportAction.OnSelectTest -> onAction(ReportsHubAction.SelectEventTest(sessionAction.testId))
-                        is com.example.alearning.ui.session.SessionReportAction.OnOpenSwitcher -> onAction(ReportsHubAction.OnOpenSwitcher)
+                        is com.vamshi.field.ui.session.SessionReportAction.OnSelectTest -> onAction(ReportsHubAction.SelectEventTest(sessionAction.testId))
+                        is com.vamshi.field.ui.session.SessionReportAction.OnOpenSwitcher -> onAction(ReportsHubAction.OnOpenSwitcher)
                         else -> {} // ignore other actions
                     }
                 },
@@ -458,7 +458,7 @@ private fun EventReportTab(
 private fun AthletePickerRow(
     athletes: List<Pair<String, String>>,
     selectedId: String?,
-    athleteData: com.example.alearning.domain.model.reports.AthleteDashboardData?,
+    athleteData: com.vamshi.field.domain.model.reports.AthleteDashboardData?,
     onSelect: (String) -> Unit
 ) {
     var showSheet by remember { mutableStateOf(false) }
@@ -482,12 +482,12 @@ private fun AthletePickerRow(
                 if (athleteData != null) {
                     val avg = athleteData.athleteSessionAvgPctile
                     val cls = when {
-                        avg == null -> com.example.alearning.domain.model.reports.Classification.NO_DATA
-                        avg >= 60 -> com.example.alearning.domain.model.reports.Classification.SUPERIOR
-                        avg >= 30 -> com.example.alearning.domain.model.reports.Classification.HEALTHY
-                        else -> com.example.alearning.domain.model.reports.Classification.NEEDS_IMPROVEMENT
+                        avg == null -> com.vamshi.field.domain.model.reports.Classification.NO_DATA
+                        avg >= 60 -> com.vamshi.field.domain.model.reports.Classification.SUPERIOR
+                        avg >= 30 -> com.vamshi.field.domain.model.reports.Classification.HEALTHY
+                        else -> com.vamshi.field.domain.model.reports.Classification.NEEDS_IMPROVEMENT
                     }
-                    val healthText = com.example.alearning.ui.report.components.zoneLabel(cls)
+                    val healthText = com.vamshi.field.ui.report.components.zoneLabel(cls)
                     val testCountText = "${athleteData.sessionTestCount} Test${if (athleteData.sessionTestCount == 1) "" else "s"}"
                     
                     Text(
@@ -581,7 +581,7 @@ private fun AthletePickerRow(
 private fun EventPickerRow(
     sessions: List<RecentSessionRow>,
     selectedEventId: String?,
-    eventData: com.example.alearning.domain.model.reports.SessionReportData?,
+    eventData: com.vamshi.field.domain.model.reports.SessionReportData?,
     onSelect: (RecentSessionRow) -> Unit
 ) {
     val df = remember { SimpleDateFormat("MMM d, yyyy", Locale.getDefault()) }

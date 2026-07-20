@@ -15,17 +15,17 @@ kotlin {
 
 
 android {
-    namespace = "com.example.alearning"
+    namespace = "com.vamshi.field"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.alearning"
+        applicationId = "com.vamshi.field"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
-        testInstrumentationRunner = "com.example.alearning.HiltTestRunner"
+        testInstrumentationRunner = "com.vamshi.field.HiltTestRunner"
     }
 
     buildTypes {
@@ -112,7 +112,7 @@ dependencies {
 
 tasks.register("generateColorsFromDesign") {
     val designFile = rootProject.file("design.md")
-    val outputDir = file("src/main/java/com/example/alearning/ui/theme")
+    val outputDir = file("src/main/java/com/vamshi/field/ui/theme")
     val outputFile = file("$outputDir/Color.kt")
     
     inputs.file(designFile)
@@ -146,7 +146,7 @@ tasks.register("generateColorsFromDesign") {
         }
         
         val sb = StringBuilder()
-        sb.append("package com.example.alearning.ui.theme\n\n")
+        sb.append("package com.vamshi.field.ui.theme\n\n")
         sb.append("import androidx.compose.ui.graphics.Color\n\n")
         sb.append("// AUTO-GENERATED from design.md - DO NOT EDIT MANUALLY\n\n")
         for ((name, hexRaw) in colors) {

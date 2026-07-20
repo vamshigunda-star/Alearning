@@ -1,6 +1,6 @@
-package com.example.alearning.domain.model.standards
+package com.vamshi.field.domain.model.standards
 
-import com.example.alearning.domain.model.people.BiologicalSex
+import com.vamshi.field.domain.model.people.BiologicalSex
 
 data class NormReference(
     val id: String,

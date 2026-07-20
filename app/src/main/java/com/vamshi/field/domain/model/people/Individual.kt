@@ -1,4 +1,4 @@
-package com.example.alearning.domain.model.people
+package com.vamshi.field.domain.model.people
 
 
 // This enum should live in the Domain layer.

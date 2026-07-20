@@ -1,4 +1,4 @@
-package com.example.alearning.ui.athlete
+package com.vamshi.field.ui.athlete
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -45,18 +45,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.alearning.domain.model.reports.AttemptRow
-import com.example.alearning.domain.model.reports.Classification
-import com.example.alearning.domain.model.reports.LeaderboardRow
-import com.example.alearning.ui.components.AppTopBar
-import com.example.alearning.ui.components.AppTopBarSubtitleColor
-import com.example.alearning.ui.report.components.ChartPoint
-import com.example.alearning.ui.report.components.DeltaArrow
-import com.example.alearning.ui.report.components.NormBandLineChart
-import com.example.alearning.ui.report.components.PercentileChip
-import com.example.alearning.ui.report.components.ZoneChip
-import com.example.alearning.ui.report.components.zoneColors
-import com.example.alearning.ui.report.components.zoneLabel
+import com.vamshi.field.domain.model.reports.AttemptRow
+import com.vamshi.field.domain.model.reports.Classification
+import com.vamshi.field.domain.model.reports.LeaderboardRow
+import com.vamshi.field.ui.components.AppTopBar
+import com.vamshi.field.ui.components.AppTopBarSubtitleColor
+import com.vamshi.field.ui.report.components.ChartPoint
+import com.vamshi.field.ui.report.components.DeltaArrow
+import com.vamshi.field.ui.report.components.NormBandLineChart
+import com.vamshi.field.ui.report.components.PercentileChip
+import com.vamshi.field.ui.report.components.ZoneChip
+import com.vamshi.field.ui.report.components.zoneColors
+import com.vamshi.field.ui.report.components.zoneLabel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

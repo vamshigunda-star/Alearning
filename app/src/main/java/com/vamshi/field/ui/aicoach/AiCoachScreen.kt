@@ -1,4 +1,4 @@
-package com.example.alearning.ui.aicoach
+package com.vamshi.field.ui.aicoach
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -14,8 +14,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.alearning.domain.repository.AiCoachStatus
-import com.example.alearning.ui.components.AppTopBar
+import com.vamshi.field.domain.repository.AiCoachStatus
+import com.vamshi.field.ui.components.AppTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

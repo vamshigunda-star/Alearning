@@ -1,4 +1,4 @@
-package com.example.alearning.ui.navigation
+package com.vamshi.field.ui.navigation
 
 import android.app.Activity
 import androidx.compose.foundation.BorderStroke
@@ -30,7 +30,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.example.alearning.ui.theme.SportOrange
+import com.vamshi.field.ui.theme.SportOrange
 
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable

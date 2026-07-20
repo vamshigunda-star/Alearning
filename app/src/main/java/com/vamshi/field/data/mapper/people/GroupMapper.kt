@@ -1,8 +1,8 @@
-package com.example.alearning.data.mapper.people
+package com.vamshi.field.data.mapper.people
 
-import com.example.alearning.data.local.entities.people.GroupEntity
-import com.example.alearning.domain.model.people.Group
-import com.example.alearning.domain.model.people.GroupCategory
+import com.vamshi.field.data.local.entities.people.GroupEntity
+import com.vamshi.field.domain.model.people.Group
+import com.vamshi.field.domain.model.people.GroupCategory
 
 fun GroupEntity.toDomain(): Group {
     return Group(

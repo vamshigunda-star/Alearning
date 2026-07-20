@@ -1,6 +1,6 @@
 @file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 
-package com.example.alearning.ui.testing.stopwatch
+package com.vamshi.field.ui.testing.stopwatch
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -33,11 +33,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.alearning.domain.model.standards.TimingMode
-import com.example.alearning.ui.components.AppTopBar
-import com.example.alearning.ui.components.AppTopBarSubtitleColor
-import com.example.alearning.ui.components.InlineErrorBanner
-import com.example.alearning.ui.theme.*
+import com.vamshi.field.domain.model.standards.TimingMode
+import com.vamshi.field.ui.components.AppTopBar
+import com.vamshi.field.ui.components.AppTopBarSubtitleColor
+import com.vamshi.field.ui.components.InlineErrorBanner
+import com.vamshi.field.ui.theme.*
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.material.icons.Icons

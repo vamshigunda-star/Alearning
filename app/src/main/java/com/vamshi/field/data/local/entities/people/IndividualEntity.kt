@@ -1,10 +1,10 @@
-package com.example.alearning.data.local.entities.people
+package com.vamshi.field.data.local.entities.people
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.Index
 import java.util.UUID
-import com.example.alearning.domain.model.people.BiologicalSex
+import com.vamshi.field.domain.model.people.BiologicalSex
 
 
 @Entity(

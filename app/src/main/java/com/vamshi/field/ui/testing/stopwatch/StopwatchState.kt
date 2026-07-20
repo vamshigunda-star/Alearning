@@ -1,6 +1,6 @@
-package com.example.alearning.ui.testing.stopwatch
+package com.vamshi.field.ui.testing.stopwatch
 
-import com.example.alearning.domain.model.standards.TimingMode
+import com.vamshi.field.domain.model.standards.TimingMode
 
 data class StopwatchUiState(
     val mode: TimingMode = TimingMode.INDIVIDUAL,
@@ -34,7 +34,7 @@ data class StopwatchUiState(
     val editingAthleteId: String? = null,
     val editingResultId: String? = null,
     val showTrialCompletedMessage: Boolean = false,
-    val historicalResults: Map<String, List<com.example.alearning.domain.model.testing.TestResult>> = emptyMap()
+    val historicalResults: Map<String, List<com.vamshi.field.domain.model.testing.TestResult>> = emptyMap()
 ) {
     val hasPendingChanges: Boolean get() = pendingResults.isNotEmpty()
 }
@@ -50,7 +50,7 @@ data class AthleteQueueItem(
     val totalTrials: Int,
     val status: AthleteStatus = AthleteStatus.WAITING,
     val capturedTimeMs: Long? = null,
-    val historicalTrials: List<com.example.alearning.domain.model.testing.TestResult> = emptyList()
+    val historicalTrials: List<com.vamshi.field.domain.model.testing.TestResult> = emptyList()
 )
 
 data class ConfirmationData(

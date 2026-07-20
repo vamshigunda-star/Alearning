@@ -1,7 +1,7 @@
-package com.example.alearning.domain.usecase.testing
+package com.vamshi.field.domain.usecase.testing
 
-import com.example.alearning.domain.repository.StandardsRepository
-import com.example.alearning.domain.repository.TestingRepository
+import com.vamshi.field.domain.repository.StandardsRepository
+import com.vamshi.field.domain.repository.TestingRepository
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 

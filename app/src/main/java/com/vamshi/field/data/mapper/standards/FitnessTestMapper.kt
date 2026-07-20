@@ -1,10 +1,10 @@
-package com.example.alearning.data.mapper.standards
+package com.vamshi.field.data.mapper.standards
 
-import com.example.alearning.data.local.entities.standards.FitnessTestEntity
-import com.example.alearning.domain.model.standards.FitnessTest
-import com.example.alearning.domain.model.standards.InterpretationStrategy
-import com.example.alearning.domain.model.standards.TimingMode
-import com.example.alearning.domain.model.standards.InputParadigm
+import com.vamshi.field.data.local.entities.standards.FitnessTestEntity
+import com.vamshi.field.domain.model.standards.FitnessTest
+import com.vamshi.field.domain.model.standards.InterpretationStrategy
+import com.vamshi.field.domain.model.standards.TimingMode
+import com.vamshi.field.domain.model.standards.InputParadigm
 
 fun FitnessTestEntity.toDomain(): FitnessTest {
     return FitnessTest(

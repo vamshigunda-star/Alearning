@@ -1,4 +1,4 @@
-package com.example.alearning.domain.model.auth
+package com.vamshi.field.domain.model.auth
 
 /**
  * Domain model representing an authenticated coach account.

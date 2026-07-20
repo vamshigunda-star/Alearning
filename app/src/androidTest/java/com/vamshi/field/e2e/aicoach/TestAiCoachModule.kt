@@ -1,13 +1,13 @@
-package com.example.alearning.e2e.aicoach
+package com.vamshi.field.e2e.aicoach
 
-import com.example.alearning.domain.repository.AiCoachRepository
+import com.vamshi.field.domain.repository.AiCoachRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 import dagger.hilt.testing.TestInstallIn
-import com.example.alearning.di.RepositoryModule
+import com.vamshi.field.di.RepositoryModule
 
 @Module
 @TestInstallIn(

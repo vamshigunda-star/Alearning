@@ -1,11 +1,11 @@
-package com.example.alearning.ui.settings
+package com.vamshi.field.ui.settings
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.alearning.domain.repository.BackupRepository
-import com.example.alearning.domain.usecase.backup.BackupDataUseCase
-import com.example.alearning.domain.usecase.backup.RestoreDataUseCase
+import com.vamshi.field.domain.repository.BackupRepository
+import com.vamshi.field.domain.usecase.backup.BackupDataUseCase
+import com.vamshi.field.domain.usecase.backup.RestoreDataUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import com.example.alearning.data.backup.DriveBackupHelper
+import com.vamshi.field.data.backup.DriveBackupHelper
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import javax.inject.Inject
 

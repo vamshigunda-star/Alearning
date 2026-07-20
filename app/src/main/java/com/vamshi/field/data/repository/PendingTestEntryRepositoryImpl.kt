@@ -1,10 +1,10 @@
-package com.example.alearning.data.repository
+package com.vamshi.field.data.repository
 
-import com.example.alearning.data.local.daos.testing.PendingTestEntryDao
-import com.example.alearning.data.mapper.testing.toDomain
-import com.example.alearning.data.mapper.testing.toEntity
-import com.example.alearning.domain.model.testing.PendingTestEntry
-import com.example.alearning.domain.repository.PendingTestEntryRepository
+import com.vamshi.field.data.local.daos.testing.PendingTestEntryDao
+import com.vamshi.field.data.mapper.testing.toDomain
+import com.vamshi.field.data.mapper.testing.toEntity
+import com.vamshi.field.domain.model.testing.PendingTestEntry
+import com.vamshi.field.domain.repository.PendingTestEntryRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject

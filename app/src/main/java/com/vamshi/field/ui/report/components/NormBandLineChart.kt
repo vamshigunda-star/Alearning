@@ -1,4 +1,4 @@
-﻿package com.example.alearning.ui.report.components
+﻿package com.vamshi.field.ui.report.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,7 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.Spring
-import com.example.alearning.domain.model.reports.NormBandsForAge
+import com.vamshi.field.domain.model.reports.NormBandsForAge
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

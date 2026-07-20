@@ -1,7 +1,7 @@
-package com.example.alearning.domain.usecase.testing
+package com.vamshi.field.domain.usecase.testing
 
-import com.example.alearning.domain.model.testing.PendingTestEntry
-import com.example.alearning.domain.repository.PendingTestEntryRepository
+import com.vamshi.field.domain.model.testing.PendingTestEntry
+import com.vamshi.field.domain.repository.PendingTestEntryRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 

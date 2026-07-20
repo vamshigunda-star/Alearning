@@ -1,7 +1,7 @@
-package com.example.alearning
+package com.vamshi.field
 
 import android.app.Application
-import com.example.alearning.data.seed.SeedDataManager
+import com.vamshi.field.data.seed.SeedDataManager
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

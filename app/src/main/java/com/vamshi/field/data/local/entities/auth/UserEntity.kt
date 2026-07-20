@@ -1,4 +1,4 @@
-package com.example.alearning.data.local.entities.auth
+package com.vamshi.field.data.local.entities.auth
 
 import androidx.room.Entity
 import androidx.room.Index
@@ -19,7 +19,7 @@ import androidx.room.PrimaryKey
  *
  * The [username] column has a unique index; the DB layer enforces uniqueness
  * at insert time (SQLiteConstraintException), and the repository catches it
- * and maps it to [com.example.alearning.domain.model.auth.AuthError.UsernameTaken].
+ * and maps it to [com.vamshi.field.domain.model.auth.AuthError.UsernameTaken].
  */
 @Entity(
     tableName = "users",

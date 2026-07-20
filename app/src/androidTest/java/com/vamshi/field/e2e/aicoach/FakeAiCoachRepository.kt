@@ -1,7 +1,7 @@
-package com.example.alearning.e2e.aicoach
+package com.vamshi.field.e2e.aicoach
 
-import com.example.alearning.domain.repository.AiCoachStatus
-import com.example.alearning.domain.repository.AiCoachRepository
+import com.vamshi.field.domain.repository.AiCoachStatus
+import com.vamshi.field.domain.repository.AiCoachRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject

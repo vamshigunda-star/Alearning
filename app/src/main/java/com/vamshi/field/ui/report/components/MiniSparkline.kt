@@ -1,4 +1,4 @@
-package com.example.alearning.ui.report.components
+package com.vamshi.field.ui.report.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size

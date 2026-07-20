@@ -1,14 +1,14 @@
-package com.example.alearning.ui.roster
+package com.vamshi.field.ui.roster
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.alearning.domain.model.people.BiologicalSex
-import com.example.alearning.domain.model.people.Group
-import com.example.alearning.domain.model.people.Individual
-import com.example.alearning.domain.repository.PeopleRepository
-import com.example.alearning.domain.usecase.people.CreateGroupUseCase
-import com.example.alearning.domain.usecase.people.ManageRosterUseCase
-import com.example.alearning.domain.usecase.people.RegisterAthleteUseCase
+import com.vamshi.field.domain.model.people.BiologicalSex
+import com.vamshi.field.domain.model.people.Group
+import com.vamshi.field.domain.model.people.Individual
+import com.vamshi.field.domain.repository.PeopleRepository
+import com.vamshi.field.domain.usecase.people.CreateGroupUseCase
+import com.vamshi.field.domain.usecase.people.ManageRosterUseCase
+import com.vamshi.field.domain.usecase.people.RegisterAthleteUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow

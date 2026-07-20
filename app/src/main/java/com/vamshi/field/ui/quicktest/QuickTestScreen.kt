@@ -1,4 +1,4 @@
-package com.example.alearning.ui.quicktest
+package com.vamshi.field.ui.quicktest
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
@@ -80,19 +80,19 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.alearning.domain.model.people.BiologicalSex
-import com.example.alearning.ui.components.AppTopBar
-import com.example.alearning.ui.components.testing.TestInputSwitcher
-import com.example.alearning.ui.theme.NavyPrimary
-import com.example.alearning.ui.theme.PerformanceGreen
-import com.example.alearning.ui.theme.PerformanceGreenText
-import com.example.alearning.ui.theme.PerformanceGrey
-import com.example.alearning.ui.theme.PerformanceRed
+import com.vamshi.field.domain.model.people.BiologicalSex
+import com.vamshi.field.ui.components.AppTopBar
+import com.vamshi.field.ui.components.testing.TestInputSwitcher
+import com.vamshi.field.ui.theme.NavyPrimary
+import com.vamshi.field.ui.theme.PerformanceGreen
+import com.vamshi.field.ui.theme.PerformanceGreenText
+import com.vamshi.field.ui.theme.PerformanceGrey
+import com.vamshi.field.ui.theme.PerformanceRed
 import androidx.compose.material3.OutlinedCard
-import com.example.alearning.ui.theme.PerformanceGreyText
-import com.example.alearning.ui.theme.PerformanceRedText
-import com.example.alearning.ui.theme.PerformanceYellow
-import com.example.alearning.ui.theme.PerformanceYellowText
+import com.vamshi.field.ui.theme.PerformanceGreyText
+import com.vamshi.field.ui.theme.PerformanceRedText
+import com.vamshi.field.ui.theme.PerformanceYellow
+import com.vamshi.field.ui.theme.PerformanceYellowText
 import java.util.Locale
 
 @Composable
@@ -531,7 +531,7 @@ private fun EnterScoresStep(
     uiState: QuickTestUiState,
     onAction: (QuickTestAction) -> Unit
 ) {
-    var editingTest by remember { mutableStateOf<com.example.alearning.domain.model.standards.FitnessTest?>(null) }
+    var editingTest by remember { mutableStateOf<com.vamshi.field.domain.model.standards.FitnessTest?>(null) }
     
     Column(modifier = Modifier.fillMaxSize()) {
         // Athlete Banner
@@ -685,7 +685,7 @@ fun QuickTestScoreCell(savedResult: RecordedTestResult?) {
 fun QuickScoreEntryDialog(
     testName: String,
     unit: String,
-    inputParadigm: com.example.alearning.domain.model.standards.InputParadigm,
+    inputParadigm: com.vamshi.field.domain.model.standards.InputParadigm,
     currentResult: RecordedTestResult?,
     onDismiss: () -> Unit,
     onSave: (Double) -> Unit,

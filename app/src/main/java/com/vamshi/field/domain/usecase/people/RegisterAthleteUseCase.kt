@@ -1,8 +1,8 @@
-package com.example.alearning.domain.usecase.people
+package com.vamshi.field.domain.usecase.people
 
-import com.example.alearning.domain.model.people.BiologicalSex
-import com.example.alearning.domain.model.people.Individual
-import com.example.alearning.domain.repository.PeopleRepository
+import com.vamshi.field.domain.model.people.BiologicalSex
+import com.vamshi.field.domain.model.people.Individual
+import com.vamshi.field.domain.repository.PeopleRepository
 import java.util.UUID
 import javax.inject.Inject
 

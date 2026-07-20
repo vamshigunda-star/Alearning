@@ -1,14 +1,14 @@
-package com.example.alearning.ui.auth.signup
+package com.vamshi.field.ui.auth.signup
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.alearning.domain.model.auth.AuthError
-import com.example.alearning.domain.model.auth.AuthResult
-import com.example.alearning.domain.usecase.auth.SignUpUseCase
-import com.example.alearning.domain.usecase.auth.ValidateNameUseCase
-import com.example.alearning.domain.usecase.auth.ValidatePasswordUseCase
-import com.example.alearning.domain.usecase.auth.ValidateUsernameUseCase
-import com.example.alearning.domain.usecase.auth.ValidationResult
+import com.vamshi.field.domain.model.auth.AuthError
+import com.vamshi.field.domain.model.auth.AuthResult
+import com.vamshi.field.domain.usecase.auth.SignUpUseCase
+import com.vamshi.field.domain.usecase.auth.ValidateNameUseCase
+import com.vamshi.field.domain.usecase.auth.ValidatePasswordUseCase
+import com.vamshi.field.domain.usecase.auth.ValidateUsernameUseCase
+import com.vamshi.field.domain.usecase.auth.ValidationResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

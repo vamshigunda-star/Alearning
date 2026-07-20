@@ -1,4 +1,4 @@
-package com.example.alearning
+package com.vamshi.field
 
 import org.junit.Test
 

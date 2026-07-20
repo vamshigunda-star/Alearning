@@ -1,4 +1,4 @@
-package com.example.alearning.domain.model.people
+package com.vamshi.field.domain.model.people
 
 enum class GroupCategory { TEAM, CLASS, PERSONAL_TRAINING }
 

@@ -1,11 +1,11 @@
-package com.example.alearning.domain.usecase.analytics
+package com.vamshi.field.domain.usecase.analytics
 
-import com.example.alearning.domain.model.standards.RadarAxis
-import com.example.alearning.domain.model.testing.TestResult
-import com.example.alearning.domain.model.standards.TestCategory
-import com.example.alearning.domain.model.standards.FitnessTest
-import com.example.alearning.domain.usecase.testing.AthleteRadarData
-import com.example.alearning.domain.usecase.testing.RadarAxisScore
+import com.vamshi.field.domain.model.standards.RadarAxis
+import com.vamshi.field.domain.model.testing.TestResult
+import com.vamshi.field.domain.model.standards.TestCategory
+import com.vamshi.field.domain.model.standards.FitnessTest
+import com.vamshi.field.domain.usecase.testing.AthleteRadarData
+import com.vamshi.field.domain.usecase.testing.RadarAxisScore
 import javax.inject.Inject
 
 data class IndividualEventSummary(

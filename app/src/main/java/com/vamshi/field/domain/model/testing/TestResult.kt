@@ -1,4 +1,4 @@
-package com.example.alearning.domain.model.testing
+package com.vamshi.field.domain.model.testing
 
 data class TestResult(
     val id: String,

@@ -1,16 +1,16 @@
-﻿package com.example.alearning.ui.quicktest
+﻿package com.vamshi.field.ui.quicktest
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.alearning.domain.model.people.BiologicalSex
-import com.example.alearning.domain.model.people.Individual
-import com.example.alearning.domain.model.standards.FitnessTest
-import com.example.alearning.domain.model.standards.TestCategory
-import com.example.alearning.domain.repository.PeopleRepository
-import com.example.alearning.domain.usecase.standards.GetTestLibraryUseCase
-import com.example.alearning.domain.usecase.testing.CreateEventUseCase
-import com.example.alearning.domain.usecase.testing.RecordTestResultUseCase
+import com.vamshi.field.domain.model.people.BiologicalSex
+import com.vamshi.field.domain.model.people.Individual
+import com.vamshi.field.domain.model.standards.FitnessTest
+import com.vamshi.field.domain.model.standards.TestCategory
+import com.vamshi.field.domain.repository.PeopleRepository
+import com.vamshi.field.domain.usecase.standards.GetTestLibraryUseCase
+import com.vamshi.field.domain.usecase.testing.CreateEventUseCase
+import com.vamshi.field.domain.usecase.testing.RecordTestResultUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
-import com.example.alearning.domain.usecase.standards.CalculatePercentileUseCase
+import com.vamshi.field.domain.usecase.standards.CalculatePercentileUseCase
 
 enum class QuickTestStep { SETUP, ENTER_SCORES, COMPLETE }
 
@@ -87,7 +87,7 @@ class QuickTestViewModel @Inject constructor(
     private val createEventUseCase: CreateEventUseCase,
     private val recordResult: RecordTestResultUseCase,
     private val calculatePercentile: CalculatePercentileUseCase,
-    private val testingRepository: com.example.alearning.domain.repository.TestingRepository
+    private val testingRepository: com.vamshi.field.domain.repository.TestingRepository
 ) : ViewModel() {
 
     private val athleteId: String? = savedStateHandle["athleteId"]

@@ -6,12 +6,12 @@ I have fixed the issues with the Individual Stopwatch mode where it was difficul
 
 ### Logic Layer
 
-#### [StopwatchViewModel.kt](file:///C:/Users/APF/AndroidStudioProjects/Alearning/app/src/main/java/com/example/alearning/ui/testing/stopwatch/StopwatchViewModel.kt)
+#### [StopwatchViewModel.kt](file:///C:/Users/APF/AndroidStudioProjects/Alearning/app/src/main/java/com/vamshi/field/ui/testing/stopwatch/StopwatchViewModel.kt)
 - **Instant Save Feedback**: Updated the `submitPending` logic to trigger the "Trial completed" signal immediately after any individual result is saved. Previously, this only triggered when the *entire roster* completed a round of trials.
 
 ### UI Layer
 
-#### [StopwatchScreen.kt](file:///C:/Users/APF/AndroidStudioProjects/Alearning/app/src/main/java/com/example/alearning/ui/testing/stopwatch/StopwatchScreen.kt)
+#### [StopwatchScreen.kt](file:///C:/Users/APF/AndroidStudioProjects/Alearning/app/src/main/java/com/vamshi/field/ui/testing/stopwatch/StopwatchScreen.kt)
 - **Enhanced Touch Targets**: The entire athlete card is now clickable for selection. You no longer need to precisely tap the small "Trial Chip" to switch athletes.
 - **Automated Workflow**: When a trial is completed, a confirmation message ("Result saved. Moving to next athlete...") appears for 2 seconds, and the app automatically selects the next waiting athlete.
 - **Improved Messaging**: Refined the save confirmation text to clearly communicate that the app is handling the transition to the next person.
@@ -26,5 +26,5 @@ I have fixed the issues with the Individual Stopwatch mode where it was difficul
 > [!TIP]
 > You can still manually override the selection at any time by tapping on another athlete's card while the timer is not running.
 
-render_diffs(file:///C:/Users/APF/AndroidStudioProjects/Alearning/app/src/main/java/com/example/alearning/ui/testing/stopwatch/StopwatchViewModel.kt)
-render_diffs(file:///C:/Users/APF/AndroidStudioProjects/Alearning/app/src/main/java/com/example/alearning/ui/testing/stopwatch/StopwatchScreen.kt)
+render_diffs(file:///C:/Users/APF/AndroidStudioProjects/Alearning/app/src/main/java/com/vamshi/field/ui/testing/stopwatch/StopwatchViewModel.kt)
+render_diffs(file:///C:/Users/APF/AndroidStudioProjects/Alearning/app/src/main/java/com/vamshi/field/ui/testing/stopwatch/StopwatchScreen.kt)

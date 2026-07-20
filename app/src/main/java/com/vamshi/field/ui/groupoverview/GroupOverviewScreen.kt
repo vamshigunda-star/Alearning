@@ -1,4 +1,4 @@
-package com.example.alearning.ui.groupoverview
+package com.vamshi.field.ui.groupoverview
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -47,14 +47,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.alearning.domain.model.reports.Distribution
-import com.example.alearning.domain.model.reports.SessionRow
-import com.example.alearning.domain.model.reports.TestTrendStrip
-import com.example.alearning.ui.components.AppTopBar
-import com.example.alearning.ui.report.components.DistributionBar
-import com.example.alearning.ui.report.components.MiniSparkline
-import com.example.alearning.ui.theme.PerformanceRed
-import com.example.alearning.ui.theme.PerformanceRedText
+import com.vamshi.field.domain.model.reports.Distribution
+import com.vamshi.field.domain.model.reports.SessionRow
+import com.vamshi.field.domain.model.reports.TestTrendStrip
+import com.vamshi.field.ui.components.AppTopBar
+import com.vamshi.field.ui.report.components.DistributionBar
+import com.vamshi.field.ui.report.components.MiniSparkline
+import com.vamshi.field.ui.theme.PerformanceRed
+import com.vamshi.field.ui.theme.PerformanceRedText
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

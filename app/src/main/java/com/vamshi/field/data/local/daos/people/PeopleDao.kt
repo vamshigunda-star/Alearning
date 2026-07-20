@@ -1,9 +1,9 @@
-package com.example.alearning.data.local.daos.people
+package com.vamshi.field.data.local.daos.people
 
 import androidx.room.*
-import com.example.alearning.data.local.entities.people.GroupEntity
-import com.example.alearning.data.local.entities.people.GroupMemberCrossRef
-import com.example.alearning.data.local.entities.people.IndividualEntity
+import com.vamshi.field.data.local.entities.people.GroupEntity
+import com.vamshi.field.data.local.entities.people.GroupMemberCrossRef
+import com.vamshi.field.data.local.entities.people.IndividualEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao

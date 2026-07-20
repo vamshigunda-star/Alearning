@@ -1,12 +1,12 @@
-package com.example.alearning.data.repository
+package com.vamshi.field.data.repository
 
-import com.example.alearning.data.local.daos.people.PeopleDao
-import com.example.alearning.data.local.entities.people.GroupMemberCrossRef
-import com.example.alearning.data.mapper.people.toDomain
-import com.example.alearning.data.mapper.people.toEntity
-import com.example.alearning.domain.model.people.Group
-import com.example.alearning.domain.model.people.Individual
-import com.example.alearning.domain.repository.PeopleRepository
+import com.vamshi.field.data.local.daos.people.PeopleDao
+import com.vamshi.field.data.local.entities.people.GroupMemberCrossRef
+import com.vamshi.field.data.mapper.people.toDomain
+import com.vamshi.field.data.mapper.people.toEntity
+import com.vamshi.field.domain.model.people.Group
+import com.vamshi.field.domain.model.people.Individual
+import com.vamshi.field.domain.repository.PeopleRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject

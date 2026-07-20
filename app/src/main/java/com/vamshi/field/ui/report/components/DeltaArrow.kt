@@ -1,4 +1,4 @@
-package com.example.alearning.ui.report.components
+package com.vamshi.field.ui.report.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -15,8 +15,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.example.alearning.ui.theme.PerformanceGreenText
-import com.example.alearning.ui.theme.PerformanceRedText
+import com.vamshi.field.ui.theme.PerformanceGreenText
+import com.vamshi.field.ui.theme.PerformanceRedText
 
 @Composable
 fun DeltaArrow(deltaPercentile: Int?, modifier: Modifier = Modifier) {

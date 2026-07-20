@@ -1,4 +1,4 @@
-package com.example.alearning.ui.auth.signin
+package com.vamshi.field.ui.auth.signin
 
 /**
  * UI state for the sign-in screen.

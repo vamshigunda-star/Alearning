@@ -1,4 +1,4 @@
-package com.example.alearning.ui.auth.signup
+package com.vamshi.field.ui.auth.signup
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -43,7 +43,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.alearning.ui.components.AppTopBar
+import com.vamshi.field.ui.components.AppTopBar
 
 @Composable
 fun SignUpScreen(

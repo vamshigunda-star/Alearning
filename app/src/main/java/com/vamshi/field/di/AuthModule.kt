@@ -1,10 +1,10 @@
-package com.example.alearning.di
+package com.vamshi.field.di
 
-import com.example.alearning.data.auth.PasswordHasher
-import com.example.alearning.data.repository.AuthRepositoryImpl
-import com.example.alearning.data.repository.SessionManagerImpl
-import com.example.alearning.domain.repository.AuthRepository
-import com.example.alearning.domain.repository.SessionManager
+import com.vamshi.field.data.auth.PasswordHasher
+import com.vamshi.field.data.repository.AuthRepositoryImpl
+import com.vamshi.field.data.repository.SessionManagerImpl
+import com.vamshi.field.domain.repository.AuthRepository
+import com.vamshi.field.domain.repository.SessionManager
 import dagger.Binds
 import dagger.Module
 import dagger.Provides

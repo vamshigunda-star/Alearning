@@ -1,12 +1,12 @@
-package com.example.alearning.ui.leaderboard
+package com.vamshi.field.ui.leaderboard
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.alearning.domain.model.standards.FitnessTest
-import com.example.alearning.domain.repository.TestingRepository
-import com.example.alearning.domain.usecase.testing.GetGroupLeaderboardUseCase
-import com.example.alearning.domain.usecase.testing.GroupLeaderboard
+import com.vamshi.field.domain.model.standards.FitnessTest
+import com.vamshi.field.domain.repository.TestingRepository
+import com.vamshi.field.domain.usecase.testing.GetGroupLeaderboardUseCase
+import com.vamshi.field.domain.usecase.testing.GroupLeaderboard
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,7 +35,7 @@ sealed interface LeaderboardAction {
 class LeaderboardViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val testingRepository: TestingRepository,
-    private val standardsRepository: com.example.alearning.domain.repository.StandardsRepository,
+    private val standardsRepository: com.vamshi.field.domain.repository.StandardsRepository,
     private val getGroupLeaderboard: GetGroupLeaderboardUseCase
 ) : ViewModel() {
 

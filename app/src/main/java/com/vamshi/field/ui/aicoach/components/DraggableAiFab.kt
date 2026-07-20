@@ -1,4 +1,4 @@
-package com.example.alearning.ui.aicoach.components
+package com.vamshi.field.ui.aicoach.components
 
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box

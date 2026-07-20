@@ -1,10 +1,10 @@
-package com.example.alearning.domain.usecase.testing
+package com.vamshi.field.domain.usecase.testing
 
-import com.example.alearning.domain.model.people.Individual
-import com.example.alearning.domain.model.standards.FitnessTest
-import com.example.alearning.domain.model.standards.TimingMode
-import com.example.alearning.domain.repository.StandardsRepository
-import com.example.alearning.domain.repository.TestingRepository
+import com.vamshi.field.domain.model.people.Individual
+import com.vamshi.field.domain.model.standards.FitnessTest
+import com.vamshi.field.domain.model.standards.TimingMode
+import com.vamshi.field.domain.repository.StandardsRepository
+import com.vamshi.field.domain.repository.TestingRepository
 import javax.inject.Inject
 
 data class StopwatchSession(

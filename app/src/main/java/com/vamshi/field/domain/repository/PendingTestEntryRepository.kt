@@ -1,6 +1,6 @@
-package com.example.alearning.domain.repository
+package com.vamshi.field.domain.repository
 
-import com.example.alearning.domain.model.testing.PendingTestEntry
+import com.vamshi.field.domain.model.testing.PendingTestEntry
 import kotlinx.coroutines.flow.Flow
 
 interface PendingTestEntryRepository {

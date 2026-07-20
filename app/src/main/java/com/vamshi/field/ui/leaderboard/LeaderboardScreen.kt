@@ -1,4 +1,4 @@
-package com.example.alearning.ui.leaderboard
+package com.vamshi.field.ui.leaderboard
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -39,18 +39,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.alearning.domain.usecase.testing.LeaderboardEntry
-import com.example.alearning.ui.components.AppTopBar
-import com.example.alearning.ui.theme.OutlineGrey
-import com.example.alearning.ui.theme.PerformanceGreen
-import com.example.alearning.ui.theme.PerformanceGreenText
-import com.example.alearning.ui.theme.PerformanceGrey
-import com.example.alearning.ui.theme.PerformanceGreyText
-import com.example.alearning.ui.theme.PerformanceRed
-import com.example.alearning.ui.theme.PerformanceRedText
-import com.example.alearning.ui.theme.PerformanceYellow
-import com.example.alearning.ui.theme.PerformanceYellowText
-import com.example.alearning.ui.theme.SportOrange
+import com.vamshi.field.domain.usecase.testing.LeaderboardEntry
+import com.vamshi.field.ui.components.AppTopBar
+import com.vamshi.field.ui.theme.OutlineGrey
+import com.vamshi.field.ui.theme.PerformanceGreen
+import com.vamshi.field.ui.theme.PerformanceGreenText
+import com.vamshi.field.ui.theme.PerformanceGrey
+import com.vamshi.field.ui.theme.PerformanceGreyText
+import com.vamshi.field.ui.theme.PerformanceRed
+import com.vamshi.field.ui.theme.PerformanceRedText
+import com.vamshi.field.ui.theme.PerformanceYellow
+import com.vamshi.field.ui.theme.PerformanceYellowText
+import com.vamshi.field.ui.theme.SportOrange
 
 @Composable
 fun LeaderboardScreen(

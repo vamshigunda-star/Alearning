@@ -1,7 +1,7 @@
-package com.example.alearning.di
+package com.vamshi.field.di
 
-import com.example.alearning.data.repository.BackupRepositoryImpl
-import com.example.alearning.domain.repository.BackupRepository
+import com.vamshi.field.data.repository.BackupRepositoryImpl
+import com.vamshi.field.domain.repository.BackupRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

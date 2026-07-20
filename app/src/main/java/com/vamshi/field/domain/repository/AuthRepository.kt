@@ -1,7 +1,7 @@
-package com.example.alearning.domain.repository
+package com.vamshi.field.domain.repository
 
-import com.example.alearning.domain.model.auth.AuthResult
-import com.example.alearning.domain.model.auth.User
+import com.vamshi.field.domain.model.auth.AuthResult
+import com.vamshi.field.domain.model.auth.User
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -39,7 +39,7 @@ interface AuthRepository {
      * so that [observeCurrentUser] immediately reflects the signed-in user.
      *
      * @return [AuthResult.Success] with the existing [User], or [AuthResult.Failure]
-     *         with [com.example.alearning.domain.model.auth.AuthError.InvalidCredentials].
+     *         with [com.vamshi.field.domain.model.auth.AuthError.InvalidCredentials].
      */
     suspend fun signIn(username: String, password: String): AuthResult
 

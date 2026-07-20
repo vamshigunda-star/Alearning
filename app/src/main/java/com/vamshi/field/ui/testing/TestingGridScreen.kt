@@ -1,4 +1,4 @@
-package com.example.alearning.ui.testing
+package com.vamshi.field.ui.testing
 
 import android.util.Log
 import androidx.compose.foundation.layout.Column
@@ -24,9 +24,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.alearning.ui.components.AppTopBar
-import com.example.alearning.ui.components.AppTopBarSubtitleColor
-import com.example.alearning.ui.components.InlineErrorBanner
+import com.vamshi.field.ui.components.AppTopBar
+import com.vamshi.field.ui.components.AppTopBarSubtitleColor
+import com.vamshi.field.ui.components.InlineErrorBanner
 import kotlinx.coroutines.delay
 
 @Composable

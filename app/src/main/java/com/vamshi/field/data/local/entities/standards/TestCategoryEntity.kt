@@ -1,4 +1,4 @@
-package com.example.alearning.data.local.entities.standards
+package com.vamshi.field.data.local.entities.standards
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

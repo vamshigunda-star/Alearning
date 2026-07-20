@@ -1,4 +1,4 @@
-package com.example.alearning.ui.report
+package com.vamshi.field.ui.report
 
 // This file is intentionally empty.
 // The old ReportViewModel has been replaced by ReportsHubViewModel.

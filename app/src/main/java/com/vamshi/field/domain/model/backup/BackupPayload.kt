@@ -1,4 +1,4 @@
-package com.example.alearning.domain.model.backup
+package com.vamshi.field.domain.model.backup
 
 data class BackupPayload(
     val individuals: List<BackupIndividual>,

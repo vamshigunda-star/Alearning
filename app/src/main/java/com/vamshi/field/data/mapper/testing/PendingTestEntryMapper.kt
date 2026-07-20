@@ -1,7 +1,7 @@
-package com.example.alearning.data.mapper.testing
+package com.vamshi.field.data.mapper.testing
 
-import com.example.alearning.data.local.entities.testing.PendingTestEntryEntity
-import com.example.alearning.domain.model.testing.PendingTestEntry
+import com.vamshi.field.data.local.entities.testing.PendingTestEntryEntity
+import com.vamshi.field.domain.model.testing.PendingTestEntry
 
 fun PendingTestEntryEntity.toDomain(): PendingTestEntry = PendingTestEntry(
     eventId = eventId,

@@ -1,7 +1,7 @@
-package com.example.alearning.data.mapper.auth
+package com.vamshi.field.data.mapper.auth
 
-import com.example.alearning.data.local.entities.auth.UserEntity
-import com.example.alearning.domain.model.auth.User
+import com.vamshi.field.data.local.entities.auth.UserEntity
+import com.vamshi.field.domain.model.auth.User
 
 /**
  * Mapping extensions between [UserEntity] (data layer) and [User] (domain layer).

@@ -1,4 +1,4 @@
-package com.example.alearning.ui.aicoach.components
+package com.vamshi.field.ui.aicoach.components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome

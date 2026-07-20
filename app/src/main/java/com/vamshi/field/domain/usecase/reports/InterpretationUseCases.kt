@@ -1,11 +1,11 @@
-package com.example.alearning.domain.usecase.reports
+package com.vamshi.field.domain.usecase.reports
 
-import com.example.alearning.domain.model.reports.Classification
-import com.example.alearning.domain.model.reports.Distribution
-import com.example.alearning.domain.model.reports.AthleteFlag
-import com.example.alearning.domain.model.reports.FlagType
-import com.example.alearning.domain.model.testing.TestResult
-import com.example.alearning.domain.repository.StandardsRepository
+import com.vamshi.field.domain.model.reports.Classification
+import com.vamshi.field.domain.model.reports.Distribution
+import com.vamshi.field.domain.model.reports.AthleteFlag
+import com.vamshi.field.domain.model.reports.FlagType
+import com.vamshi.field.domain.model.testing.TestResult
+import com.vamshi.field.domain.repository.StandardsRepository
 import javax.inject.Inject
 
 class ClassifyPercentileUseCase @Inject constructor() {

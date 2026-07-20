@@ -1,11 +1,11 @@
-package com.example.alearning.data.local.entities.standards
+package com.vamshi.field.data.local.entities.standards
 
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.example.alearning.data.local.entities.standards.TestCategoryEntity
+import com.vamshi.field.data.local.entities.standards.TestCategoryEntity
 import java.util.UUID
 
 @Entity(

@@ -1,4 +1,4 @@
-package com.example.alearning.ui.session
+package com.vamshi.field.ui.session
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -55,20 +55,20 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.alearning.domain.model.reports.Classification
-import com.example.alearning.domain.model.reports.LeaderboardRow
-import com.example.alearning.domain.repository.AiCoachStatus
-import com.example.alearning.ui.aicoach.AiCoachViewModel
-import com.example.alearning.ui.aicoach.components.AiFloatingActionButton
-import com.example.alearning.ui.components.AppTopBar
-import com.example.alearning.ui.components.AppTopBarSubtitleColor
-import com.example.alearning.ui.report.components.AthleteLeaderRow
-import com.example.alearning.ui.report.components.SessionSwitcherSheet
-import com.example.alearning.ui.report.components.ZoneChip
-import com.example.alearning.ui.theme.PerformanceRed
-import com.example.alearning.ui.theme.PerformanceRedText
-import com.example.alearning.ui.theme.SportOrangeContainer
-import com.example.alearning.util.CsvExporter
+import com.vamshi.field.domain.model.reports.Classification
+import com.vamshi.field.domain.model.reports.LeaderboardRow
+import com.vamshi.field.domain.repository.AiCoachStatus
+import com.vamshi.field.ui.aicoach.AiCoachViewModel
+import com.vamshi.field.ui.aicoach.components.AiFloatingActionButton
+import com.vamshi.field.ui.components.AppTopBar
+import com.vamshi.field.ui.components.AppTopBarSubtitleColor
+import com.vamshi.field.ui.report.components.AthleteLeaderRow
+import com.vamshi.field.ui.report.components.SessionSwitcherSheet
+import com.vamshi.field.ui.report.components.ZoneChip
+import com.vamshi.field.ui.theme.PerformanceRed
+import com.vamshi.field.ui.theme.PerformanceRedText
+import com.vamshi.field.ui.theme.SportOrangeContainer
+import com.vamshi.field.util.CsvExporter
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -496,7 +496,7 @@ fun TrendBars(points: List<Pair<Long, Float>>) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CoachInsightSheet(
-    test: com.example.alearning.domain.model.standards.FitnessTest?,
+    test: com.vamshi.field.domain.model.standards.FitnessTest?,
     redZoneAthletes: List<LeaderboardRow>,
     onDismiss: () -> Unit
 ) {
@@ -561,7 +561,7 @@ private fun InsightSection(title: String, content: String) {
     }
 }
 
-private fun getMeasuresText(test: com.example.alearning.domain.model.standards.FitnessTest?): String = when {
+private fun getMeasuresText(test: com.vamshi.field.domain.model.standards.FitnessTest?): String = when {
     test == null -> "Select a test."
     test.name.contains("Jump", ignoreCase = true) -> "Lower-body explosive power and vertical displacement."
     test.name.contains("Sprint", ignoreCase = true) -> "Acceleration phase efficiency and maximal linear velocity."
@@ -571,7 +571,7 @@ private fun getMeasuresText(test: com.example.alearning.domain.model.standards.F
     else -> "Fitness performance relative to age and sex standards."
 }
 
-private fun getFocusText(test: com.example.alearning.domain.model.standards.FitnessTest?): String = when {
+private fun getFocusText(test: com.vamshi.field.domain.model.standards.FitnessTest?): String = when {
     test == null -> "Select a test."
     test.name.contains("Jump", ignoreCase = true) -> "Plyometric training, triple extension, and landing mechanics."
     test.name.contains("Sprint", ignoreCase = true) -> "Drive phase body angle, arm drive, and hamstring conditioning."
@@ -581,7 +581,7 @@ private fun getFocusText(test: com.example.alearning.domain.model.standards.Fitn
     else -> "General athletic development and balanced conditioning."
 }
 
-private fun getImprovementText(test: com.example.alearning.domain.model.standards.FitnessTest?): String = when {
+private fun getImprovementText(test: com.vamshi.field.domain.model.standards.FitnessTest?): String = when {
     test == null -> "Select a test."
     test.name.contains("Jump", ignoreCase = true) -> "Box jumps, depth jumps, and power cleans for explosive development."
     test.name.contains("Sprint", ignoreCase = true) -> "Resisted sprinting, wall drills, and mobility work for stride length."

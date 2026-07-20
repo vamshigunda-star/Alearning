@@ -1,4 +1,4 @@
-package com.example.alearning.data.auth
+package com.vamshi.field.data.auth
 
 import java.security.MessageDigest
 import java.security.SecureRandom
@@ -18,7 +18,7 @@ import javax.inject.Singleton
  *  - Comparison: [MessageDigest.isEqual] for constant-time byte comparison
  *
  * Storage format: salt and hash are stored as separate [ByteArray] columns
- * in [com.example.alearning.data.local.entities.auth.UserEntity] to avoid any
+ * in [com.vamshi.field.data.local.entities.auth.UserEntity] to avoid any
  * encoding overhead or parsing fragility.
  *
  * NEVER log passwords, salts, or derived keys.

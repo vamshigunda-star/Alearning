@@ -1,10 +1,10 @@
-package com.example.alearning.domain.repository
+package com.vamshi.field.domain.repository
 
-import com.example.alearning.domain.model.reports.AthleteDashboardData
-import com.example.alearning.domain.model.reports.AthleteTestDetailData
-import com.example.alearning.domain.model.reports.GroupOverviewData
-import com.example.alearning.domain.model.reports.ReportsHomeData
-import com.example.alearning.domain.model.reports.SessionReportData
+import com.vamshi.field.domain.model.reports.AthleteDashboardData
+import com.vamshi.field.domain.model.reports.AthleteTestDetailData
+import com.vamshi.field.domain.model.reports.GroupOverviewData
+import com.vamshi.field.domain.model.reports.ReportsHomeData
+import com.vamshi.field.domain.model.reports.SessionReportData
 import kotlinx.coroutines.flow.Flow
 
 interface ReportsRepository {

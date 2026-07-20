@@ -1,10 +1,10 @@
-package com.example.alearning.data.local.daos.auth
+package com.vamshi.field.data.local.daos.auth
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.example.alearning.data.local.entities.auth.UserEntity
+import com.vamshi.field.data.local.entities.auth.UserEntity
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -19,8 +19,8 @@ interface UserDao {
     /**
      * Inserts a new user. If a duplicate [UserEntity.username] is inserted,
      * the unique index will throw [android.database.sqlite.SQLiteConstraintException],
-     * which [com.example.alearning.data.repository.AuthRepositoryImpl] catches and
-     * maps to [com.example.alearning.domain.model.auth.AuthError.UsernameTaken].
+     * which [com.vamshi.field.data.repository.AuthRepositoryImpl] catches and
+     * maps to [com.vamshi.field.domain.model.auth.AuthError.UsernameTaken].
      */
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(user: UserEntity)

@@ -1,10 +1,10 @@
-package com.example.alearning.data.repository
+package com.vamshi.field.data.repository
 
 import android.content.Context
 import android.os.Build
 import android.util.Log
-import com.example.alearning.domain.repository.AiCoachRepository
-import com.example.alearning.domain.repository.AiCoachStatus
+import com.vamshi.field.domain.repository.AiCoachRepository
+import com.vamshi.field.domain.repository.AiCoachStatus
 import com.google.ai.edge.aicore.GenerationConfig
 import com.google.ai.edge.aicore.GenerativeModel
 import kotlinx.coroutines.flow.MutableStateFlow

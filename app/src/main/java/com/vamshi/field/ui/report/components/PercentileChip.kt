@@ -1,4 +1,4 @@
-package com.example.alearning.ui.report.components
+package com.vamshi.field.ui.report.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
@@ -10,16 +10,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.alearning.domain.model.reports.Classification
-import com.example.alearning.domain.usecase.reports.ClassifyPercentileUseCase
-import com.example.alearning.ui.theme.PerformanceGreen
-import com.example.alearning.ui.theme.PerformanceGreenText
-import com.example.alearning.ui.theme.PerformanceGrey
-import com.example.alearning.ui.theme.PerformanceGreyText
-import com.example.alearning.ui.theme.PerformanceRed
-import com.example.alearning.ui.theme.PerformanceRedText
-import com.example.alearning.ui.theme.PerformanceYellow
-import com.example.alearning.ui.theme.PerformanceYellowText
+import com.vamshi.field.domain.model.reports.Classification
+import com.vamshi.field.domain.usecase.reports.ClassifyPercentileUseCase
+import com.vamshi.field.ui.theme.PerformanceGreen
+import com.vamshi.field.ui.theme.PerformanceGreenText
+import com.vamshi.field.ui.theme.PerformanceGrey
+import com.vamshi.field.ui.theme.PerformanceGreyText
+import com.vamshi.field.ui.theme.PerformanceRed
+import com.vamshi.field.ui.theme.PerformanceRedText
+import com.vamshi.field.ui.theme.PerformanceYellow
+import com.vamshi.field.ui.theme.PerformanceYellowText
 
 private val classifyPercentile = ClassifyPercentileUseCase()
 

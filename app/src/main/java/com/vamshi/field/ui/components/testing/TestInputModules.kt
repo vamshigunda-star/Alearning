@@ -1,4 +1,4 @@
-package com.example.alearning.ui.components.testing
+package com.vamshi.field.ui.components.testing
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -21,7 +21,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.alearning.domain.model.standards.InputParadigm
+import com.vamshi.field.domain.model.standards.InputParadigm
 
 /**
  * A semi-circular gauge that represents performance percentile (0-100)

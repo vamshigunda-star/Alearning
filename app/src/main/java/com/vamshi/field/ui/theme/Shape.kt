@@ -1,4 +1,4 @@
-package com.example.alearning.ui.theme
+package com.vamshi.field.ui.theme
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Shapes

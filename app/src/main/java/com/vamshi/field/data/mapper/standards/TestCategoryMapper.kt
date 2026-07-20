@@ -1,8 +1,8 @@
-package com.example.alearning.data.mapper.standards
+package com.vamshi.field.data.mapper.standards
 
-import com.example.alearning.data.local.entities.standards.TestCategoryEntity
-import com.example.alearning.domain.model.standards.RadarAxis
-import com.example.alearning.domain.model.standards.TestCategory
+import com.vamshi.field.data.local.entities.standards.TestCategoryEntity
+import com.vamshi.field.domain.model.standards.RadarAxis
+import com.vamshi.field.domain.model.standards.TestCategory
 
 fun TestCategoryEntity.toDomain(): TestCategory {
     return TestCategory(

@@ -1,12 +1,12 @@
-package com.example.alearning.ui.auth.reset
+package com.vamshi.field.ui.auth.reset
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.alearning.domain.model.auth.AuthResult
-import com.example.alearning.domain.usecase.auth.GetSecurityQuestionUseCase
-import com.example.alearning.domain.usecase.auth.ResetPasswordUseCase
-import com.example.alearning.domain.usecase.auth.ValidatePasswordUseCase
-import com.example.alearning.domain.usecase.auth.ValidationResult
+import com.vamshi.field.domain.model.auth.AuthResult
+import com.vamshi.field.domain.usecase.auth.GetSecurityQuestionUseCase
+import com.vamshi.field.domain.usecase.auth.ResetPasswordUseCase
+import com.vamshi.field.domain.usecase.auth.ValidatePasswordUseCase
+import com.vamshi.field.domain.usecase.auth.ValidationResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

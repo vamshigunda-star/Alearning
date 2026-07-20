@@ -1,4 +1,4 @@
-package com.example.alearning.ui.roster
+package com.vamshi.field.ui.roster
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -37,10 +37,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.alearning.ui.athlete.AthleteDashboardScreen
-import com.example.alearning.ui.components.AppTopBar
-import com.example.alearning.ui.components.AppTopBarActionButton
-import com.example.alearning.ui.theme.SportOrange
+import com.vamshi.field.ui.athlete.AthleteDashboardScreen
+import com.vamshi.field.ui.components.AppTopBar
+import com.vamshi.field.ui.components.AppTopBarActionButton
+import com.vamshi.field.ui.theme.SportOrange
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable

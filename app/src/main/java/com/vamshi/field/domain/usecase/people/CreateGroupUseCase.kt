@@ -1,8 +1,8 @@
-package com.example.alearning.domain.usecase.people
+package com.vamshi.field.domain.usecase.people
 
-import com.example.alearning.domain.model.people.Group
-import com.example.alearning.domain.model.people.GroupCategory
-import com.example.alearning.domain.repository.PeopleRepository
+import com.vamshi.field.domain.model.people.Group
+import com.vamshi.field.domain.model.people.GroupCategory
+import com.vamshi.field.domain.repository.PeopleRepository
 import java.util.UUID
 import javax.inject.Inject
 

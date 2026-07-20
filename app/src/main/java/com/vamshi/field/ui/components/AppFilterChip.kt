@@ -1,4 +1,4 @@
-package com.example.alearning.ui.components
+package com.vamshi.field.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box

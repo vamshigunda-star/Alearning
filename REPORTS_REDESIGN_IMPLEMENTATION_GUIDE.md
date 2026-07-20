@@ -1,6 +1,6 @@
 # Reports Redesign — Implementation Manual (for Opus 4.8)
 
-**Audience:** An Opus 4.8 coding agent implementing the "Reports Redesign - Standalone.html" mockup into the live ALearning app.
+**Audience:** An Opus 4.8 coding agent implementing the "Reports Redesign - Standalone.html" mockup into the live Field app.
 **Goal:** Adopt the mockup's UI/layout for the Reports section **without removing or breaking any existing behaviour** (AI Coach, CSV export, delete, session switcher, navigation, medical alerts, absent/missing handling, group trends, flags).
 **Read first:** `CLAUDE.md` and `DEVELOPMENT_CONTEXT.md`. Obey Clean Architecture and the terminology rules there.
 

@@ -1,4 +1,4 @@
-package com.example.alearning.ui.auth.signin
+package com.vamshi.field.ui.auth.signin
 
 /** All user-initiated events from the sign-in screen. */
 sealed interface SignInAction {

@@ -1,8 +1,8 @@
-package com.example.alearning.domain.usecase.standards
+package com.vamshi.field.domain.usecase.standards
 
 import android.util.Log
-import com.example.alearning.domain.model.people.BiologicalSex
-import com.example.alearning.domain.repository.StandardsRepository
+import com.vamshi.field.domain.model.people.BiologicalSex
+import com.vamshi.field.domain.repository.StandardsRepository
 import javax.inject.Inject
 
 data class PercentileResult(

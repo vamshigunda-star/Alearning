@@ -1,4 +1,4 @@
-﻿package com.example.alearning.ui.roster
+﻿package com.vamshi.field.ui.roster
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
@@ -24,10 +24,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.alearning.domain.model.people.Group
-import com.example.alearning.domain.model.people.Individual
-import com.example.alearning.ui.theme.SportOrange
-import com.example.alearning.ui.theme.SportOrangeContainer
+import com.vamshi.field.domain.model.people.Group
+import com.vamshi.field.domain.model.people.Individual
+import com.vamshi.field.ui.theme.SportOrange
+import com.vamshi.field.ui.theme.SportOrangeContainer
 import java.util.*
 
 @Composable

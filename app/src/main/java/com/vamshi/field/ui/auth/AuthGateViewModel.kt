@@ -1,9 +1,9 @@
-package com.example.alearning.ui.auth
+package com.vamshi.field.ui.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.alearning.domain.repository.AuthRepository
-import com.example.alearning.domain.repository.SessionManager
+import com.vamshi.field.domain.repository.AuthRepository
+import com.vamshi.field.domain.repository.SessionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +20,7 @@ import javax.inject.Inject
  *  - [AuthGateState.UnauthenticatedHasUsers] — accounts exist, no session → go to SignIn.
  *  - [AuthGateState.UnauthenticatedNoUsers]  — no accounts at all → go to SignUp.
  *
- * This ViewModel is consumed by [com.example.alearning.ui.navigation.ALearningNavGraph]
+ * This ViewModel is consumed by [com.vamshi.field.ui.navigation.ALearningNavGraph]
  * to determine the [NavHost] start destination. Once the destination is resolved the
  * [NavHost] takes over and this ViewModel is not observed further.
  */

@@ -1,9 +1,9 @@
-﻿package com.example.alearning.ui.roster
+﻿package com.vamshi.field.ui.roster
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import com.example.alearning.ui.components.RegisterAthleteSheet
+import com.vamshi.field.ui.components.RegisterAthleteSheet
 
 @Composable
 fun RosterDialogs(

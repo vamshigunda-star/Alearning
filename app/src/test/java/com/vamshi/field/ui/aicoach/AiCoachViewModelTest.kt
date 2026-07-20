@@ -1,8 +1,8 @@
-package com.example.alearning.ui.aicoach
+package com.vamshi.field.ui.aicoach
 
 import androidx.lifecycle.SavedStateHandle
-import com.example.alearning.domain.repository.AiCoachRepository
-import com.example.alearning.domain.repository.AiCoachStatus
+import com.vamshi.field.domain.repository.AiCoachRepository
+import com.vamshi.field.domain.repository.AiCoachStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow

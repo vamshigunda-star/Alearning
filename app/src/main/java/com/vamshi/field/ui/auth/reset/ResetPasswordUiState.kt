@@ -1,4 +1,4 @@
-package com.example.alearning.ui.auth.reset
+package com.vamshi.field.ui.auth.reset
 
 /**
  * UI state for the two-step password reset screen.

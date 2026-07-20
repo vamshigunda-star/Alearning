@@ -1,7 +1,7 @@
-package com.example.alearning.domain.usecase.testing
+package com.vamshi.field.domain.usecase.testing
 
-import com.example.alearning.domain.model.testing.TestingEvent
-import com.example.alearning.domain.repository.TestingRepository
+import com.vamshi.field.domain.model.testing.TestingEvent
+import com.vamshi.field.domain.repository.TestingRepository
 import java.util.UUID
 import javax.inject.Inject
 

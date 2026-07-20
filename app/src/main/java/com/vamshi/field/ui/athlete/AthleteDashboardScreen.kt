@@ -1,4 +1,4 @@
-﻿package com.example.alearning.ui.athlete
+﻿package com.vamshi.field.ui.athlete
 
 import android.app.Activity
 import androidx.compose.foundation.BorderStroke
@@ -61,30 +61,30 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.alearning.domain.model.people.Individual
-import com.example.alearning.domain.model.reports.AthleteDashboardData
-import com.example.alearning.domain.model.reports.AthleteFlag
-import com.example.alearning.domain.model.reports.AthleteTestTile
-import com.example.alearning.domain.model.reports.Classification
-import com.example.alearning.domain.model.reports.FlagType
-import com.example.alearning.domain.model.standards.FitnessTest
-import com.example.alearning.domain.repository.AiCoachStatus
-import com.example.alearning.domain.usecase.testing.AthleteRadarData
-import com.example.alearning.ui.aicoach.AiCoachViewModel
-import com.example.alearning.ui.components.AppTopBar
-import com.example.alearning.ui.components.AppTopBarSubtitleColor
-import com.example.alearning.ui.components.charts.RadarChart
-import com.example.alearning.ui.report.components.DeltaArrow
-import com.example.alearning.ui.report.components.PercentileChip
-import com.example.alearning.ui.report.components.ZoneChip
-import com.example.alearning.ui.report.components.zoneColors
-import com.example.alearning.ui.report.components.zoneLabel
-import com.example.alearning.ui.theme.PerformanceRed
-import com.example.alearning.ui.theme.PerformanceRedText
-import com.example.alearning.ui.theme.SportOrange
-import com.example.alearning.ui.theme.SportOrangeContainer
-import com.example.alearning.ui.theme.SportOrangeVariant
-import com.example.alearning.util.CsvExporter
+import com.vamshi.field.domain.model.people.Individual
+import com.vamshi.field.domain.model.reports.AthleteDashboardData
+import com.vamshi.field.domain.model.reports.AthleteFlag
+import com.vamshi.field.domain.model.reports.AthleteTestTile
+import com.vamshi.field.domain.model.reports.Classification
+import com.vamshi.field.domain.model.reports.FlagType
+import com.vamshi.field.domain.model.standards.FitnessTest
+import com.vamshi.field.domain.repository.AiCoachStatus
+import com.vamshi.field.domain.usecase.testing.AthleteRadarData
+import com.vamshi.field.ui.aicoach.AiCoachViewModel
+import com.vamshi.field.ui.components.AppTopBar
+import com.vamshi.field.ui.components.AppTopBarSubtitleColor
+import com.vamshi.field.ui.components.charts.RadarChart
+import com.vamshi.field.ui.report.components.DeltaArrow
+import com.vamshi.field.ui.report.components.PercentileChip
+import com.vamshi.field.ui.report.components.ZoneChip
+import com.vamshi.field.ui.report.components.zoneColors
+import com.vamshi.field.ui.report.components.zoneLabel
+import com.vamshi.field.ui.theme.PerformanceRed
+import com.vamshi.field.ui.theme.PerformanceRedText
+import com.vamshi.field.ui.theme.SportOrange
+import com.vamshi.field.ui.theme.SportOrangeContainer
+import com.vamshi.field.ui.theme.SportOrangeVariant
+import com.vamshi.field.util.CsvExporter
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
@@ -201,7 +201,7 @@ fun AthleteDashboardContent(
                 else -> AthleteBody(uiState = uiState, padding = PaddingValues(0.dp), onAction = onAction)
             }
 
-            com.example.alearning.ui.aicoach.components.DraggableAiFab(
+            com.vamshi.field.ui.aicoach.components.DraggableAiFab(
                 isVisible = isAiCoachVisible,
                 onClick = {
                     val contextString = data?.let { d ->

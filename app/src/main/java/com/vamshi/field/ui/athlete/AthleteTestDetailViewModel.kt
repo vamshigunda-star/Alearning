@@ -1,12 +1,12 @@
-package com.example.alearning.ui.athlete
+package com.vamshi.field.ui.athlete
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.alearning.domain.model.reports.AthleteTestDetailData
-import com.example.alearning.domain.model.reports.AttemptRow
-import com.example.alearning.domain.repository.TestingRepository
-import com.example.alearning.domain.usecase.reports.ObserveAthleteTestDetailUseCase
+import com.vamshi.field.domain.model.reports.AthleteTestDetailData
+import com.vamshi.field.domain.model.reports.AttemptRow
+import com.vamshi.field.domain.repository.TestingRepository
+import com.vamshi.field.domain.usecase.reports.ObserveAthleteTestDetailUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -1,10 +1,10 @@
-package com.example.alearning.ui.aicoach
+package com.vamshi.field.ui.aicoach
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.alearning.domain.repository.AiCoachRepository
-import com.example.alearning.domain.repository.AiCoachStatus
+import com.vamshi.field.domain.repository.AiCoachRepository
+import com.vamshi.field.domain.repository.AiCoachStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

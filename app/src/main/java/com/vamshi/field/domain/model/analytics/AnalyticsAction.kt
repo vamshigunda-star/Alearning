@@ -1,4 +1,4 @@
-package com.example.alearning.domain.model.analytics
+package com.vamshi.field.domain.model.analytics
 
 sealed interface AnalyticsAction {
     data class SelectIndividual(val individualId: String?) : AnalyticsAction

@@ -1,4 +1,4 @@
-package com.example.alearning.ui.components
+package com.vamshi.field.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import com.example.alearning.ui.theme.TextSecondary
+import com.vamshi.field.ui.theme.TextSecondary
 
 /**
  * Standard top bar for every screen in ALearning.

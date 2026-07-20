@@ -1,4 +1,4 @@
-package com.example.alearning.ui.components.charts
+package com.vamshi.field.ui.components.charts
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*

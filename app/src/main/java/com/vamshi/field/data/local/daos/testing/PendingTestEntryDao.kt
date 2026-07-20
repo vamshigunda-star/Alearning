@@ -1,10 +1,10 @@
-package com.example.alearning.data.local.daos.testing
+package com.vamshi.field.data.local.daos.testing
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.example.alearning.data.local.entities.testing.PendingTestEntryEntity
+import com.vamshi.field.data.local.entities.testing.PendingTestEntryEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao

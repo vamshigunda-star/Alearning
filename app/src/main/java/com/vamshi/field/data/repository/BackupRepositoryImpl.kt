@@ -1,10 +1,10 @@
-﻿package com.example.alearning.data.repository
+﻿package com.vamshi.field.data.repository
 
 import android.content.Context
 import androidx.room.withTransaction
-import com.example.alearning.data.AppDatabase
-import com.example.alearning.domain.model.backup.*
-import com.example.alearning.domain.repository.BackupRepository
+import com.vamshi.field.data.AppDatabase
+import com.vamshi.field.domain.model.backup.*
+import com.vamshi.field.domain.repository.BackupRepository
 import com.google.gson.Gson
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.withContext
 import java.io.File
-import com.example.alearning.data.backup.DriveBackupHelper
+import com.vamshi.field.data.backup.DriveBackupHelper
 import javax.inject.Inject
 
 class BackupRepositoryImpl @Inject constructor(
@@ -110,7 +110,7 @@ class BackupRepositoryImpl @Inject constructor(
                 backupDao.clearAllUserGeneratedData()
                 
                 val userEntities = payload.users.map {
-                    com.example.alearning.data.local.entities.auth.UserEntity(
+                    com.vamshi.field.data.local.entities.auth.UserEntity(
                         it.id, it.firstName, it.lastName, it.username,
                         android.util.Base64.decode(it.passwordHash, android.util.Base64.NO_WRAP),
                         android.util.Base64.decode(it.passwordSalt, android.util.Base64.NO_WRAP),
@@ -121,29 +121,29 @@ class BackupRepositoryImpl @Inject constructor(
                     )
                 }
                 val indEntities = payload.individuals.map {
-                    com.example.alearning.data.local.entities.people.IndividualEntity(
+                    com.vamshi.field.data.local.entities.people.IndividualEntity(
                         id = it.id, firstName = it.firstName, lastName = it.lastName, 
-                        dateOfBirth = it.dateOfBirth, sex = com.example.alearning.domain.model.people.BiologicalSex.valueOf(it.gender), notes = it.notes
+                        dateOfBirth = it.dateOfBirth, sex = com.vamshi.field.domain.model.people.BiologicalSex.valueOf(it.gender), notes = it.notes
                     )
                 }
                 val grpEntities = payload.groups.map {
-                    com.example.alearning.data.local.entities.people.GroupEntity(
+                    com.vamshi.field.data.local.entities.people.GroupEntity(
                         id = it.id, name = it.name, location = null, cycle = null, category = it.type, isDeleted = !it.isActive
                     )
                 }
                 val gmEntities = payload.groupMembers.map {
-                    com.example.alearning.data.local.entities.people.GroupMemberCrossRef(it.groupId, it.individualId)
+                    com.vamshi.field.data.local.entities.people.GroupMemberCrossRef(it.groupId, it.individualId)
                 }
                 val teEntities = payload.testingEvents.map {
-                    com.example.alearning.data.local.entities.testing.TestingEventEntity(
+                    com.vamshi.field.data.local.entities.testing.TestingEventEntity(
                         id = it.id, name = it.name, date = it.timestamp, notes = it.notes
                     )
                 }
                 val etEntities = payload.eventTests.map {
-                    com.example.alearning.data.local.entities.testing.EventTestCrossRef(it.eventId, it.testId)
+                    com.vamshi.field.data.local.entities.testing.EventTestCrossRef(it.eventId, it.testId)
                 }
                 val trEntities = payload.testResults.map {
-                    com.example.alearning.data.local.entities.testing.TestResultEntity(
+                    com.vamshi.field.data.local.entities.testing.TestResultEntity(
                         id = it.id, eventId = it.eventId, individualId = it.individualId, testId = it.testId, 
                         rawScore = it.rawScore, ageAtTime = 0f, captureMethod = it.captureMethod, createdAt = it.timestamp
                     )

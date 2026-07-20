@@ -18,5 +18,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Alearning"
+rootProject.name = "Field"
 include(":app")

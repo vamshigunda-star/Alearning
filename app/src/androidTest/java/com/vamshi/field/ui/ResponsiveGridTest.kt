@@ -1,4 +1,4 @@
-package com.example.alearning.ui
+package com.vamshi.field.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.width
@@ -7,8 +7,8 @@ import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.unit.dp
-import com.example.alearning.ui.dashboard.DashboardContent
-import com.example.alearning.ui.dashboard.DashboardUiState
+import com.vamshi.field.ui.dashboard.DashboardContent
+import com.vamshi.field.ui.dashboard.DashboardUiState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Rule

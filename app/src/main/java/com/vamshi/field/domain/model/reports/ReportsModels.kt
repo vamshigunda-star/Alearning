@@ -1,10 +1,10 @@
-package com.example.alearning.domain.model.reports
+package com.vamshi.field.domain.model.reports
 
-import com.example.alearning.domain.model.people.Group
-import com.example.alearning.domain.model.people.Individual
-import com.example.alearning.domain.model.standards.FitnessTest
-import com.example.alearning.domain.model.testing.TestResult
-import com.example.alearning.domain.model.testing.TestingEvent
+import com.vamshi.field.domain.model.people.Group
+import com.vamshi.field.domain.model.people.Individual
+import com.vamshi.field.domain.model.standards.FitnessTest
+import com.vamshi.field.domain.model.testing.TestResult
+import com.vamshi.field.domain.model.testing.TestingEvent
 
 data class GroupCardData(
     val group: Group,
