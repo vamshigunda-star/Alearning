@@ -1,13 +1,13 @@
-package com.example.alearning.ui.dashboard
+package com.vamshi.field.ui.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.alearning.domain.model.people.Group
-import com.example.alearning.domain.model.testing.TestingEvent
-import com.example.alearning.domain.repository.PeopleRepository
-import com.example.alearning.domain.repository.TestingRepository
-import com.example.alearning.domain.usecase.auth.ObserveCurrentUserUseCase
-import com.example.alearning.domain.usecase.auth.SignOutUseCase
+import com.vamshi.field.domain.model.people.Group
+import com.vamshi.field.domain.model.testing.TestingEvent
+import com.vamshi.field.domain.repository.PeopleRepository
+import com.vamshi.field.domain.repository.TestingRepository
+import com.vamshi.field.domain.usecase.auth.ObserveCurrentUserUseCase
+import com.vamshi.field.domain.usecase.auth.SignOutUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,6 +39,7 @@ sealed interface DashboardAction {
     data object OnQuickTestClick : DashboardAction
     data object OnRosterClick : DashboardAction
     data object OnTestLibraryClick : DashboardAction
+    data object OnRecommendationsClick : DashboardAction
     data class OnEventClick(val eventId: String, val groupId: String) : DashboardAction
     data object OnSettingsClick : DashboardAction
     data object OnDismissError : DashboardAction

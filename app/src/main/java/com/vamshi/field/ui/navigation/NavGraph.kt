@@ -1,4 +1,4 @@
-package com.example.alearning.ui.navigation
+package com.vamshi.field.ui.navigation
 
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -20,26 +20,27 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.example.alearning.ui.aicoach.AiCoachScreen
-import com.example.alearning.ui.athlete.AthleteDashboardScreen
-import com.example.alearning.ui.athlete.AthleteTestDetailScreen
-import com.example.alearning.ui.auth.AuthGateState
-import com.example.alearning.ui.auth.AuthGateViewModel
-import com.example.alearning.ui.auth.reset.ResetPasswordScreen
-import com.example.alearning.ui.auth.signin.SignInScreen
-import com.example.alearning.ui.auth.signup.SignUpScreen
-import com.example.alearning.ui.dashboard.DashboardScreen
-import com.example.alearning.ui.groupoverview.GroupOverviewScreen
-import com.example.alearning.ui.leaderboard.LeaderboardScreen
-import com.example.alearning.ui.quicktest.QuickTestScreen
-import com.example.alearning.ui.report.ReportScreen
-import com.example.alearning.ui.roster.RosterScreen
-import com.example.alearning.ui.session.SessionReportScreen
-import com.example.alearning.ui.settings.SettingsScreen
-import com.example.alearning.ui.testing.CreateEventScreen
-import com.example.alearning.ui.testing.TestingGridScreen
-import com.example.alearning.ui.testing.stopwatch.StopwatchScreen
-import com.example.alearning.ui.testlibrary.TestLibraryScreen
+import com.vamshi.field.ui.aicoach.AiCoachScreen
+import com.vamshi.field.ui.athlete.AthleteDashboardScreen
+import com.vamshi.field.ui.athlete.AthleteTestDetailScreen
+import com.vamshi.field.ui.auth.AuthGateState
+import com.vamshi.field.ui.auth.AuthGateViewModel
+import com.vamshi.field.ui.auth.reset.ResetPasswordScreen
+import com.vamshi.field.ui.auth.signin.SignInScreen
+import com.vamshi.field.ui.auth.signup.SignUpScreen
+import com.vamshi.field.ui.dashboard.DashboardScreen
+import com.vamshi.field.ui.groupoverview.GroupOverviewScreen
+import com.vamshi.field.ui.leaderboard.LeaderboardScreen
+import com.vamshi.field.ui.quicktest.QuickTestScreen
+import com.vamshi.field.ui.recommendations.RecommendationsScreen
+import com.vamshi.field.ui.report.ReportScreen
+import com.vamshi.field.ui.roster.RosterScreen
+import com.vamshi.field.ui.session.SessionReportScreen
+import com.vamshi.field.ui.settings.SettingsScreen
+import com.vamshi.field.ui.testing.CreateEventScreen
+import com.vamshi.field.ui.testing.TestingGridScreen
+import com.vamshi.field.ui.testing.stopwatch.StopwatchScreen
+import com.vamshi.field.ui.testlibrary.TestLibraryScreen
 
 @Composable
 fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
@@ -125,7 +126,8 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
             DashboardScreen(
                 onNavigateToRoster = { navController.navigate(BottomNavItem.Roster.route) },
                 onNavigateToTestLibrary = { navController.navigate(Screen.TestLibrary.route) },
-                onNavigateToCreateEvent = { navController.navigate(Screen.CreateEvent.route) },
+                onNavigateToCreateEvent = { navController.navigate(Screen.CreateEvent.createRoute()) },
+                onNavigateToRecommendations = { navController.navigate(Screen.Recommendations.route) },
                 onNavigateToQuickTest = { navController.navigate(Screen.QuickTest.createRoute()) },
                 onNavigateToTestingGrid = { eventId, groupId ->
                     navController.navigate(Screen.TestingGrid.createRoute(eventId, groupId))
@@ -163,8 +165,25 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
             TestLibraryScreen(onNavigateBack = { navController.popBackStack() })
         }
 
+        composable(Screen.Recommendations.route) {
+
+            RecommendationsScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onApplyAndContinue = { recommendationId ->
+                    navController.navigate(Screen.CreateEvent.createRoute(recommendationId)) {
+                        // A rapid double-tap on "Apply & Continue" must not push two
+                        // CreateEvent instances onto the back stack.
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
         composable(
             route = Screen.CreateEvent.route,
+            arguments = listOf(
+                navArgument("recommendationId") { type = NavType.StringType; nullable = true; defaultValue = null }
+            ),
             enterTransition = { slideInHorizontally(animationSpec = tween(200, easing = FastOutSlowInEasing)) { fullWidth -> fullWidth / 4 } + fadeIn(animationSpec = tween(200)) },
             exitTransition = { slideOutHorizontally(animationSpec = tween(200, easing = FastOutSlowInEasing)) { fullWidth -> -fullWidth / 4 } + fadeOut(animationSpec = tween(200)) },
             popEnterTransition = { slideInHorizontally(animationSpec = tween(200, easing = FastOutSlowInEasing)) { fullWidth -> -fullWidth / 4 } + fadeIn(animationSpec = tween(200)) },
@@ -230,7 +249,7 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
                 onNavigateToSession = { groupId, sessionId ->
                     navController.navigate(Screen.SessionReport.createRoute(groupId, sessionId))
                 },
-                onNavigateToCreateSession = { navController.navigate(Screen.CreateEvent.route) }
+                onNavigateToCreateSession = { navController.navigate(Screen.CreateEvent.createRoute()) }
             )
         }
 

@@ -1,14 +1,14 @@
-package com.example.alearning.data.local.daos.testing
+package com.vamshi.field.data.local.daos.testing
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.example.alearning.data.local.entities.people.IndividualEntity
-import com.example.alearning.data.local.entities.standards.FitnessTestEntity
-import com.example.alearning.data.local.entities.testing.EventTestCrossRef
-import com.example.alearning.data.local.entities.testing.TestResultEntity
-import com.example.alearning.data.local.entities.testing.TestingEventEntity
+import com.vamshi.field.data.local.entities.people.IndividualEntity
+import com.vamshi.field.data.local.entities.standards.FitnessTestEntity
+import com.vamshi.field.data.local.entities.testing.EventTestCrossRef
+import com.vamshi.field.data.local.entities.testing.TestResultEntity
+import com.vamshi.field.data.local.entities.testing.TestingEventEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -119,13 +119,4 @@ interface TestingDao {
 
     @Query("DELETE FROM test_results WHERE id = :resultId")
     suspend fun deleteResultById(resultId: String)
-
-    @Query("DELETE FROM test_results")
-    suspend fun deleteAllResults()
-
-    @Query("DELETE FROM event_test_cross_ref")
-    suspend fun deleteAllEventTestCrossRefs()
-
-    @Query("DELETE FROM testing_events")
-    suspend fun deleteAllEvents()
 }

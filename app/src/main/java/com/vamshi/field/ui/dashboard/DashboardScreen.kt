@@ -1,4 +1,4 @@
-package com.example.alearning.ui.dashboard
+package com.vamshi.field.ui.dashboard
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Bolt
@@ -36,10 +37,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.alearning.domain.model.testing.TestingEvent
-import com.example.alearning.ui.theme.*
-import com.example.alearning.ui.theme.PeachIconBg
-import com.example.alearning.ui.theme.BlueIconBg
+import com.vamshi.field.domain.model.testing.TestingEvent
+import com.vamshi.field.ui.theme.*
+import com.vamshi.field.ui.theme.PeachIconBg
+import com.vamshi.field.ui.theme.BlueIconBg
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -53,6 +54,7 @@ fun DashboardScreen(
     modifier: Modifier = Modifier,
     onNavigateToRoster: () -> Unit,
     onNavigateToTestLibrary: () -> Unit,
+    onNavigateToRecommendations: () -> Unit,
     onNavigateToCreateEvent: () -> Unit,
     onNavigateToQuickTest: () -> Unit,
     onNavigateToTestingGrid: (String, String) -> Unit,
@@ -80,6 +82,7 @@ fun DashboardScreen(
                 DashboardAction.OnQuickTestClick -> onNavigateToQuickTest()
                 DashboardAction.OnRosterClick -> onNavigateToRoster()
                 DashboardAction.OnTestLibraryClick -> onNavigateToTestLibrary()
+                DashboardAction.OnRecommendationsClick -> onNavigateToRecommendations()
                 is DashboardAction.OnEventClick -> onNavigateToTestingGrid(it.eventId, it.groupId)
                 is DashboardAction.OnPickLeaderboardEvent -> {
                     viewModel.onAction(DashboardAction.OnDismissLeaderboardPicker)
@@ -183,6 +186,15 @@ fun DashboardContent(
                     tint = SportOrange,
                     iconBg = PeachIconBg,
                     onClick = { onAction(DashboardAction.OnLeaderboardClick) }
+                )
+            }
+            item {
+                QuickActionCard(
+                    icon = Icons.AutoMirrored.Filled.Assignment,
+                    label = "Recommendations",
+                    tint = SportBlue,
+                    iconBg = BlueIconBg,
+                    onClick = { onAction(DashboardAction.OnRecommendationsClick) }
                 )
             }
 
@@ -310,7 +322,7 @@ private fun LeaderboardEventPickerSheet(
 
 /**
  * Lightweight, left-aligned Dashboard header. Deliberately does NOT reuse the shared
- * [com.example.alearning.ui.components.AppTopBar] (solid-primary, centered, white title)
+ * [com.vamshi.field.ui.components.AppTopBar] (solid-primary, centered, white title)
  * since that contract is shared across other screens — this is a Dashboard-local visual
  * treatment only, with no navigation/behavior change.
  */

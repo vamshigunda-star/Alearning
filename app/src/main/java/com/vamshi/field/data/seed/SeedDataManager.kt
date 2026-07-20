@@ -1,18 +1,22 @@
-package com.example.alearning.data.seed
+package com.vamshi.field.data.seed
 
 import android.content.Context
-import com.example.alearning.data.local.entities.standards.FitnessTestEntity
-import com.example.alearning.data.local.entities.standards.NormReferenceEntity
-import com.example.alearning.data.local.entities.standards.TestCategoryEntity
-import com.example.alearning.data.mapper.standards.toDomain
-import com.example.alearning.domain.model.people.BiologicalSex
-import com.example.alearning.domain.usecase.standards.ImportStandardsUseCase
-import com.example.alearning.data.local.entities.people.IndividualEntity
-import com.example.alearning.data.local.entities.people.GroupEntity
-import com.example.alearning.data.local.entities.people.GroupMemberCrossRef
-import com.example.alearning.data.local.entities.testing.TestingEventEntity
-import com.example.alearning.data.local.entities.testing.TestResultEntity
-import com.example.alearning.data.local.entities.testing.EventTestCrossRef
+import com.vamshi.field.data.local.entities.standards.FitnessTestEntity
+import com.vamshi.field.data.local.entities.standards.NormReferenceEntity
+import com.vamshi.field.data.local.entities.standards.TestCategoryEntity
+import com.vamshi.field.data.mapper.standards.toDomain
+import com.vamshi.field.domain.model.people.BiologicalSex
+import com.vamshi.field.domain.model.standards.RecommendationCategory
+import com.vamshi.field.domain.model.standards.RecommendationScope
+import com.vamshi.field.domain.model.standards.RecommendationTestLink
+import com.vamshi.field.domain.usecase.standards.ImportRecommendationsUseCase
+import com.vamshi.field.domain.usecase.standards.ImportStandardsUseCase
+import com.vamshi.field.data.local.entities.people.IndividualEntity
+import com.vamshi.field.data.local.entities.people.GroupEntity
+import com.vamshi.field.data.local.entities.people.GroupMemberCrossRef
+import com.vamshi.field.data.local.entities.testing.TestingEventEntity
+import com.vamshi.field.data.local.entities.testing.TestResultEntity
+import com.vamshi.field.data.local.entities.testing.EventTestCrossRef
 import java.util.Calendar
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -22,11 +26,18 @@ import javax.inject.Singleton
 class SeedDataManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val importStandardsUseCase: ImportStandardsUseCase,
-    private val database: com.example.alearning.data.AppDatabase
+    private val importRecommendationsUseCase: ImportRecommendationsUseCase,
+    private val database: com.vamshi.field.data.AppDatabase
 ) {
     companion object {
         private const val PREFS_NAME = "alearning_prefs"
-        private const val KEY_DATA_SEEDED = "data_seeded_csv_v11" // Bumped for reports hub
+
+        // Bumping this key re-runs seedIfNeeded() for every existing install on next launch.
+        // This is SAFE for user data: catalog tests/categories are upserted in place, only
+        // norm_references and the two recommendation tables are replaced wholesale, and
+        // coach-created events/results/athletes/groups are never touched. Catalog rows
+        // removed from the CSVs are left in the DB (existing results may reference them).
+        private const val KEY_DATA_SEEDED = "data_seeded_csv_v12" // Bumped for recommendations feature
     }
 
     suspend fun seedIfNeeded() {
@@ -39,9 +50,9 @@ class SeedDataManager @Inject constructor(
         android.util.Log.d("SeedDataManager", "Starting data seeding from CSV...")
         // 1. Seed Test Library from CSV
         try {
-            val categoryMaps = com.example.alearning.util.CsvParser.parse(context.assets.open("test_categories.csv"))
-            val testMaps = com.example.alearning.util.CsvParser.parse(context.assets.open("tests.csv"))
-            val normMaps = com.example.alearning.util.CsvParser.parse(context.assets.open("norms.csv"))
+            val categoryMaps = com.vamshi.field.util.CsvParser.parse(context.assets.open("test_categories.csv"))
+            val testMaps = com.vamshi.field.util.CsvParser.parse(context.assets.open("tests.csv"))
+            val normMaps = com.vamshi.field.util.CsvParser.parse(context.assets.open("norms.csv"))
 
             android.util.Log.d("SeedDataManager", "Parsed ${categoryMaps.size} categories, ${testMaps.size} tests, ${normMaps.size} norms")
 
@@ -101,10 +112,45 @@ class SeedDataManager @Inject constructor(
             importStandardsUseCase(
                 categories.map { it.toDomain() },
                 tests.map { it.toDomain() },
-                norms.map { it.toDomain() },
-                clearExisting = true
+                norms.map { it.toDomain() }
             )
             android.util.Log.d("SeedDataManager", "Successfully imported standards into database")
+
+            // 2. Seed Test Recommendations from CSV (must run after standards import above,
+            // since the cross-ref rows have a CASCADE FK to fitness_tests)
+            try {
+                val recoCategoryMaps = com.vamshi.field.util.CsvParser.parse(context.assets.open("recommendation_categories.csv"))
+                val recoTestMaps = com.vamshi.field.util.CsvParser.parse(context.assets.open("recommendation_tests.csv"))
+
+                val recoCategories = recoCategoryMaps.map { row ->
+                    RecommendationCategory(
+                        id = row["id"]!!,
+                        name = row["name"]!!,
+                        description = row["description"],
+                        icon = row["icon"]?.takeIf { it.isNotBlank() },
+                        scope = row["scope"]?.let {
+                            try { RecommendationScope.valueOf(it) } catch (_: Exception) { RecommendationScope.POPULATION }
+                        } ?: RecommendationScope.POPULATION,
+                        sortOrder = row["sortOrder"]?.toIntOrNull() ?: 0
+                    )
+                }
+
+                val recoLinks = recoTestMaps.map { row ->
+                    RecommendationTestLink(
+                        recommendationCategoryId = row["recommendationCategoryId"]!!,
+                        testId = row["testId"]!!,
+                        sortOrder = row["sortOrder"]?.toIntOrNull() ?: 0,
+                        required = row["required"]?.lowercase() == "true"
+                    )
+                }
+
+                android.util.Log.d("SeedDataManager", "Parsed ${recoCategories.size} recommendation categories, ${recoLinks.size} recommendation links")
+                importRecommendationsUseCase(recoCategories, recoLinks, clearExisting = true)
+                android.util.Log.d("SeedDataManager", "Successfully imported recommendations into database")
+            } catch (e: Exception) {
+                android.util.Log.e("SeedDataManager", "Error seeding recommendations from CSV", e)
+                e.printStackTrace()
+            }
 
             // --- Seed Dummy Athletes & Results ---
             val cursor = database.query("SELECT COUNT(*) FROM individuals", null)
@@ -215,13 +261,13 @@ class SeedDataManager @Inject constructor(
                 testingDao.insertEvent(event1)
                 testingDao.insertEvent(event2)
 
-                // 5. Link tests to events
+                // 5. Link tests to events (IDs must exist in tests.csv — FK to fitness_tests)
                 val testIds = listOf(
-                    "standard_vertical_jump",
-                    "standard_40m_sprint",
-                    "standard_beep_test",
-                    "standard_1rm_squat",
-                    "standard_pro_agility"
+                    "test_pushup",
+                    "test_pro_agility",
+                    "test_pacer",
+                    "test_1rm_squat",
+                    "test_t_test"
                 )
                 for (testId in testIds) {
                     testingDao.addTestToEvent(EventTestCrossRef("event_benchmark_1", testId))
@@ -231,32 +277,32 @@ class SeedDataManager @Inject constructor(
                 // 6. Test Results
                 val results = listOf(
                     // Alex Mercer
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_alex", testId = "standard_vertical_jump", rawScore = 65.0, ageAtTime = 18f, percentile = 85, classification = "SUPERIOR"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_alex", testId = "standard_40m_sprint", rawScore = 4.75, ageAtTime = 18f, percentile = 90, classification = "SUPERIOR"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_alex", testId = "standard_beep_test", rawScore = 12.5, ageAtTime = 18f, percentile = 75, classification = "HEALTHY"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_alex", testId = "standard_1rm_squat", rawScore = 140.0, ageAtTime = 18f, percentile = 80, classification = "HEALTHY"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_alex", testId = "standard_pro_agility", rawScore = 4.25, ageAtTime = 18f, percentile = 88, classification = "SUPERIOR"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_alex", testId = "test_pushup", rawScore = 65.0, ageAtTime = 18f, percentile = 85, classification = "SUPERIOR"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_alex", testId = "test_pro_agility", rawScore = 4.75, ageAtTime = 18f, percentile = 90, classification = "SUPERIOR"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_alex", testId = "test_pacer", rawScore = 50.0, ageAtTime = 18f, percentile = 75, classification = "HEALTHY"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_alex", testId = "test_1rm_squat", rawScore = 140.0, ageAtTime = 18f, percentile = 80, classification = "HEALTHY"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_alex", testId = "test_t_test", rawScore = 9.2, ageAtTime = 18f, percentile = 88, classification = "SUPERIOR"),
 
                     // Sarah Connor
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_sarah", testId = "standard_vertical_jump", rawScore = 48.0, ageAtTime = 17f, percentile = 78, classification = "HEALTHY"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_sarah", testId = "standard_40m_sprint", rawScore = 5.25, ageAtTime = 17f, percentile = 65, classification = "HEALTHY"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_sarah", testId = "standard_beep_test", rawScore = 10.2, ageAtTime = 17f, percentile = 82, classification = "SUPERIOR"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_sarah", testId = "standard_1rm_squat", rawScore = 95.0, ageAtTime = 17f, percentile = 72, classification = "HEALTHY"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_sarah", testId = "standard_pro_agility", rawScore = 4.60, ageAtTime = 17f, percentile = 74, classification = "HEALTHY"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_sarah", testId = "test_pushup", rawScore = 48.0, ageAtTime = 17f, percentile = 78, classification = "HEALTHY"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_sarah", testId = "test_pro_agility", rawScore = 5.25, ageAtTime = 17f, percentile = 65, classification = "HEALTHY"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_sarah", testId = "test_pacer", rawScore = 41.0, ageAtTime = 17f, percentile = 82, classification = "SUPERIOR"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_sarah", testId = "test_1rm_squat", rawScore = 95.0, ageAtTime = 17f, percentile = 72, classification = "HEALTHY"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_sarah", testId = "test_t_test", rawScore = 9.9, ageAtTime = 17f, percentile = 74, classification = "HEALTHY"),
 
                     // Marcus Fenix
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_marcus", testId = "standard_vertical_jump", rawScore = 32.0, ageAtTime = 19f, percentile = 25, classification = "NEEDS_IMPROVEMENT"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_marcus", testId = "standard_40m_sprint", rawScore = 5.95, ageAtTime = 19f, percentile = 20, classification = "NEEDS_IMPROVEMENT"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_marcus", testId = "standard_beep_test", rawScore = 6.4, ageAtTime = 19f, percentile = 28, classification = "NEEDS_IMPROVEMENT"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_marcus", testId = "standard_1rm_squat", rawScore = 165.0, ageAtTime = 19f, percentile = 95, classification = "SUPERIOR"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_marcus", testId = "standard_pro_agility", rawScore = 5.15, ageAtTime = 19f, percentile = 22, classification = "NEEDS_IMPROVEMENT"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_marcus", testId = "test_pushup", rawScore = 32.0, ageAtTime = 19f, percentile = 25, classification = "NEEDS_IMPROVEMENT"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_marcus", testId = "test_pro_agility", rawScore = 5.95, ageAtTime = 19f, percentile = 20, classification = "NEEDS_IMPROVEMENT"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_marcus", testId = "test_pacer", rawScore = 26.0, ageAtTime = 19f, percentile = 28, classification = "NEEDS_IMPROVEMENT"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_marcus", testId = "test_1rm_squat", rawScore = 165.0, ageAtTime = 19f, percentile = 95, classification = "SUPERIOR"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_marcus", testId = "test_t_test", rawScore = 11.1, ageAtTime = 19f, percentile = 22, classification = "NEEDS_IMPROVEMENT"),
 
                     // Lara Croft
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_lara", testId = "standard_vertical_jump", rawScore = 58.0, ageAtTime = 17f, percentile = 94, classification = "SUPERIOR"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_lara", testId = "standard_40m_sprint", rawScore = 4.98, ageAtTime = 17f, percentile = 92, classification = "SUPERIOR"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_lara", testId = "standard_beep_test", rawScore = 11.8, ageAtTime = 17f, percentile = 96, classification = "SUPERIOR"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_lara", testId = "standard_1rm_squat", rawScore = 110.0, ageAtTime = 17f, percentile = 90, classification = "SUPERIOR"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_lara", testId = "standard_pro_agility", rawScore = 4.12, ageAtTime = 17f, percentile = 95, classification = "SUPERIOR")
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_lara", testId = "test_pushup", rawScore = 58.0, ageAtTime = 17f, percentile = 94, classification = "SUPERIOR"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_lara", testId = "test_pro_agility", rawScore = 4.98, ageAtTime = 17f, percentile = 92, classification = "SUPERIOR"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_lara", testId = "test_pacer", rawScore = 47.0, ageAtTime = 17f, percentile = 96, classification = "SUPERIOR"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_lara", testId = "test_1rm_squat", rawScore = 110.0, ageAtTime = 17f, percentile = 90, classification = "SUPERIOR"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_lara", testId = "test_t_test", rawScore = 8.9, ageAtTime = 17f, percentile = 95, classification = "SUPERIOR")
                 )
                 for (res in results) {
                     testingDao.insertResult(res)

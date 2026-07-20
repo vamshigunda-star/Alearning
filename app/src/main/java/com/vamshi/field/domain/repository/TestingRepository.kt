@@ -1,9 +1,9 @@
-package com.example.alearning.domain.repository
+package com.vamshi.field.domain.repository
 
-import com.example.alearning.domain.model.people.Individual
-import com.example.alearning.domain.model.standards.FitnessTest
-import com.example.alearning.domain.model.testing.TestResult
-import com.example.alearning.domain.model.testing.TestingEvent
+import com.vamshi.field.domain.model.people.Individual
+import com.vamshi.field.domain.model.standards.FitnessTest
+import com.vamshi.field.domain.model.testing.TestResult
+import com.vamshi.field.domain.model.testing.TestingEvent
 import kotlinx.coroutines.flow.Flow
 
 interface TestingRepository {
@@ -46,5 +46,4 @@ interface TestingRepository {
     suspend fun getAthletesInGroupOrdered(groupId: String): List<Individual>
     suspend fun getTrialCountForAthlete(eventId: String, individualId: String, testId: String): Int
     suspend fun deleteResultById(resultId: String)
-    suspend fun clearAllTestingData()
 }

@@ -1,22 +1,33 @@
-package com.example.alearning.util
+package com.vamshi.field.util
 
+import android.util.Log
 import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
 
 object CsvParser {
+    private const val TAG = "CsvParser"
+
     fun parse(inputStream: InputStream): List<Map<String, String>> {
         val reader = BufferedReader(InputStreamReader(inputStream))
         val headerLine = reader.readLine() ?: return emptyList()
         val headers = parseLine(headerLine)
 
         val result = mutableListOf<Map<String, String>>()
+        var lineNumber = 1
         var line: String? = reader.readLine()
         while (line != null) {
+            lineNumber++
+            if (line.isBlank()) {
+                line = reader.readLine()
+                continue
+            }
             val values = parseLine(line)
             if (values.size == headers.size) {
                 val row = headers.zip(values).toMap()
                 result.add(row)
+            } else {
+                Log.w(TAG, "Skipping malformed row at line $lineNumber: expected ${headers.size} columns, got ${values.size}: $line")
             }
             line = reader.readLine()
         }

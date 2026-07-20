@@ -1,0 +1,7 @@
+id,name,description,icon,scope,sortOrder
+reco_cat_primary_school,Primary School Children,"Fundamental movement and coordination focus, low-intensity and safe for young children.",,POPULATION,1
+reco_cat_secondary_school,Secondary School Children,"Broad health-related fitness battery for adolescents, in line with common school fitness testing.",,POPULATION,2
+reco_cat_junior_athletes,Junior Athletes,"Athletic development focus - speed, agility, and upper-body endurance for youth in structured sport.",,POPULATION,3
+reco_cat_senior_athletes,Senior Athletes,"High-performance battery covering maximal strength, speed, and agility for competitive adult athletes.",,POPULATION,4
+reco_cat_general_population,General Population,"Health-related fitness battery for general adult wellness screening.",,POPULATION,5
+reco_cat_elderly,Elderly,"Low-impact, safety-first battery focused on functional strength and submaximal cardio.",,POPULATION,6

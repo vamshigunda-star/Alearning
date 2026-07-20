@@ -1,20 +1,23 @@
-package com.example.alearning.ui.testing
+package com.vamshi.field.ui.testing
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.alearning.data.storage.CustomPresetsStore
-import com.example.alearning.domain.model.people.Group
-import com.example.alearning.domain.model.standards.FitnessTest
-import com.example.alearning.domain.model.standards.TestCategory
-import com.example.alearning.domain.model.standards.TestPreset
-import com.example.alearning.domain.repository.PeopleRepository
-import com.example.alearning.domain.usecase.standards.GetTestLibraryUseCase
-import com.example.alearning.domain.usecase.testing.CreateEventUseCase
+import com.vamshi.field.data.storage.CustomPresetsStore
+import com.vamshi.field.domain.model.people.Group
+import com.vamshi.field.domain.model.standards.FitnessTest
+import com.vamshi.field.domain.model.standards.TestCategory
+import com.vamshi.field.domain.model.standards.TestPreset
+import com.vamshi.field.domain.repository.PeopleRepository
+import com.vamshi.field.domain.usecase.standards.GetRecommendationsUseCase
+import com.vamshi.field.domain.usecase.standards.GetTestLibraryUseCase
+import com.vamshi.field.domain.usecase.testing.CreateEventUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -60,12 +63,17 @@ sealed interface CreateEventAction {
 class CreateEventViewModel @Inject constructor(
     private val peopleRepository: PeopleRepository,
     private val getTestLibrary: GetTestLibraryUseCase,
+    private val getRecommendations: GetRecommendationsUseCase,
     private val createEventUseCase: CreateEventUseCase,
-    private val customPresetsStore: CustomPresetsStore
+    private val customPresetsStore: CustomPresetsStore,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateEventUiState())
     val uiState: StateFlow<CreateEventUiState> = _uiState.asStateFlow()
+
+    private val recommendationId: String? = savedStateHandle["recommendationId"]
+    private var recommendationApplied = false
 
     init {
         viewModelScope.launch {
@@ -94,6 +102,20 @@ class CreateEventViewModel @Inject constructor(
                         presets = buildPresets(categories, tests)
                     )
                 }
+                if (!recommendationApplied && recommendationId != null) {
+                    recommendationApplied = true
+                    applyRecommendation(recommendationId)
+                }
+            }
+        }
+    }
+
+    private fun applyRecommendation(categoryId: String) {
+        viewModelScope.launch {
+            val recommendedTests = getRecommendations.getRecommendedTests(categoryId).first()
+            val knownIds = _uiState.value.allTests.map { it.id }.toSet()
+            _uiState.update {
+                it.copy(selectedTestIds = recommendedTests.map { test -> test.id }.filter { id -> id in knownIds }.toSet())
             }
         }
     }

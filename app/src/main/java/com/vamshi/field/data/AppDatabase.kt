@@ -1,28 +1,31 @@
-package com.example.alearning.data
+package com.vamshi.field.data
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.example.alearning.data.local.Converters
-import com.example.alearning.data.local.daos.auth.UserDao
-import com.example.alearning.data.local.daos.backup.BackupDao
-import com.example.alearning.data.local.daos.people.PeopleDao
-import com.example.alearning.data.local.daos.standards.StandardsDao
-import com.example.alearning.data.local.daos.testing.PendingTestEntryDao
-import com.example.alearning.data.local.daos.testing.TestingDao
-import com.example.alearning.data.local.entities.auth.UserEntity
-import com.example.alearning.data.local.entities.people.GroupEntity
-import com.example.alearning.data.local.entities.people.GroupMemberCrossRef
-import com.example.alearning.data.local.entities.people.IndividualEntity
-import com.example.alearning.data.local.entities.standards.FitnessTestEntity
-import com.example.alearning.data.local.entities.standards.NormReferenceEntity
-import com.example.alearning.data.local.entities.standards.TestCategoryEntity
-import com.example.alearning.data.local.entities.testing.EventTestCrossRef
-import com.example.alearning.data.local.entities.testing.PendingTestEntryEntity
-import com.example.alearning.data.local.entities.testing.TestResultEntity
-import com.example.alearning.data.local.entities.testing.TestingEventEntity
+import com.vamshi.field.data.local.Converters
+import com.vamshi.field.data.local.daos.auth.UserDao
+import com.vamshi.field.data.local.daos.backup.BackupDao
+import com.vamshi.field.data.local.daos.people.PeopleDao
+import com.vamshi.field.data.local.daos.standards.RecommendationDao
+import com.vamshi.field.data.local.daos.standards.StandardsDao
+import com.vamshi.field.data.local.daos.testing.PendingTestEntryDao
+import com.vamshi.field.data.local.daos.testing.TestingDao
+import com.vamshi.field.data.local.entities.auth.UserEntity
+import com.vamshi.field.data.local.entities.people.GroupEntity
+import com.vamshi.field.data.local.entities.people.GroupMemberCrossRef
+import com.vamshi.field.data.local.entities.people.IndividualEntity
+import com.vamshi.field.data.local.entities.standards.FitnessTestEntity
+import com.vamshi.field.data.local.entities.standards.NormReferenceEntity
+import com.vamshi.field.data.local.entities.standards.RecommendationCategoryEntity
+import com.vamshi.field.data.local.entities.standards.RecommendationTestCrossRef
+import com.vamshi.field.data.local.entities.standards.TestCategoryEntity
+import com.vamshi.field.data.local.entities.testing.EventTestCrossRef
+import com.vamshi.field.data.local.entities.testing.PendingTestEntryEntity
+import com.vamshi.field.data.local.entities.testing.TestResultEntity
+import com.vamshi.field.data.local.entities.testing.TestingEventEntity
 
 @Database(
     entities = [
@@ -36,9 +39,11 @@ import com.example.alearning.data.local.entities.testing.TestingEventEntity
         TestResultEntity::class,
         EventTestCrossRef::class,
         UserEntity::class,
-        PendingTestEntryEntity::class
+        PendingTestEntryEntity::class,
+        RecommendationCategoryEntity::class,
+        RecommendationTestCrossRef::class
     ],
-    version = 9,
+    version = 10,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -49,8 +54,53 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun pendingTestEntryDao(): PendingTestEntryDao
     abstract fun backupDao(): BackupDao
+    abstract fun recommendationDao(): RecommendationDao
 
     companion object {
+        /**
+         * Migration 9 → 10: Adds recommendation_categories and recommendation_test_cross_ref.
+         *
+         * Backs the "Test Recommendations" feature — coaches pick a population category
+         * (Primary School, Elderly, etc.) and get a pre-built test selection. Junction table
+         * mirrors event_test_cross_ref's shape (composite PK, CASCADE FKs, index on the
+         * non-leading FK column).
+         */
+        val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // No DEFAULT clauses: the entities declare no @ColumnInfo defaultValue, so the
+                // migration-created schema must match what Room generates on a fresh install.
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `recommendation_categories` (
+                        `id` TEXT NOT NULL,
+                        `name` TEXT NOT NULL,
+                        `description` TEXT,
+                        `icon` TEXT,
+                        `scope` TEXT NOT NULL,
+                        `sortOrder` INTEGER NOT NULL,
+                        PRIMARY KEY(`id`)
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `recommendation_test_cross_ref` (
+                        `recommendationCategoryId` TEXT NOT NULL,
+                        `testId` TEXT NOT NULL,
+                        `sortOrder` INTEGER NOT NULL,
+                        `required` INTEGER NOT NULL,
+                        PRIMARY KEY(`recommendationCategoryId`, `testId`),
+                        FOREIGN KEY(`recommendationCategoryId`) REFERENCES `recommendation_categories`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(`testId`) REFERENCES `fitness_tests`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_recommendation_test_cross_ref_testId` ON `recommendation_test_cross_ref` (`testId`)"
+                )
+            }
+        }
+
         val MIGRATION_8_9 = object : Migration(8, 9) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE fitness_tests ADD COLUMN youtubeId TEXT DEFAULT NULL")

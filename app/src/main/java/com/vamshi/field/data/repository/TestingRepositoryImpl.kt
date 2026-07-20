@@ -1,16 +1,16 @@
-package com.example.alearning.data.repository
+package com.vamshi.field.data.repository
 
-import com.example.alearning.data.local.daos.testing.TestingDao
-import com.example.alearning.data.local.entities.testing.EventTestCrossRef
-import com.example.alearning.data.mapper.people.toDomain
-import com.example.alearning.data.mapper.standards.toDomain
-import com.example.alearning.data.mapper.testing.toDomain
-import com.example.alearning.data.mapper.testing.toEntity
-import com.example.alearning.domain.model.people.Individual
-import com.example.alearning.domain.model.standards.FitnessTest
-import com.example.alearning.domain.model.testing.TestResult
-import com.example.alearning.domain.model.testing.TestingEvent
-import com.example.alearning.domain.repository.TestingRepository
+import com.vamshi.field.data.local.daos.testing.TestingDao
+import com.vamshi.field.data.local.entities.testing.EventTestCrossRef
+import com.vamshi.field.data.mapper.people.toDomain
+import com.vamshi.field.data.mapper.standards.toDomain
+import com.vamshi.field.data.mapper.testing.toDomain
+import com.vamshi.field.data.mapper.testing.toEntity
+import com.vamshi.field.domain.model.people.Individual
+import com.vamshi.field.domain.model.standards.FitnessTest
+import com.vamshi.field.domain.model.testing.TestResult
+import com.vamshi.field.domain.model.testing.TestingEvent
+import com.vamshi.field.domain.repository.TestingRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -96,11 +96,5 @@ class TestingRepositoryImpl @Inject constructor(
 
     override suspend fun deleteResultById(resultId: String) {
         dao.deleteResultById(resultId)
-    }
-
-    override suspend fun clearAllTestingData() {
-        dao.deleteAllResults()
-        dao.deleteAllEventTestCrossRefs()
-        dao.deleteAllEvents()
     }
 }

@@ -1,12 +1,12 @@
-# ALearning — Development Context
+# Field — Development Context
 
-This document serves as the unified source of truth and architectural reference for the **ALearning** application. ALearning is an offline-first fitness testing and performance tracking Android application designed for coaches, PE teachers, and fitness professionals.
+This document serves as the unified source of truth and architectural reference for the **Field** application. Field is an offline-first fitness testing and performance tracking Android application designed for coaches, PE teachers, and fitness professionals.
 
 ---
 
 ## 1. Architectural Blueprint (Clean Architecture)
 
-ALearning is built adhering to Clean Architecture principles, structuring code into three distinct packages with strict dependency directions:
+Field is built adhering to Clean Architecture principles, structuring code into three distinct packages with strict dependency directions:
 
 ```
 Presentation Layer (ui/) ──> Domain Layer (domain/) <── Data Layer (data/)
@@ -28,7 +28,7 @@ Presentation Layer (ui/) ──> Domain Layer (domain/) <── Data Layer (data
 - ViewModels read route arguments using `SavedStateHandle` rather than receiving navigation callbacks.
 
 ### Screen Inventory and Route Definitions
-All routes are defined as objects in [Screen.kt](file:///c:/Users/APF/AndroidStudioProjects/Alearning/app/src/main/java/com/example/alearning/ui/navigation/Screen.kt):
+All routes are defined as objects in [Screen.kt](file:///c:/Users/APF/AndroidStudioProjects/Alearning/app/src/main/java/com/vamshi/field/ui/navigation/Screen.kt):
 
 | Screen | Nav Route | ViewModel | Primary Responsibility |
 |---|---|---|---|
@@ -105,7 +105,7 @@ An offline-first Room SQLite implementation containing the following tables:
 - `pending_test_entries`: Staged, in-flight grid scores that survive app process death during live testing sessions.
 
 ### Seeding Mechanism
-On first launch, [SeedDataManager](file:///c:/Users/APF/AndroidStudioProjects/Alearning/app/src/main/java/com/example/alearning/data/seed/SeedDataManager.kt) parses CSV data from assets (`test_categories.csv`, `tests.csv`, `norms.csv`, `recommendation_categories.csv`, `recommendation_tests.csv`) and seeds the SQLite tables using `ImportStandardsUseCase` and `ImportRecommendationsUseCase`.
+On first launch, [SeedDataManager](file:///c:/Users/APF/AndroidStudioProjects/Alearning/app/src/main/java/com/vamshi/field/data/seed/SeedDataManager.kt) parses CSV data from assets (`test_categories.csv`, `tests.csv`, `norms.csv`, `recommendation_categories.csv`, `recommendation_tests.csv`) and seeds the SQLite tables using `ImportStandardsUseCase` and `ImportRecommendationsUseCase`.
 - Guarded by a versioned SharedPreferences key (`KEY_DATA_SEEDED` in `SeedDataManager`, currently `data_seeded_csv_v12`). Bump the version suffix to ship catalog updates to existing installs.
 - Reseeding is non-destructive for user data: catalog tests/categories are **upserted** in place (user results hold foreign keys to them), while `norm_references` and the recommendation tables are replaced wholesale (nothing references them). Coach-created events, results, athletes, and groups are never touched. Catalog rows removed from newer CSVs remain in the DB, since existing results may reference them.
 - Demo athletes/groups/events are only seeded when the `individuals` table is empty (i.e., a truly fresh install).
@@ -239,7 +239,7 @@ sequenceDiagram
 ## 6. Gap Analysis & Technical Debt
 
 1. **Misplaced UI Components Package (`reports/components`)**:
-   - *Issue*: Custom charts and chips (`NormBandLineChart`, `MiniSparkline`, `AthleteRow`, etc.) are located in `com.example.alearning.reports.components` in the root source directory.
+   - *Issue*: Custom charts and chips (`NormBandLineChart`, `MiniSparkline`, `AthleteRow`, etc.) are located in `com.vamshi.field.reports.components` in the root source directory.
    - *Impact*: Violates Clean Architecture package boundaries. UI components should reside within the `ui/` package under a common reports folder.
 2. **Direct Repository Access from Presentation Layer**:
    - *Issue*: `TestingGridViewModel` and `StopwatchViewModel` make direct queries to `TestingRepository.getEventById()` and `deleteResultById()` instead of invoking Domain Use Cases.
@@ -260,7 +260,7 @@ To support autonomous implementation of upcoming sports fitness features, the fo
 ### 1. Room Migration Validator
 - **Role**: Automate database schema exports and migration assertions.
 - **Commands**:
-  - Run database migration tests: `./gradlew :app:testDebugUnitTest --tests "com.example.alearning.data.migration.*"`
+  - Run database migration tests: `./gradlew :app:testDebugUnitTest --tests "com.vamshi.field.data.migration.*"`
 - **Workflow**:
   - Set `exportSchema = true` in `AppDatabase.kt`.
   - Configure `room.schemaLocation` in `app/build.gradle.kts` to point to a local directory inside the project.
@@ -281,15 +281,15 @@ To support autonomous implementation of upcoming sports fitness features, the fo
   - Run package verification tool: `python scripts/check_architecture.py`
 - **Workflow**:
   - Run regex scans on Kotlin files import headers.
-  - Assert that files under `com/example/alearning/domain` never import packages from `data/` or `ui/`.
-  - Assert that files under `com/example/alearning/ui` never import `data/local`, `data/repository`, or `data/mapper` components directly.
+  - Assert that files under `com/vamshi/field/domain` never import packages from `data/` or `ui/`.
+  - Assert that files under `com/vamshi/field/ui` never import `data/local`, `data/repository`, or `data/mapper` components directly.
 
 ---
 
 ## 8. Future Roadmap
 
 ### Phase 1: Architectural Simplification (Tech Debt Cleanup)
-- Move all classes inside `com.example.alearning.reports.components` package to `com.example.alearning.ui.reports.components`.
+- Move all classes inside `com.vamshi.field.reports.components` package to `com.vamshi.field.ui.reports.components`.
 - Refactor all import statements in `AthleteDashboardScreen`, `AthleteTestDetailScreen`, `GroupOverviewScreen`, and `SessionReportScreen`.
 - Verify compilation using `gradlew assembleDebug`.
 

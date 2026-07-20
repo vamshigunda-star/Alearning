@@ -1,15 +1,17 @@
-package com.example.alearning.di
+package com.vamshi.field.di
 
-import com.example.alearning.data.repository.PeopleRepositoryImpl
-import com.example.alearning.data.repository.PendingTestEntryRepositoryImpl
-import com.example.alearning.data.repository.ReportsRepositoryImpl
-import com.example.alearning.data.repository.StandardsRepositoryImpl
-import com.example.alearning.data.repository.TestingRepositoryImpl
-import com.example.alearning.domain.repository.PeopleRepository
-import com.example.alearning.domain.repository.PendingTestEntryRepository
-import com.example.alearning.domain.repository.ReportsRepository
-import com.example.alearning.domain.repository.StandardsRepository
-import com.example.alearning.domain.repository.TestingRepository
+import com.vamshi.field.data.repository.PeopleRepositoryImpl
+import com.vamshi.field.data.repository.PendingTestEntryRepositoryImpl
+import com.vamshi.field.data.repository.RecommendationRepositoryImpl
+import com.vamshi.field.data.repository.ReportsRepositoryImpl
+import com.vamshi.field.data.repository.StandardsRepositoryImpl
+import com.vamshi.field.data.repository.TestingRepositoryImpl
+import com.vamshi.field.domain.repository.PeopleRepository
+import com.vamshi.field.domain.repository.PendingTestEntryRepository
+import com.vamshi.field.domain.repository.RecommendationRepository
+import com.vamshi.field.domain.repository.ReportsRepository
+import com.vamshi.field.domain.repository.StandardsRepository
+import com.vamshi.field.domain.repository.TestingRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -53,7 +55,13 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindAiCoachRepository(
-        aiCoachRepositoryImpl: com.example.alearning.data.repository.AiCoachRepositoryImpl
-    ): com.example.alearning.domain.repository.AiCoachRepository
+        aiCoachRepositoryImpl: com.vamshi.field.data.repository.AiCoachRepositoryImpl
+    ): com.vamshi.field.domain.repository.AiCoachRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindRecommendationRepository(
+        recommendationRepositoryImpl: RecommendationRepositoryImpl
+    ): RecommendationRepository
 
 }

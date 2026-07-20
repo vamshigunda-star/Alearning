@@ -1,13 +1,14 @@
-package com.example.alearning.di
+package com.vamshi.field.di
 
 import android.content.Context
 import androidx.room.Room
-import com.example.alearning.data.AppDatabase
-import com.example.alearning.data.local.daos.auth.UserDao
-import com.example.alearning.data.local.daos.people.PeopleDao
-import com.example.alearning.data.local.daos.standards.StandardsDao
-import com.example.alearning.data.local.daos.testing.PendingTestEntryDao
-import com.example.alearning.data.local.daos.testing.TestingDao
+import com.vamshi.field.data.AppDatabase
+import com.vamshi.field.data.local.daos.auth.UserDao
+import com.vamshi.field.data.local.daos.people.PeopleDao
+import com.vamshi.field.data.local.daos.standards.RecommendationDao
+import com.vamshi.field.data.local.daos.standards.StandardsDao
+import com.vamshi.field.data.local.daos.testing.PendingTestEntryDao
+import com.vamshi.field.data.local.daos.testing.TestingDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -33,7 +34,8 @@ object DatabaseModule {
                 AppDatabase.MIGRATION_5_6,
                 AppDatabase.MIGRATION_6_7,
                 AppDatabase.MIGRATION_7_8,
-                AppDatabase.MIGRATION_8_9
+                AppDatabase.MIGRATION_8_9,
+                AppDatabase.MIGRATION_9_10
             )
             .build()
     }
@@ -52,4 +54,7 @@ object DatabaseModule {
 
     @Provides
     fun providePendingTestEntryDao(db: AppDatabase): PendingTestEntryDao = db.pendingTestEntryDao()
+
+    @Provides
+    fun provideRecommendationDao(db: AppDatabase): RecommendationDao = db.recommendationDao()
 }

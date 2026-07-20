@@ -1,12 +1,13 @@
-package com.example.alearning.data.local.daos.standards
+package com.vamshi.field.data.local.daos.standards
 
 
 import androidx.room.Dao
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Upsert
-import com.example.alearning.data.local.entities.standards.FitnessTestEntity
-import com.example.alearning.data.local.entities.standards.NormReferenceEntity
-import com.example.alearning.data.local.entities.standards.TestCategoryEntity
+import com.vamshi.field.data.local.entities.standards.FitnessTestEntity
+import com.vamshi.field.data.local.entities.standards.NormReferenceEntity
+import com.vamshi.field.data.local.entities.standards.TestCategoryEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -66,9 +67,13 @@ interface StandardsDao {
     @Query("DELETE FROM norm_references")
     suspend fun deleteAllNorms()
 
-    @Query("DELETE FROM fitness_tests")
-    suspend fun deleteAllTests()
-
-    @Query("DELETE FROM test_categories")
-    suspend fun deleteAllCategories()
+    // Norm rows have random UUID primary keys, so upsert can't deduplicate them
+    // across reseeds — swap the whole table atomically instead. Safe: no other
+    // table references norm_references. fitness_tests/test_categories must NOT
+    // get bulk deletes here; user results reference them.
+    @Transaction
+    suspend fun replaceAllNorms(norms: List<NormReferenceEntity>) {
+        deleteAllNorms()
+        insertNorms(norms)
+    }
 }

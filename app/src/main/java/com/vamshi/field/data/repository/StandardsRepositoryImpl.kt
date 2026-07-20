@@ -1,13 +1,13 @@
-package com.example.alearning.data.repository
+package com.vamshi.field.data.repository
 
-import com.example.alearning.data.local.daos.standards.StandardsDao
-import com.example.alearning.data.mapper.standards.toDomain
-import com.example.alearning.data.mapper.standards.toEntity
-import com.example.alearning.domain.model.people.BiologicalSex
-import com.example.alearning.domain.model.standards.FitnessTest
-import com.example.alearning.domain.model.standards.NormReference
-import com.example.alearning.domain.model.standards.TestCategory
-import com.example.alearning.domain.repository.StandardsRepository
+import com.vamshi.field.data.local.daos.standards.StandardsDao
+import com.vamshi.field.data.mapper.standards.toDomain
+import com.vamshi.field.data.mapper.standards.toEntity
+import com.vamshi.field.domain.model.people.BiologicalSex
+import com.vamshi.field.domain.model.standards.FitnessTest
+import com.vamshi.field.domain.model.standards.NormReference
+import com.vamshi.field.domain.model.standards.TestCategory
+import com.vamshi.field.domain.repository.StandardsRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -52,13 +52,7 @@ class StandardsRepositoryImpl @Inject constructor(
         tests.forEach { dao.insertTest(it.toEntity()) }
     }
 
-    override suspend fun insertNorms(norms: List<NormReference>) {
-        dao.insertNorms(norms.map { it.toEntity() })
-    }
-
-    override suspend fun clearAllStandards() {
-        dao.deleteAllNorms()
-        dao.deleteAllTests()
-        dao.deleteAllCategories()
+    override suspend fun replaceAllNorms(norms: List<NormReference>) {
+        dao.replaceAllNorms(norms.map { it.toEntity() })
     }
 }

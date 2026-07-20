@@ -1,4 +1,4 @@
-﻿package com.example.alearning.ui.navigation
+﻿package com.vamshi.field.ui.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Assignment
@@ -13,7 +13,11 @@ sealed class Screen(val route: String) {
     data object Athletes : Screen("athletes")
     data object Insights : Screen("insights")
     data object TestLibrary : Screen("test_library")
-    data object CreateEvent : Screen("create_event")
+    data object Recommendations : Screen("recommendations")
+    data object CreateEvent : Screen("create_event?recommendationId={recommendationId}") {
+        fun createRoute(recommendationId: String? = null): String =
+            "create_event" + if (recommendationId != null) "?recommendationId=$recommendationId" else ""
+    }
     data object QuickTest : Screen("quick_test?athleteId={athleteId}&testIds={testIds}&eventId={eventId}") {
         fun createRoute(athleteId: String? = null, testIds: List<String> = emptyList(), eventId: String? = null): String {
             val params = buildList {
