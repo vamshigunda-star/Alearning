@@ -30,9 +30,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -360,10 +363,15 @@ private fun DashboardHeader(
                 }
                 Spacer(modifier = Modifier.width(10.dp))
                 Text(
-                    "ALearning",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
+                    text = buildAnnotatedString {
+                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold, color = TextPrimary)) {
+                            append("Field")
+                        }
+                        withStyle(style = SpanStyle(fontWeight = FontWeight.Normal, color = TextSecondary)) {
+                            append(" — Testing")
+                        }
+                    },
+                    style = MaterialTheme.typography.titleLarge
                 )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
