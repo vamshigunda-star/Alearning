@@ -16,6 +16,8 @@ data class User(
     val lastName: String,
     /** Normalized to lowercase+trimmed before storage. */
     val username: String,
+    /** Optional — only used to enable Google Drive backup/restore. Never a login field. */
+    val email: String? = null,
     val createdAt: Long
 )
 

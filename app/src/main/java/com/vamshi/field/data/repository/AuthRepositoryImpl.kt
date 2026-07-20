@@ -43,23 +43,30 @@ class AuthRepositoryImpl @Inject constructor(
         lastName: String,
         username: String,
         password: String,
-        securityQuestion: String,
-        securityAnswer: String
+        email: String?,
+        securityQuestion: String?,
+        securityAnswer: String?
     ): AuthResult = withContext(Dispatchers.IO) {
         val normalizedUsername = username.trim().lowercase()
-        val normalizedAnswer = securityAnswer.trim().lowercase()
 
         val (pwdSalt, pwdHash) = hasher.hash(password)
-        val (ansSalt, ansHash) = hasher.hash(normalizedAnswer)
+        // Security-answer hashing is skipped entirely (null hash/salt persisted) when no
+        // security answer is supplied — the current onboarding path never sets one.
+        val (ansSalt, ansHash) = if (!securityAnswer.isNullOrBlank()) {
+            hasher.hash(securityAnswer.trim().lowercase())
+        } else {
+            null to null
+        }
 
         val entity = UserEntity(
             id = UUID.randomUUID().toString(),
             firstName = firstName.trim(),
             lastName = lastName.trim(),
             username = normalizedUsername,
+            email = email?.trim()?.ifBlank { null },
             passwordHash = pwdHash,
             passwordSalt = pwdSalt,
-            securityQuestion = securityQuestion.trim(),
+            securityQuestion = securityQuestion?.trim(),
             securityAnswerHash = ansHash,
             securityAnswerSalt = ansSalt,
             createdAt = System.currentTimeMillis()
@@ -145,5 +152,37 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun getSecurityQuestion(username: String): String? =
         withContext(Dispatchers.IO) {
             userDao.getByUsername(username.trim().lowercase())?.securityQuestion
+        }
+
+    override suspend fun getPrimaryAccount(): User? = withContext(Dispatchers.IO) {
+        // userDao.getAll() is already ordered by createdAt DESC, so the head of the
+        // list satisfies both the "single account" and "most recent" cases.
+        userDao.getAll().firstOrNull()?.toDomain()
+    }
+
+    override suspend fun listAccounts(): List<User> = withContext(Dispatchers.IO) {
+        userDao.getAll().map { it.toDomain() }
+    }
+
+    override suspend fun unlock(userId: String, password: String): AuthResult =
+        withContext(Dispatchers.IO) {
+            val entity = userDao.getById(userId)
+                ?: return@withContext AuthResult.Failure(AuthError.InvalidCredentials)
+
+            val valid = hasher.verify(password, entity.passwordSalt, entity.passwordHash)
+            if (!valid) {
+                return@withContext AuthResult.Failure(AuthError.InvalidCredentials)
+            }
+
+            sessionManager.setCurrentUserId(entity.id)
+            AuthResult.Success(entity.toDomain())
+        }
+
+    override suspend fun establishSessionAfterRestore(): AuthResult =
+        withContext(Dispatchers.IO) {
+            val user = userDao.getAll().firstOrNull()
+                ?: return@withContext AuthResult.Failure(AuthError.Unknown)
+            sessionManager.setCurrentUserId(user.id)
+            AuthResult.Success(user.toDomain())
         }
 }

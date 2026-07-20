@@ -49,13 +49,19 @@ class BackupRepositoryImpl @Inject constructor(
                 BackupTestResult(it.id, it.eventId, it.individualId, it.testId, it.rawScore, it.percentile?.toDouble(), it.createdAt, it.captureMethod, null)
             }
             val users = backupDao.getAllUsers().map {
-                BackupUser(it.id, it.firstName, it.lastName, it.username, 
-                           android.util.Base64.encodeToString(it.passwordHash, android.util.Base64.NO_WRAP), 
-                           android.util.Base64.encodeToString(it.passwordSalt, android.util.Base64.NO_WRAP), 
-                           it.securityQuestion, 
-                           it.securityAnswerHash?.let { h -> android.util.Base64.encodeToString(h, android.util.Base64.NO_WRAP) }, 
-                           it.securityAnswerSalt?.let { s -> android.util.Base64.encodeToString(s, android.util.Base64.NO_WRAP) }, 
-                           it.createdAt)
+                BackupUser(
+                    id = it.id,
+                    firstName = it.firstName,
+                    lastName = it.lastName,
+                    username = it.username,
+                    passwordHash = android.util.Base64.encodeToString(it.passwordHash, android.util.Base64.NO_WRAP),
+                    passwordSalt = android.util.Base64.encodeToString(it.passwordSalt, android.util.Base64.NO_WRAP),
+                    securityQuestion = it.securityQuestion,
+                    securityAnswerHash = it.securityAnswerHash?.let { h -> android.util.Base64.encodeToString(h, android.util.Base64.NO_WRAP) },
+                    securityAnswerSalt = it.securityAnswerSalt?.let { s -> android.util.Base64.encodeToString(s, android.util.Base64.NO_WRAP) },
+                    email = it.email,
+                    createdAt = it.createdAt
+                )
             }
 
             val payload = BackupPayload(
@@ -111,13 +117,17 @@ class BackupRepositoryImpl @Inject constructor(
                 
                 val userEntities = payload.users.map {
                     com.vamshi.field.data.local.entities.auth.UserEntity(
-                        it.id, it.firstName, it.lastName, it.username,
-                        android.util.Base64.decode(it.passwordHash, android.util.Base64.NO_WRAP),
-                        android.util.Base64.decode(it.passwordSalt, android.util.Base64.NO_WRAP),
-                        it.securityQuestion,
-                        it.securityAnswerHash?.let { h -> android.util.Base64.decode(h, android.util.Base64.NO_WRAP) },
-                        it.securityAnswerSalt?.let { s -> android.util.Base64.decode(s, android.util.Base64.NO_WRAP) },
-                        it.createdAt
+                        id = it.id,
+                        firstName = it.firstName,
+                        lastName = it.lastName,
+                        username = it.username,
+                        email = it.email,
+                        passwordHash = android.util.Base64.decode(it.passwordHash, android.util.Base64.NO_WRAP),
+                        passwordSalt = android.util.Base64.decode(it.passwordSalt, android.util.Base64.NO_WRAP),
+                        securityQuestion = it.securityQuestion,
+                        securityAnswerHash = it.securityAnswerHash?.let { h -> android.util.Base64.decode(h, android.util.Base64.NO_WRAP) },
+                        securityAnswerSalt = it.securityAnswerSalt?.let { s -> android.util.Base64.decode(s, android.util.Base64.NO_WRAP) },
+                        createdAt = it.createdAt
                     )
                 }
                 val indEntities = payload.individuals.map {

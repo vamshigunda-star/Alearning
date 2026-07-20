@@ -25,9 +25,9 @@ import com.vamshi.field.ui.athlete.AthleteDashboardScreen
 import com.vamshi.field.ui.athlete.AthleteTestDetailScreen
 import com.vamshi.field.ui.auth.AuthGateState
 import com.vamshi.field.ui.auth.AuthGateViewModel
-import com.vamshi.field.ui.auth.reset.ResetPasswordScreen
-import com.vamshi.field.ui.auth.signin.SignInScreen
-import com.vamshi.field.ui.auth.signup.SignUpScreen
+import com.vamshi.field.ui.auth.onboarding.OnboardingScreen
+import com.vamshi.field.ui.auth.restore.RestoreBackupScreen
+import com.vamshi.field.ui.auth.unlock.UnlockScreen
 import com.vamshi.field.ui.dashboard.DashboardScreen
 import com.vamshi.field.ui.groupoverview.GroupOverviewScreen
 import com.vamshi.field.ui.leaderboard.LeaderboardScreen
@@ -58,9 +58,9 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
 
     val startDestination = when (authGateState) {
         AuthGateState.Authenticated -> Screen.Dashboard.route
-        AuthGateState.UnauthenticatedHasUsers -> Screen.SignIn.route
-        AuthGateState.UnauthenticatedNoUsers -> Screen.SignUp.route
-        AuthGateState.Loading -> Screen.SignIn.route // unreachable — handled above
+        AuthGateState.UnauthenticatedHasUsers -> Screen.Unlock.route
+        AuthGateState.UnauthenticatedNoUsers -> Screen.Onboarding.route
+        AuthGateState.Loading -> Screen.Unlock.route // unreachable — handled above
     }
 
     NavHost(
@@ -74,46 +74,41 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
     ) {
         // ───── Auth screens ─────
 
-        composable(Screen.SignIn.route) {
+        composable(Screen.Unlock.route) {
 
-            SignInScreen(
-                onSignInSuccess = {
+            UnlockScreen(
+                onUnlockSuccess = {
                     navController.navigate(Screen.Dashboard.route) {
                         popUpTo(0) { inclusive = true }
                     }
                 },
-                onNavigateToSignUp = {
-                    navController.navigate(Screen.SignUp.route)
-                },
-                onNavigateToResetPassword = {
-                    navController.navigate(Screen.ResetPassword.route)
+                onNavigateToRestore = {
+                    navController.navigate(Screen.RestoreBackup.route)
                 }
             )
         }
 
-        composable(Screen.SignUp.route) {
+        composable(Screen.Onboarding.route) {
 
-            SignUpScreen(
-                onSignUpSuccess = {
+            OnboardingScreen(
+                onOnboardingSuccess = {
                     navController.navigate(Screen.Dashboard.route) {
                         popUpTo(0) { inclusive = true }
                     }
                 },
-                onNavigateToSignIn = {
-                    navController.navigate(Screen.SignIn.route) {
-                        popUpTo(Screen.SignUp.route) { inclusive = true }
-                    }
+                onNavigateToRestore = {
+                    navController.navigate(Screen.RestoreBackup.route)
                 }
             )
         }
 
-        composable(Screen.ResetPassword.route) {
+        composable(Screen.RestoreBackup.route) {
 
-            ResetPasswordScreen(
-                onBack = { navController.popBackStack() },
-                onResetSuccess = {
-                    navController.navigate(Screen.SignIn.route) {
-                        popUpTo(Screen.ResetPassword.route) { inclusive = true }
+            RestoreBackupScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onRestoreSuccess = {
+                    navController.navigate(Screen.Dashboard.route) {
+                        popUpTo(0) { inclusive = true }
                     }
                 }
             )
@@ -138,7 +133,7 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
                 onNavigateToReports = { navController.navigate(Screen.Report.route) },
                 onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                 onNavigateToSignIn = {
-                    navController.navigate(Screen.SignIn.route) {
+                    navController.navigate(Screen.Unlock.route) {
                         popUpTo(0) { inclusive = true }
                     }
                 }

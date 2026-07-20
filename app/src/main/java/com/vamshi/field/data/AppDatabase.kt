@@ -43,7 +43,7 @@ import com.vamshi.field.data.local.entities.testing.TestingEventEntity
         RecommendationCategoryEntity::class,
         RecommendationTestCrossRef::class
     ],
-    version = 10,
+    version = 11,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -57,6 +57,25 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun recommendationDao(): RecommendationDao
 
     companion object {
+        /**
+         * Migration 10 → 11: Adds the nullable `email` column to `users`.
+         *
+         * Backs the redesigned onboarding flow (Coach Name + Password + optional Email).
+         * Email is never a login field — it exists solely so a coach can later connect
+         * Google Drive backup/restore without re-entering it. Nullable with no DEFAULT
+         * clause, matching how [UserEntity.email] declares no `@ColumnInfo` default —
+         * the migration-created schema must match what Room generates on a fresh install.
+         *
+         * Deliberately does NOT drop `securityQuestion`/`securityAnswerHash`/`securityAnswerSalt`
+         * — those columns are already nullable and simply stop being written to by the new
+         * onboarding path. Physically dropping them is out of scope here (planned separately).
+         */
+        val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE users ADD COLUMN email TEXT DEFAULT NULL")
+            }
+        }
+
         /**
          * Migration 9 → 10: Adds recommendation_categories and recommendation_test_cross_ref.
          *

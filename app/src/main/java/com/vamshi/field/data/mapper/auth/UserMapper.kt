@@ -16,5 +16,6 @@ fun UserEntity.toDomain(): User = User(
     firstName = firstName,
     lastName = lastName,
     username = username,
+    email = email,
     createdAt = createdAt
 )

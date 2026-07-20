@@ -1,13 +1,16 @@
-package com.vamshi.field.ui.auth.signin
+package com.vamshi.field.ui.auth.unlock
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -15,10 +18,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.foundation.Image
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -33,66 +36,65 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.vamshi.field.R
-import com.vamshi.field.ui.auth.signup.AuthErrorBanner
+import com.vamshi.field.ui.auth.components.AuthErrorBanner
 import com.vamshi.field.ui.components.AppTopBar
 
+/**
+ * Quiet, white "Welcome back" unlock screen shown to a returning coach on every launch
+ * after the first. Deliberately plain — matches [AppTopBar]'s white/compact contract,
+ * unlike the one-time gradient hero on [com.vamshi.field.ui.auth.onboarding.OnboardingScreen].
+ */
 @Composable
-fun SignInScreen(
-    onSignInSuccess: () -> Unit,
-    onNavigateToSignUp: () -> Unit,
-    onNavigateToResetPassword: () -> Unit,
-    viewModel: SignInViewModel = hiltViewModel()
+fun UnlockScreen(
+    onUnlockSuccess: () -> Unit,
+    onNavigateToRestore: () -> Unit,
+    viewModel: UnlockViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(uiState.signInSuccess) {
-        if (uiState.signInSuccess) {
-            viewModel.onAction(SignInAction.NavigationConsumed)
-            onSignInSuccess()
+    LaunchedEffect(uiState.unlockSuccess) {
+        if (uiState.unlockSuccess) {
+            viewModel.onAction(UnlockAction.NavigationConsumed)
+            onUnlockSuccess()
         }
     }
 
-    LaunchedEffect(uiState.navigateToReset) {
-        if (uiState.navigateToReset) {
-            viewModel.onAction(SignInAction.NavigationConsumed)
-            onNavigateToResetPassword()
-        }
-    }
-
-    LaunchedEffect(uiState.navigateToSignUp) {
-        if (uiState.navigateToSignUp) {
-            viewModel.onAction(SignInAction.NavigationConsumed)
-            onNavigateToSignUp()
-        }
-    }
-
-    SignInContent(
+    UnlockContent(
         uiState = uiState,
-        onAction = viewModel::onAction
+        onAction = viewModel::onAction,
+        onNavigateToRestore = onNavigateToRestore
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SignInContent(
-    uiState: SignInUiState,
-    onAction: (SignInAction) -> Unit
+fun UnlockContent(
+    uiState: UnlockUiState,
+    onAction: (UnlockAction) -> Unit,
+    onNavigateToRestore: () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
 
     Scaffold(
-        topBar = { AppTopBar(title = "ALearning") }
+        topBar = { AppTopBar(title = "Field") }
     ) { paddingValues ->
+        if (uiState.isLoading && uiState.accountId == null) {
+            Box(
+                modifier = Modifier.fillMaxSize().padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+            return@Scaffold
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -104,57 +106,54 @@ fun SignInContent(
             if (uiState.errorMessage != null) {
                 AuthErrorBanner(
                     message = uiState.errorMessage,
-                    onDismiss = { onAction(SignInAction.DismissError) }
+                    onDismiss = { onAction(UnlockAction.DismissError) }
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
-            Image(
-                painter = painterResource(id = R.drawable.logo),
-                contentDescription = "SAMA Testing Logo",
-                modifier = Modifier
-                    .size(120.dp)
-                    .align(Alignment.CenterHorizontally),
-                contentScale = ContentScale.Fit
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
             Text(
-                text = "Welcome back, Coach",
+                text = "Welcome back, ${uiState.coachDisplayName}",
                 style = MaterialTheme.typography.headlineSmall
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Sign in to continue",
+                text = "Enter your password to continue",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            OutlinedTextField(
-                value = uiState.username,
-                onValueChange = { onAction(SignInAction.UsernameChanged(it)) },
-                label = { Text("Username") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Ascii,
-                    imeAction = ImeAction.Next
-                ),
-                keyboardActions = KeyboardActions(
-                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
-                ),
-                modifier = Modifier.fillMaxWidth()
-            )
+            if (uiState.showAccountSwitcher) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    uiState.accounts.forEach { account ->
+                        val label = listOf(account.firstName, account.lastName)
+                            .filter { it.isNotBlank() }
+                            .joinToString(" ")
+                            .ifBlank { "Coach" }
+                        FilterChip(
+                            selected = account.id == uiState.accountId,
+                            onClick = { onAction(UnlockAction.AccountSelected(account.id)) },
+                            label = { Text(label) }
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+            }
 
             OutlinedTextField(
                 value = uiState.password,
-                onValueChange = { onAction(SignInAction.PasswordChanged(it)) },
+                onValueChange = { onAction(UnlockAction.PasswordChanged(it)) },
                 label = { Text("Password") },
                 singleLine = true,
                 visualTransformation = if (uiState.passwordVisible)
                     VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
-                    IconButton(onClick = { onAction(SignInAction.TogglePasswordVisibility) }) {
+                    IconButton(onClick = { onAction(UnlockAction.TogglePasswordVisibility) }) {
                         Icon(
                             imageVector = if (uiState.passwordVisible)
                                 Icons.Default.Visibility else Icons.Default.VisibilityOff,
@@ -169,22 +168,15 @@ fun SignInContent(
                 ),
                 keyboardActions = KeyboardActions(onDone = {
                     focusManager.clearFocus()
-                    onAction(SignInAction.Submit)
+                    onAction(UnlockAction.Submit)
                 }),
                 modifier = Modifier.fillMaxWidth()
             )
 
-            TextButton(
-                onClick = { onAction(SignInAction.ResetPasswordClicked) },
-                modifier = Modifier.align(Alignment.End)
-            ) {
-                Text("Forgot password?")
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             Button(
-                onClick = { onAction(SignInAction.Submit) },
+                onClick = { onAction(UnlockAction.Submit) },
                 enabled = !uiState.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -198,17 +190,17 @@ fun SignInContent(
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 } else {
-                    Text("Sign In")
+                    Text("Continue")
                 }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
             TextButton(
-                onClick = { onAction(SignInAction.NavigateToSignUpClicked) },
+                onClick = onNavigateToRestore,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             ) {
-                Text("Don't have an account? Sign up")
+                Text("Trouble signing in?")
             }
         }
     }

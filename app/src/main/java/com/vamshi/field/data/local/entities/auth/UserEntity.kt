@@ -35,6 +35,13 @@ data class UserEntity(
     /** Stored as lowercase+trimmed; never contains mixed-case. */
     val username: String,
 
+    /**
+     * Optional email — added in schema v11 ([com.vamshi.field.data.AppDatabase.MIGRATION_10_11]).
+     * Purely for enabling Google Drive backup/restore later; never used as a login field
+     * and never required at account-creation time.
+     */
+    val email: String? = null,
+
     /** PBKDF2 derived key bytes (32 bytes / 256 bits). */
     val passwordHash: ByteArray,
 
@@ -61,6 +68,7 @@ data class UserEntity(
             firstName == other.firstName &&
             lastName == other.lastName &&
             username == other.username &&
+            email == other.email &&
             passwordHash.contentEquals(other.passwordHash) &&
             passwordSalt.contentEquals(other.passwordSalt) &&
             securityQuestion == other.securityQuestion &&
@@ -78,6 +86,7 @@ data class UserEntity(
         result = 31 * result + firstName.hashCode()
         result = 31 * result + lastName.hashCode()
         result = 31 * result + username.hashCode()
+        result = 31 * result + (email?.hashCode() ?: 0)
         result = 31 * result + passwordHash.contentHashCode()
         result = 31 * result + passwordSalt.contentHashCode()
         result = 31 * result + (securityQuestion?.hashCode() ?: 0)

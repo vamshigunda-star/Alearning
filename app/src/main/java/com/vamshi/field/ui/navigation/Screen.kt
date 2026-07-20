@@ -65,9 +65,12 @@ sealed class Screen(val route: String) {
     }
 
     // ───── Auth screens ─────
-    data object SignIn : Screen("sign_in")
-    data object SignUp : Screen("sign_up")
-    data object ResetPassword : Screen("reset_password")
+    /** First-launch account creation: Coach Name + Password (+ optional Email). Replaces SignUp. */
+    data object Onboarding : Screen("onboarding")
+    /** Returning-coach "Welcome back" password unlock. Replaces SignIn. */
+    data object Unlock : Screen("unlock")
+    /** Pre-auth Google Drive restore, reachable from both Onboarding and Unlock. Replaces ResetPassword. */
+    data object RestoreBackup : Screen("restore_backup")
     
     data object AiCoach : Screen("ai_coach?context={context}") {
         fun createRoute(contextString: String?) = if (contextString != null) "ai_coach?context=${android.net.Uri.encode(contextString)}" else "ai_coach"

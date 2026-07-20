@@ -45,6 +45,17 @@ interface UserDao {
     suspend fun count(): Int
 
     /**
+     * Returns every stored account, most recently created first.
+     *
+     * Lightweight, domain-facing read (unlike [com.vamshi.field.data.local.daos.backup.BackupDao.getAllUsers],
+     * which is a separate DAO carrying raw credential bytes for the backup JSON round-trip only).
+     * Used by [com.vamshi.field.data.repository.AuthRepositoryImpl] to resolve the primary/most-recent
+     * account and to power the rare multi-account switcher on the Unlock screen.
+     */
+    @Query("SELECT * FROM users ORDER BY createdAt DESC")
+    suspend fun getAll(): List<UserEntity>
+
+    /**
      * Updates the password credentials for an existing user during a
      * password reset operation.
      */
