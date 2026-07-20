@@ -38,4 +38,4 @@ test_waist_circ,cat_body_comp,Waist Circumference,cm,FALSE,Measure circumference
 
 test_t_test,cat_agility,T-Test,seconds,FALSE,Sprint and shuffle through a T-shaped cone course as fast as possible.,INDIVIDUAL,NUMERIC,,2,0,60,NORM_LOOKUP,,bS6P9z4WZlM
 
-test_pro_agility,cat_agility,Pro Agility (5-10-5),seconds,FALSE,Sprint 5 yards right, 10 yards left, and 5 yards right through a linear course.,INDIVIDUAL,NUMERIC,,2,0,20,NORM_LOOKUP,,8p-S7d8hX3w
+test_pro_agility,cat_agility,Pro Agility (5-10-5),seconds,FALSE,"Sprint 5 yards right, 10 yards left, and 5 yards right through a linear course.",INDIVIDUAL,NUMERIC,,2,0,20,NORM_LOOKUP,,8p-S7d8hX3w

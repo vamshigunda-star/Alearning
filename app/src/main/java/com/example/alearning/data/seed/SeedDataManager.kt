@@ -217,11 +217,11 @@ class SeedDataManager @Inject constructor(
 
                 // 5. Link tests to events
                 val testIds = listOf(
-                    "standard_vertical_jump",
-                    "standard_40m_sprint",
-                    "standard_beep_test",
-                    "standard_1rm_squat",
-                    "standard_pro_agility"
+                    "test_pullup",
+                    "test_mile_run",
+                    "test_pacer",
+                    "test_1rm_squat",
+                    "test_pro_agility"
                 )
                 for (testId in testIds) {
                     testingDao.addTestToEvent(EventTestCrossRef("event_benchmark_1", testId))
@@ -231,32 +231,32 @@ class SeedDataManager @Inject constructor(
                 // 6. Test Results
                 val results = listOf(
                     // Alex Mercer
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_alex", testId = "standard_vertical_jump", rawScore = 65.0, ageAtTime = 18f, percentile = 85, classification = "SUPERIOR"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_alex", testId = "standard_40m_sprint", rawScore = 4.75, ageAtTime = 18f, percentile = 90, classification = "SUPERIOR"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_alex", testId = "standard_beep_test", rawScore = 12.5, ageAtTime = 18f, percentile = 75, classification = "HEALTHY"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_alex", testId = "standard_1rm_squat", rawScore = 140.0, ageAtTime = 18f, percentile = 80, classification = "HEALTHY"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_alex", testId = "standard_pro_agility", rawScore = 4.25, ageAtTime = 18f, percentile = 88, classification = "SUPERIOR"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_alex", testId = "test_pullup", rawScore = 15.0, ageAtTime = 18f, percentile = 85, classification = "SUPERIOR"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_alex", testId = "test_mile_run", rawScore = 320.0, ageAtTime = 18f, percentile = 90, classification = "SUPERIOR"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_alex", testId = "test_pacer", rawScore = 95.0, ageAtTime = 18f, percentile = 75, classification = "HEALTHY"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_alex", testId = "test_1rm_squat", rawScore = 315.0, ageAtTime = 18f, percentile = 80, classification = "HEALTHY"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_alex", testId = "test_pro_agility", rawScore = 4.25, ageAtTime = 18f, percentile = 88, classification = "SUPERIOR"),
 
                     // Sarah Connor
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_sarah", testId = "standard_vertical_jump", rawScore = 48.0, ageAtTime = 17f, percentile = 78, classification = "HEALTHY"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_sarah", testId = "standard_40m_sprint", rawScore = 5.25, ageAtTime = 17f, percentile = 65, classification = "HEALTHY"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_sarah", testId = "standard_beep_test", rawScore = 10.2, ageAtTime = 17f, percentile = 82, classification = "SUPERIOR"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_sarah", testId = "standard_1rm_squat", rawScore = 95.0, ageAtTime = 17f, percentile = 72, classification = "HEALTHY"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_sarah", testId = "standard_pro_agility", rawScore = 4.60, ageAtTime = 17f, percentile = 74, classification = "HEALTHY"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_sarah", testId = "test_pullup", rawScore = 8.0, ageAtTime = 17f, percentile = 78, classification = "HEALTHY"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_sarah", testId = "test_mile_run", rawScore = 420.0, ageAtTime = 17f, percentile = 65, classification = "HEALTHY"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_sarah", testId = "test_pacer", rawScore = 70.0, ageAtTime = 17f, percentile = 82, classification = "SUPERIOR"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_sarah", testId = "test_1rm_squat", rawScore = 185.0, ageAtTime = 17f, percentile = 72, classification = "HEALTHY"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_sarah", testId = "test_pro_agility", rawScore = 4.60, ageAtTime = 17f, percentile = 74, classification = "HEALTHY"),
 
                     // Marcus Fenix
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_marcus", testId = "standard_vertical_jump", rawScore = 32.0, ageAtTime = 19f, percentile = 25, classification = "NEEDS_IMPROVEMENT"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_marcus", testId = "standard_40m_sprint", rawScore = 5.95, ageAtTime = 19f, percentile = 20, classification = "NEEDS_IMPROVEMENT"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_marcus", testId = "standard_beep_test", rawScore = 6.4, ageAtTime = 19f, percentile = 28, classification = "NEEDS_IMPROVEMENT"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_marcus", testId = "standard_1rm_squat", rawScore = 165.0, ageAtTime = 19f, percentile = 95, classification = "SUPERIOR"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_marcus", testId = "standard_pro_agility", rawScore = 5.15, ageAtTime = 19f, percentile = 22, classification = "NEEDS_IMPROVEMENT"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_marcus", testId = "test_pullup", rawScore = 4.0, ageAtTime = 19f, percentile = 25, classification = "NEEDS_IMPROVEMENT"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_marcus", testId = "test_mile_run", rawScore = 540.0, ageAtTime = 19f, percentile = 20, classification = "NEEDS_IMPROVEMENT"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_marcus", testId = "test_pacer", rawScore = 35.0, ageAtTime = 19f, percentile = 28, classification = "NEEDS_IMPROVEMENT"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_marcus", testId = "test_1rm_squat", rawScore = 405.0, ageAtTime = 19f, percentile = 95, classification = "SUPERIOR"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_marcus", testId = "test_pro_agility", rawScore = 5.15, ageAtTime = 19f, percentile = 22, classification = "NEEDS_IMPROVEMENT"),
 
                     // Lara Croft
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_lara", testId = "standard_vertical_jump", rawScore = 58.0, ageAtTime = 17f, percentile = 94, classification = "SUPERIOR"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_lara", testId = "standard_40m_sprint", rawScore = 4.98, ageAtTime = 17f, percentile = 92, classification = "SUPERIOR"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_lara", testId = "standard_beep_test", rawScore = 11.8, ageAtTime = 17f, percentile = 96, classification = "SUPERIOR"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_lara", testId = "standard_1rm_squat", rawScore = 110.0, ageAtTime = 17f, percentile = 90, classification = "SUPERIOR"),
-                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_lara", testId = "standard_pro_agility", rawScore = 4.12, ageAtTime = 17f, percentile = 95, classification = "SUPERIOR")
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_lara", testId = "test_pullup", rawScore = 12.0, ageAtTime = 17f, percentile = 94, classification = "SUPERIOR"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_lara", testId = "test_mile_run", rawScore = 390.0, ageAtTime = 17f, percentile = 92, classification = "SUPERIOR"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_lara", testId = "test_pacer", rawScore = 85.0, ageAtTime = 17f, percentile = 96, classification = "SUPERIOR"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_lara", testId = "test_1rm_squat", rawScore = 225.0, ageAtTime = 17f, percentile = 90, classification = "SUPERIOR"),
+                    TestResultEntity(eventId = "event_benchmark_1", individualId = "athlete_lara", testId = "test_pro_agility", rawScore = 4.12, ageAtTime = 17f, percentile = 95, classification = "SUPERIOR")
                 )
                 for (res in results) {
                     testingDao.insertResult(res)
