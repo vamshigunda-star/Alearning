@@ -41,7 +41,8 @@ Presentation (ui/) → Domain (domain/) ← Data (data/)
 ## Database & Seeding
 - **Version:** Room database is currently at **Version 8**.
 - **Seeding:** Data is seeded from CSVs in `assets/` on first launch.
-- **Seed Flag:** Guarded by SharedPreferences key `data_seeded_csv_v9`.
+- **Seed Flag:** Guarded by a versioned SharedPreferences key (`KEY_DATA_SEEDED` in `SeedDataManager`, currently `data_seeded_csv_v12`).
+- **Reseeding is safe:** bumping the seed key re-imports the catalog by upserting `test_categories`/`fitness_tests` and wholesale-replacing `norm_references` and the recommendation tables. It must NEVER delete user-generated data (`testing_events`, `test_results`, `event_test_cross_ref`, athletes, groups).
 
 ---
 

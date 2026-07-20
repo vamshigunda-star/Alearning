@@ -105,9 +105,10 @@ An offline-first Room SQLite implementation containing the following tables:
 - `pending_test_entries`: Staged, in-flight grid scores that survive app process death during live testing sessions.
 
 ### Seeding Mechanism
-On first launch, [SeedDataManager](file:///c:/Users/APF/AndroidStudioProjects/Alearning/app/src/main/java/com/example/alearning/data/seed/SeedDataManager.kt) parses CSV data from assets (`test_categories.csv`, `tests.csv`, `norms.csv`) and seeds the SQLite tables using `ImportStandardsUseCase`.
-- Guarded by SharedPreferences key: `data_seeded_csv_v9`.
-- Seeding is atomic; failures are rolled back automatically.
+On first launch, [SeedDataManager](file:///c:/Users/APF/AndroidStudioProjects/Alearning/app/src/main/java/com/example/alearning/data/seed/SeedDataManager.kt) parses CSV data from assets (`test_categories.csv`, `tests.csv`, `norms.csv`, `recommendation_categories.csv`, `recommendation_tests.csv`) and seeds the SQLite tables using `ImportStandardsUseCase` and `ImportRecommendationsUseCase`.
+- Guarded by a versioned SharedPreferences key (`KEY_DATA_SEEDED` in `SeedDataManager`, currently `data_seeded_csv_v12`). Bump the version suffix to ship catalog updates to existing installs.
+- Reseeding is non-destructive for user data: catalog tests/categories are **upserted** in place (user results hold foreign keys to them), while `norm_references` and the recommendation tables are replaced wholesale (nothing references them). Coach-created events, results, athletes, and groups are never touched. Catalog rows removed from newer CSVs remain in the DB, since existing results may reference them.
+- Demo athletes/groups/events are only seeded when the `individuals` table is empty (i.e., a truly fresh install).
 
 ---
 
@@ -124,7 +125,7 @@ sequenceDiagram
     participant DB as AppDatabase (Room)
 
     App->>SDM: seedIfNeeded()
-    SDM->>Prefs: Check flag "data_seeded_csv_v9"
+    SDM->>Prefs: Check versioned seed flag (KEY_DATA_SEEDED)
     alt Flag is true
         Prefs-->>SDM: Already Seeded
         SDM-->>App: Skip Seeding
@@ -132,11 +133,11 @@ sequenceDiagram
         SDM->>CSV: Open and parse CSV rows (Categories, Tests, Norms)
         CSV-->>SDM: Return parsed maps
         SDM->>SDM: Map rows to Room Entity instances
-        SDM->>UC: invoke(categories, tests, norms, clearExisting = true)
-        UC->>DB: Insert seeded records into tables
+        SDM->>UC: invoke(categories, tests, norms)
+        UC->>DB: Upsert catalog rows, replace norms
         DB-->>UC: Success
         UC-->>SDM: Success
-        SDM->>Prefs: Set "data_seeded_csv_v9" = true
+        SDM->>Prefs: Set versioned seed flag = true
         SDM-->>App: Seeding Complete
     end
 ```
