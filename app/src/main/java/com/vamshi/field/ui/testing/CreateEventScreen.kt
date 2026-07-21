@@ -1,32 +1,34 @@
 package com.vamshi.field.ui.testing
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.DirectionsRun
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Event
-import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.vamshi.field.domain.model.standards.FitnessTest
 import com.vamshi.field.domain.model.standards.TestPreset
 import com.vamshi.field.ui.components.AppTopBar
 import com.vamshi.field.ui.theme.*
@@ -138,6 +140,7 @@ fun CreateEventContent(
     if (uiState.isSavePresetDialogOpen) {
         SavePresetDialog(
             name = uiState.pendingPresetName,
+            selectedCount = uiState.selectedTestIds.size,
             onNameChange = { onAction(CreateEventAction.SetPendingPresetName(it)) },
             onConfirm = { onAction(CreateEventAction.ConfirmSavePreset) },
             onDismiss = { onAction(CreateEventAction.DismissSavePresetDialog) }
@@ -146,151 +149,27 @@ fun CreateEventContent(
 }
 
 @Composable
-private fun PresetCard(
-    preset: TestPreset,
-    isApplied: Boolean,
-    onApply: () -> Unit,
-    onDelete: () -> Unit
-) {
-    val icon = when {
-        preset.name.contains("Sprint", ignoreCase = true) -> Icons.AutoMirrored.Filled.DirectionsRun
-        else -> Icons.Default.FitnessCenter
-    }
-
-    Surface(
-        onClick = onApply,
-        shape = RoundedCornerShape(16.dp),
-        color = if (isApplied) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface,
-        border = BorderStroke(
-            if (isApplied) 2.dp else 1.dp,
-            if (isApplied) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-        ),
-        modifier = Modifier
-            .width(120.dp)
-            .height(120.dp),
-        shadowElevation = if (isApplied) 0.dp else 2.dp
-    ) {
-        Box(modifier = Modifier.padding(12.dp)) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = if (isApplied) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant,
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-                
-                Column {
-                    Text(
-                        preset.name,
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        color = if (isApplied) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        "${preset.testIds.size} Tests",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-            if (!preset.isBuiltIn) {
-                IconButton(
-                    onClick = onDelete,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .offset(x = 10.dp, y = (-10).dp)
-                        .size(20.dp)
-                ) {
-                    Icon(
-                        Icons.Default.Close,
-                        contentDescription = "Delete",
-                        modifier = Modifier.size(12.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun SavePresetCard(
-    enabled: Boolean,
-    onClick: () -> Unit
-) {
-    Surface(
-        onClick = onClick,
-        enabled = enabled,
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
-        modifier = Modifier
-            .width(120.dp)
-            .height(120.dp),
-        shadowElevation = 0.dp
-    ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Surface(
-                shape = RoundedCornerShape(8.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                modifier = Modifier.size(36.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        Icons.Default.Add,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            }
-            Text(
-                "Save Current\nSelection",
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                lineHeight = 14.sp,
-                color = MaterialTheme.colorScheme.primary
-            )
-        }
-    }
-}
-
-@Composable
 private fun SavePresetDialog(
     name: String,
+    selectedCount: Int,
     onNameChange: (String) -> Unit,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Save preset") },
+        title = { Text("Save as custom list") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    "Give this test selection a name. You can apply it again later from Quick Select.",
+                    "Name this selection of $selectedCount tests so you can reuse it for future testing events.",
                     style = MaterialTheme.typography.bodyMedium
                 )
                 OutlinedTextField(
                     value = name,
                     onValueChange = onNameChange,
-                    label = { Text("Preset name") },
-                    placeholder = { Text("e.g., U12 Pre-Season") },
+                    label = { Text("List name") },
+                    placeholder = { Text("Combine Day 1") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -298,7 +177,7 @@ private fun SavePresetDialog(
         },
         confirmButton = {
             TextButton(onClick = onConfirm, enabled = name.isNotBlank()) {
-                Text("Save")
+                Text("Save list")
             }
         },
         dismissButton = {
@@ -370,7 +249,6 @@ private fun CreateEventBody(
     padding: PaddingValues
 ) {
     var groupDropdownExpanded by remember { mutableStateOf(false) }
-    var quickSelectExpanded by remember { mutableStateOf(false) }
     val selectedGroup = uiState.groups.find { it.id == uiState.selectedGroupId }
 
     LazyColumn(
@@ -393,7 +271,7 @@ private fun CreateEventBody(
                 ) {
                     val groupText = selectedGroup?.let {
                         val count = uiState.groupAthleteCounts[it.id] ?: 0
-                        "${it.name} � $count"
+                        "${it.name} • $count"
                     } ?: ""
                     
                     OutlinedTextField(
@@ -477,237 +355,262 @@ private fun CreateEventBody(
         if (uiState.categories.isNotEmpty()) {
             item {
                 Text(
-                    "Select Tests", 
-                    style = MaterialTheme.typography.titleLarge, 
+                    "Select Tests",
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                ScrollableTabRow(
-                    selectedTabIndex = uiState.selectedTabIndex,
-                    edgePadding = 0.dp,
-                    containerColor = Color.Transparent,
-                    divider = {},
-                    indicator = { tabPositions ->
-                        if (uiState.selectedTabIndex < tabPositions.size) {
-                            TabRowDefaults.SecondaryIndicator(
-                                modifier = Modifier.tabIndicatorOffset(tabPositions[uiState.selectedTabIndex]),
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                ) {
-                    uiState.categories.forEachIndexed { index, category ->
-                        val testCount = uiState.allTests.count { it.categoryId == category.id }
-                        Tab(
-                            selected = index == uiState.selectedTabIndex,
-                            onClick = { onAction(CreateEventAction.SelectTab(index)) },
-                            text = { 
-                                val isSelected = index == uiState.selectedTabIndex
-                                Surface(
-                                    shape = RoundedCornerShape(24.dp),
-                                    color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
-                                    shadowElevation = if (isSelected) 2.dp else 0.dp,
-                                    modifier = Modifier.padding(vertical = 4.dp)
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
-                                    ) {
-                                        Text(
-                                            category.name, 
-                                            maxLines = 1, 
-                                            style = MaterialTheme.typography.titleSmall,
-                                            color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                        Surface(
-                                            shape = androidx.compose.foundation.shape.CircleShape,
-                                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                                            modifier = Modifier.size(24.dp)
-                                        ) {
-                                            Box(contentAlignment = Alignment.Center) {
-                                                Text(
-                                                    "$testCount",
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+            }
+
+            uiState.categories.forEach { category ->
+                val isExpanded = category.id == uiState.expandedCategoryId
+                val categoryTests = uiState.allTests.filter { it.categoryId == category.id }
+                val selectedCount = categoryTests.count { it.id in uiState.selectedTestIds }
+
+                item(key = "category_${category.id}") {
+                    CategoryAccordionHeader(
+                        name = category.name,
+                        selectedCount = selectedCount,
+                        totalCount = categoryTests.size,
+                        isExpanded = isExpanded,
+                        onClick = { onAction(CreateEventAction.ToggleCategoryExpanded(category.id)) }
+                    )
+                }
+
+                if (isExpanded) {
+                    items(categoryTests, key = { it.id }) { test ->
+                        TestSelectionRow(
+                            test = test,
+                            isSelected = test.id in uiState.selectedTestIds,
+                            onToggle = { onAction(CreateEventAction.ToggleTest(test.id)) }
                         )
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     }
                 }
             }
         }
 
-        items(uiState.availableTests) { test ->
-            val isSelected = test.id in uiState.selectedTestIds
-            Surface(
-                onClick = { onAction(CreateEventAction.ToggleTest(test.id)) },
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.surface,
+        if (uiState.presets.isNotEmpty()) {
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "My custom lists",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(uiState.presets, key = { it.id }) { preset ->
+                            val isApplied = preset.testIds.isNotEmpty() && uiState.selectedTestIds == preset.testIds.toSet()
+                            CustomListChip(
+                                preset = preset,
+                                isApplied = isApplied,
+                                onApply = { onAction(CreateEventAction.ApplyPreset(preset.id)) },
+                                onDelete = if (!preset.isBuiltIn) {
+                                    { onAction(CreateEventAction.DeletePreset(preset.id)) }
+                                } else null
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            Button(
+                onClick = { onAction(CreateEventAction.OpenSavePresetDialog) },
+                enabled = uiState.selectedTestIds.isNotEmpty(),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .shadow(2.dp, RoundedCornerShape(16.dp))
+                    .height(56.dp),
+                shape = RoundedCornerShape(28.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Checkbox(
-                        checked = isSelected,
-                        onCheckedChange = { onAction(CreateEventAction.ToggleTest(test.id)) },
-                        colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary)
-                    )
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Text(
-                            test.name, 
-                            style = MaterialTheme.typography.titleMedium, 
-                            fontWeight = FontWeight.Bold
-                        )
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Text(
-                                test.unit,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            val badgeColor = if (test.isHigherBetter) Color(0xFFE8F5E9) else Color(0xFFFFEBEE)
-                            val textColor = if (test.isHigherBetter) Color(0xFF2E7D32) else Color(0xFFC62828)
-                            Surface(
-                                shape = RoundedCornerShape(4.dp),
-                                color = badgeColor
-                            ) {
-                                Text(
-                                    if (test.isHigherBetter) "Higher is Better" else "Lower is Better",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = textColor,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                )
-                            }
-                        }
-                    }
-                }
+                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(20.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    "Save as Custom List",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
-        
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
+
+        item { Spacer(modifier = Modifier.height(24.dp)) }
+    }
+}
+
+@Composable
+private fun CategoryAccordionHeader(
+    name: String,
+    selectedCount: Int,
+    totalCount: Int,
+    isExpanded: Boolean,
+    onClick: () -> Unit
+) {
+    val chevronRotation by animateFloatAsState(if (isExpanded) 180f else 0f, label = "chevronRotation")
+    val backgroundColor by animateColorAsState(
+        if (isExpanded) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surface,
+        label = "categoryHeaderBackground"
+    )
+
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(16.dp),
+        color = backgroundColor,
+        border = BorderStroke(
+            if (isExpanded) 1.dp else 1.dp,
+            if (isExpanded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+        ),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             Text(
-                "Quick Select",
-                style = MaterialTheme.typography.titleLarge,
+                name,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f)
+            )
+            if (selectedCount > 0) {
+                Surface(
+                    shape = androidx.compose.foundation.shape.CircleShape,
+                    color = MaterialTheme.colorScheme.primary
+                ) {
+                    Text(
+                        "$selectedCount",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
+            Text(
+                "$totalCount tests",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Icon(
+                Icons.Default.ExpandMore,
+                contentDescription = if (isExpanded) "Collapse" else "Expand",
+                modifier = Modifier.rotate(chevronRotation),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun TestSelectionRow(
+    test: FitnessTest,
+    isSelected: Boolean,
+    onToggle: () -> Unit
+) {
+    val backgroundColor by animateColorAsState(
+        if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else Color.Transparent,
+        label = "testRowBackground"
+    )
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(backgroundColor)
+            .clickable(onClick = onToggle)
+            .padding(horizontal = 12.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Checkbox(
+            checked = isSelected,
+            onCheckedChange = { onToggle() },
+            colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary)
+        )
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                test.name,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            ExposedDropdownMenuBox(
-                expanded = quickSelectExpanded,
-                onExpandedChange = { quickSelectExpanded = !quickSelectExpanded },
-                modifier = Modifier.fillMaxWidth()
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Determine current selection text
-                val matchedPreset = uiState.presets.find { preset -> 
-                    preset.testIds.isNotEmpty() && uiState.selectedTestIds == preset.testIds.toSet() 
-                }
-                val selectionText = matchedPreset?.name ?: "Current Selection (${uiState.selectedTestIds.size} tests)"
-                
-                OutlinedTextField(
-                    value = selectionText,
-                    onValueChange = {},
-                    readOnly = true,
-                    singleLine = true,
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = quickSelectExpanded) },
-                    modifier = Modifier.menuAnchor().fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                    )
+                Text(
+                    test.unit,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                
-                ExposedDropdownMenu(
-                    expanded = quickSelectExpanded,
-                    onDismissRequest = { quickSelectExpanded = false },
-                    modifier = Modifier.background(MaterialTheme.colorScheme.surface)
+                val badgeColor = if (test.isHigherBetter) Color(0xFFE8F5E9) else Color(0xFFFFEBEE)
+                val textColor = if (test.isHigherBetter) Color(0xFF2E7D32) else Color(0xFFC62828)
+                Surface(
+                    shape = RoundedCornerShape(4.dp),
+                    color = badgeColor
                 ) {
-                    DropdownMenuItem(
-                        text = { Text("Current Selection (${uiState.selectedTestIds.size} tests)") },
-                        onClick = { quickSelectExpanded = false }
-                    )
-                    
-                    if (uiState.presets.isNotEmpty()) {
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-                        
-                        uiState.presets.forEach { preset ->
-                            val isApplied = preset.testIds.isNotEmpty() && uiState.selectedTestIds == preset.testIds.toSet()
-                            DropdownMenuItem(
-                                text = { 
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Text(
-                                            preset.name,
-                                            fontWeight = if (isApplied) FontWeight.Bold else FontWeight.Normal,
-                                            color = if (isApplied) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                        if (!preset.isBuiltIn) {
-                                            IconButton(
-                                                onClick = {
-                                                    onAction(CreateEventAction.DeletePreset(preset.id))
-                                                    quickSelectExpanded = false
-                                                },
-                                                modifier = Modifier.size(24.dp)
-                                            ) {
-                                                Icon(
-                                                    Icons.Default.Close,
-                                                    contentDescription = "Delete Preset",
-                                                    modifier = Modifier.size(16.dp),
-                                                    tint = MaterialTheme.colorScheme.error
-                                                )
-                                            }
-                                        }
-                                    }
-                                },
-                                onClick = {
-                                    onAction(CreateEventAction.ApplyPreset(preset.id))
-                                    quickSelectExpanded = false
-                                }
-                            )
-                        }
-                    }
-                    
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-                    DropdownMenuItem(
-                        text = { 
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Add, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Save Current Selection as Preset", color = MaterialTheme.colorScheme.primary)
-                            }
-                        },
-                        onClick = {
-                            onAction(CreateEventAction.OpenSavePresetDialog)
-                            quickSelectExpanded = false
-                        }
+                    Text(
+                        if (test.isHigherBetter) "Higher is Better" else "Lower is Better",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = textColor,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                     )
                 }
             }
         }
-        
-        item { Spacer(modifier = Modifier.height(24.dp)) }
+    }
+}
+
+@Composable
+private fun CustomListChip(
+    preset: TestPreset,
+    isApplied: Boolean,
+    onApply: () -> Unit,
+    onDelete: (() -> Unit)?
+) {
+    Surface(
+        onClick = onApply,
+        shape = RoundedCornerShape(24.dp),
+        color = if (isApplied) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+        border = BorderStroke(
+            1.dp,
+            if (isApplied) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(start = 12.dp, end = if (onDelete != null) 4.dp else 12.dp, top = 8.dp, bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                "${preset.name} · ${preset.testIds.size}",
+                style = MaterialTheme.typography.labelLarge,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                color = if (isApplied) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+            )
+            if (onDelete != null) {
+                IconButton(
+                    onClick = onDelete,
+                    modifier = Modifier.size(20.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = "Delete list",
+                        modifier = Modifier.size(14.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
     }
 }

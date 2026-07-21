@@ -1,6 +1,7 @@
 package com.vamshi.field.ui.dashboard
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -19,17 +20,20 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -40,6 +44,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.vamshi.field.R
 import com.vamshi.field.domain.model.testing.TestingEvent
 import com.vamshi.field.ui.theme.*
 import com.vamshi.field.ui.theme.PeachIconBg
@@ -60,6 +65,7 @@ fun DashboardScreen(
     onNavigateToRecommendations: () -> Unit,
     onNavigateToCreateEvent: () -> Unit,
     onNavigateToQuickTest: () -> Unit,
+    onNavigateToIndividualTest: () -> Unit,
     onNavigateToTestingGrid: (String, String) -> Unit,
     onNavigateToLeaderboard: (eventId: String, groupId: String, mode: String) -> Unit,
     onNavigateToReports: () -> Unit,
@@ -83,6 +89,7 @@ fun DashboardScreen(
             when (it) {
                 DashboardAction.OnCreateEventClick -> onNavigateToCreateEvent()
                 DashboardAction.OnQuickTestClick -> onNavigateToQuickTest()
+                DashboardAction.OnIndividualTestClick -> onNavigateToIndividualTest()
                 DashboardAction.OnRosterClick -> onNavigateToRoster()
                 DashboardAction.OnTestLibraryClick -> onNavigateToTestLibrary()
                 DashboardAction.OnRecommendationsClick -> onNavigateToRecommendations()
@@ -147,6 +154,19 @@ fun DashboardContent(
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
+                PrimaryActionCard(
+                    title = "Individual Test",
+                    subtitle = "Test a registered athlete with analytics",
+                    icon = Icons.Default.Person,
+                    accentColor = SportBlue,
+                    accentContainerColor = BlueIconBg,
+                    buttonLabel = "Start",
+                    buttonIcon = Icons.Default.PlayArrow,
+                    onClick = { onAction(DashboardAction.OnIndividualTestClick) }
+                )
+            }
+
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 Text(
                     "Quick Actions",
                     style = MaterialTheme.typography.titleMedium,
@@ -176,7 +196,7 @@ fun DashboardContent(
             item {
                 QuickActionCard(
                     icon = Icons.AutoMirrored.Filled.LibraryBooks,
-                    label = "Test Library",
+                    label = "Tests Library",
                     tint = MaterialTheme.colorScheme.primary,
                     iconBg = BlueIconBg,
                     onClick = { onAction(DashboardAction.OnTestLibraryClick) }
@@ -348,19 +368,13 @@ private fun DashboardHeader(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
+                Image(
+                    painter = painterResource(R.drawable.logo),
+                    contentDescription = null,
                     modifier = Modifier
                         .size(32.dp)
-                        .background(ElectricBlue, CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        Icons.Default.EmojiEvents,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
+                        .clip(CircleShape)
+                )
                 Spacer(modifier = Modifier.width(10.dp))
                 Text(
                     text = buildAnnotatedString {
@@ -483,6 +497,29 @@ private fun ContextHeaderCard(
 
 @Composable
 private fun HeroCard(onClick: () -> Unit) {
+    PrimaryActionCard(
+        title = "Start Group Testing Event",
+        subtitle = "Create and launch a test session",
+        icon = Icons.Default.PlayArrow,
+        accentColor = SportOrange,
+        accentContainerColor = SportOrangeContainer,
+        buttonLabel = "Start",
+        buttonIcon = Icons.Default.PlayArrow,
+        onClick = onClick
+    )
+}
+
+@Composable
+private fun PrimaryActionCard(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    accentColor: Color,
+    accentContainerColor: Color,
+    buttonLabel: String,
+    buttonIcon: ImageVector,
+    onClick: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -506,27 +543,27 @@ private fun HeroCard(onClick: () -> Unit) {
             Box(
                 modifier = Modifier
                     .size(44.dp)
-                    .background(SportOrangeContainer, CircleShape),
+                    .background(accentContainerColor, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    Icons.Default.PlayArrow,
+                    icon,
                     contentDescription = null,
-                    tint = SportOrange,
+                    tint = accentColor,
                     modifier = Modifier.size(24.dp)
                 )
             }
             Spacer(modifier = Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    "Start Testing Event",
+                    title,
                     style = MaterialTheme.typography.titleMedium,
                     color = TextPrimary,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    "Create and launch a test session",
+                    subtitle,
                     style = MaterialTheme.typography.bodySmall,
                     color = TextSecondary
                 )
@@ -534,21 +571,21 @@ private fun HeroCard(onClick: () -> Unit) {
             Spacer(modifier = Modifier.width(12.dp))
             Surface(
                 shape = RoundedCornerShape(50),
-                color = SportOrange
+                color = accentColor
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        Icons.Default.PlayArrow,
-                        contentDescription = "Start",
+                        buttonIcon,
+                        contentDescription = buttonLabel,
                         tint = Color.White,
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        "Start",
+                        buttonLabel,
                         style = MaterialTheme.typography.labelLarge,
                         color = Color.White,
                         fontWeight = FontWeight.Bold

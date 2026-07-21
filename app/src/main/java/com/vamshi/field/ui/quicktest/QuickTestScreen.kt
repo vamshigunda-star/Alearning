@@ -137,7 +137,7 @@ fun QuickTestContent(
         topBar = {
             AppTopBar(
                 title = when (uiState.step) {
-                    QuickTestStep.SETUP -> "Quick Test Setup"
+                    QuickTestStep.SETUP -> if (uiState.requireRegisteredAthlete) "Individual Test Setup" else "Quick Test Setup"
                     QuickTestStep.ENTER_SCORES -> "Enter Scores"
                     QuickTestStep.COMPLETE -> "Complete"
                 },
@@ -157,6 +157,7 @@ fun QuickTestContent(
             if (uiState.step == QuickTestStep.SETUP) {
                 Surface(tonalElevation = 3.dp) {
                     val canStart = uiState.athleteSearchQuery.isNotBlank() &&
+                                 (!uiState.requireRegisteredAthlete || uiState.selectedAthlete != null) &&
                                  uiState.selectedTestIds.isNotEmpty() &&
                                  (!uiState.isGuest || (uiState.guestAge.isNotBlank() && uiState.guestSex != BiologicalSex.UNSPECIFIED))
 
@@ -165,6 +166,7 @@ fun QuickTestContent(
                             Text(
                                 text = when {
                                     uiState.athleteSearchQuery.isBlank() -> "Enter an athlete name to continue"
+                                    uiState.requireRegisteredAthlete && uiState.selectedAthlete == null -> "Select a registered athlete to continue"
                                     uiState.selectedTestIds.isEmpty() -> "Select at least one test"
                                     uiState.isGuest && uiState.guestAge.isBlank() -> "Enter guest age"
                                     uiState.isGuest && uiState.guestSex == BiologicalSex.UNSPECIFIED -> "Select guest sex"
@@ -285,8 +287,12 @@ private fun SetupStep(
                 OutlinedTextField(
                     value = uiState.athleteSearchQuery,
                     onValueChange = { onAction(QuickTestAction.OnAthleteQueryChange(it)) },
-                    label = { Text("Athlete Name") },
-                    placeholder = { Text("Enter name or search...") },
+                    label = { Text(if (uiState.requireRegisteredAthlete) "Registered Athlete" else "Athlete Name") },
+                    placeholder = {
+                        Text(
+                            if (uiState.requireRegisteredAthlete) "Search registered athletes..." else "Enter name or search..."
+                        )
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     leadingIcon = { Icon(Icons.Default.Person, null) },

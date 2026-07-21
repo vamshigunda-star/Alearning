@@ -37,6 +37,7 @@ data class DashboardUiState(
 sealed interface DashboardAction {
     data object OnCreateEventClick : DashboardAction
     data object OnQuickTestClick : DashboardAction
+    data object OnIndividualTestClick : DashboardAction
     data object OnRosterClick : DashboardAction
     data object OnTestLibraryClick : DashboardAction
     data object OnRecommendationsClick : DashboardAction

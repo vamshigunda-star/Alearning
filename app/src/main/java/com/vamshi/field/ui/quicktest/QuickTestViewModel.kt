@@ -57,7 +57,9 @@ data class QuickTestUiState(
     val isLoading: Boolean = true,
     val isDeleting: Boolean = false,
     val showDeleteConfirmation: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    /** True for the "Individual Test" entry point: only registered athletes are allowed, no guest/ad-hoc path. */
+    val requireRegisteredAthlete: Boolean = false
 )
 
 sealed interface QuickTestAction {
@@ -96,9 +98,10 @@ class QuickTestViewModel @Inject constructor(
         ?.mapNotNull { it.trim().takeIf { s -> s.isNotEmpty() } }
         ?.toSet()
         ?: emptySet()
+    private val requireRegisteredAthlete: Boolean = savedStateHandle.get<String>("mode") == "individual"
 
     private val _uiState = MutableStateFlow(
-        QuickTestUiState(selectedTestIds = initialTestIds)
+        QuickTestUiState(selectedTestIds = initialTestIds, requireRegisteredAthlete = requireRegisteredAthlete)
     )
     val uiState: StateFlow<QuickTestUiState> = _uiState.asStateFlow()
 
@@ -159,10 +162,10 @@ class QuickTestViewModel @Inject constructor(
             }
             is QuickTestAction.OnSelectAthlete -> {
                 _uiState.update { it.copy(
-                    selectedAthlete = action.athlete, 
+                    selectedAthlete = action.athlete,
                     athleteSearchQuery = action.athlete?.fullName ?: "",
                     matchingAthletes = emptyList(),
-                    isGuest = action.athlete == null
+                    isGuest = !it.requireRegisteredAthlete && action.athlete == null
                 ) }
             }
             is QuickTestAction.OnSetGuestSex -> _uiState.update { it.copy(guestSex = action.sex) }
@@ -182,6 +185,10 @@ class QuickTestViewModel @Inject constructor(
                 val state = _uiState.value
                 if (state.athleteSearchQuery.isBlank()) {
                     _uiState.update { it.copy(errorMessage = "Please enter a name") }
+                    return
+                }
+                if (state.requireRegisteredAthlete && state.selectedAthlete == null) {
+                    _uiState.update { it.copy(errorMessage = "Select a registered athlete to continue") }
                     return
                 }
                 if (state.selectedTestIds.isEmpty()) {
@@ -253,9 +260,9 @@ class QuickTestViewModel @Inject constructor(
                 }
                 _uiState.update {
                     it.copy(
-                        selectedTests = allTests, 
+                        selectedTests = allTests,
                         step = QuickTestStep.ENTER_SCORES,
-                        isGuest = state.selectedAthlete == null
+                        isGuest = !state.requireRegisteredAthlete && state.selectedAthlete == null
                     )
                 }
             } catch (e: Exception) {

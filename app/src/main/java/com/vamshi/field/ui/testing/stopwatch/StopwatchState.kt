@@ -35,10 +35,7 @@ data class StopwatchUiState(
     val showMissingEntriesDialog: Boolean = false,
     val editingAthleteId: String? = null,
     val editingResultId: String? = null,
-    val showTrialCompletedMessage: Boolean = false,
-    val historicalResults: Map<String, List<com.vamshi.field.domain.model.testing.TestResult>> = emptyMap(),
-    val lastSavedAthleteName: String? = null,
-    val lastSavedTimeMs: Long? = null
+    val historicalResults: Map<String, List<com.vamshi.field.domain.model.testing.TestResult>> = emptyMap()
 ) {
     val hasPendingChanges: Boolean get() = pendingResults.isNotEmpty()
 }
@@ -54,10 +51,10 @@ data class AthleteQueueItem(
     val totalTrials: Int,
     val status: AthleteStatus = AthleteStatus.WAITING,
     val capturedTimeMs: Long? = null,
-    val historicalTrials: List<com.vamshi.field.domain.model.testing.TestResult> = emptyList(),
-    // Display-only merge of historicalTrials + any just-saved scores not yet reflected in historicalTrials
-    // (Room's Flow re-emits asynchronously after a write commits). resultId is null for the latter —
-    // callers must not treat a null resultId as editable/deletable via the historical-result path.
+    // Union of DB-confirmed trials (historicalResults) and trials recorded this session, deduped by
+    // resultId and sorted by capture order. Session-recorded entries always carry a real resultId
+    // (RecordTestResultUseCase returns the persisted TestResult directly), so display never depends on
+    // Room's Flow re-emission timing — see StopwatchViewModel.sessionResults.
     val displayTrials: List<TrialDisplay> = emptyList()
 )
 
@@ -92,7 +89,6 @@ sealed interface StopwatchAction {
     data object OnRequestSubmit : StopwatchAction
     data object OnDismissMissingEntriesDialog : StopwatchAction
     data object OnSubmitPending : StopwatchAction
-    data object OnDismissTrialMessage : StopwatchAction
 }
 
 sealed interface StopwatchUiEvent {

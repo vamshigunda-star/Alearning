@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.vamshi.field.domain.model.people.BiologicalSex
 import com.vamshi.field.domain.model.people.Group
 import com.vamshi.field.domain.model.people.Individual
 import com.vamshi.field.ui.theme.SportOrange
@@ -60,26 +61,71 @@ fun RosterTabRow(
 fun RosterFilterChip(
     label: String,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    compact: Boolean = false
 ) {
     Surface(
-        modifier = Modifier
-            .height(38.dp)
+        modifier = modifier
+            .height(if (compact) 32.dp else 38.dp)
             .clip(RoundedCornerShape(20.dp))
             .clickable { onClick() },
         shape = RoundedCornerShape(20.dp),
         color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
     ) {
         Box(
-            modifier = Modifier.padding(horizontal = 16.dp),
+            modifier = Modifier.padding(horizontal = if (compact) 6.dp else 16.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = label,
-                style = MaterialTheme.typography.labelLarge,
+                style = if (compact) MaterialTheme.typography.labelSmall else MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
                 color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface
             )
+        }
+    }
+}
+
+@Composable
+fun AthleteFilterRow(
+    selectedSexFilters: Set<BiologicalSex>,
+    selectedAgeRange: AthleteAgeRange?,
+    onSexToggled: (BiologicalSex) -> Unit,
+    onAgeRangeSelected: (AthleteAgeRange?) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            RosterFilterChip(
+                label = "Male",
+                isSelected = BiologicalSex.MALE in selectedSexFilters,
+                onClick = { onSexToggled(BiologicalSex.MALE) }
+            )
+            RosterFilterChip(
+                label = "Female",
+                isSelected = BiologicalSex.FEMALE in selectedSexFilters,
+                onClick = { onSexToggled(BiologicalSex.FEMALE) }
+            )
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            AthleteAgeRange.entries.forEach { range ->
+                RosterFilterChip(
+                    label = range.label,
+                    isSelected = selectedAgeRange == range,
+                    onClick = { onAgeRangeSelected(if (selectedAgeRange == range) null else range) },
+                    modifier = Modifier.weight(1f),
+                    compact = true
+                )
+            }
         }
     }
 }
@@ -96,6 +142,13 @@ fun AthleteTabContent(
             placeholder = "Search athletes..."
         )
 
+        AthleteFilterRow(
+            selectedSexFilters = uiState.selectedSexFilters,
+            selectedAgeRange = uiState.selectedAgeRange,
+            onSexToggled = { onAction(RosterAction.OnSexFilterToggled(it)) },
+            onAgeRangeSelected = { onAction(RosterAction.OnAgeRangeFilterSelected(it)) }
+        )
+
         LazyColumn(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -104,7 +157,7 @@ fun AthleteTabContent(
             items(uiState.filteredAthletes, key = { it.id }) { athlete ->
                 val isSelected = uiState.selectedAthleteIds.contains(athlete.id)
                 val groups = uiState.athleteGroups[athlete.id] ?: emptyList()
-                
+
                 SwipeableAthleteCard(
                     athlete = athlete,
                     groups = groups,
@@ -116,7 +169,7 @@ fun AthleteTabContent(
             }
             item {
                 Text(
-                    "? Swipe left to delete",
+                    "← Swipe left to delete",
                     modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.bodySmall,

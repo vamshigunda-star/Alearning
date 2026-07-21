@@ -14,7 +14,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -39,7 +38,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.vamshi.field.ui.athlete.AthleteDashboardScreen
 import com.vamshi.field.ui.components.AppTopBar
-import com.vamshi.field.ui.components.AppTopBarActionButton
 import com.vamshi.field.ui.theme.SportOrange
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
@@ -125,13 +123,6 @@ fun RosterContent(
                     IconButton(onClick = { onAction(RosterAction.OnNavigateBack) }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
-                },
-                actions = {
-                    AppTopBarActionButton(
-                        icon = Icons.Default.PersonAdd,
-                        contentDescription = "Register Athlete",
-                        onClick = { onAction(RosterAction.OnShowRegisterAthleteDialog) }
-                    )
                 }
             )
         },

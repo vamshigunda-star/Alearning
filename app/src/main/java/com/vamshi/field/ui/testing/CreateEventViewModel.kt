@@ -27,11 +27,10 @@ data class CreateEventUiState(
     val groups: List<Group> = emptyList(),
     val categories: List<TestCategory> = emptyList(),
     val allTests: List<FitnessTest> = emptyList(),
-    val availableTests: List<FitnessTest> = emptyList(),
     val presets: List<TestPreset> = emptyList(),
     val groupAthleteCounts: Map<String, Int> = emptyMap(),
     val selectedGroupId: String? = null,
-    val selectedTabIndex: Int = 0,
+    val expandedCategoryId: String? = null, // accordion: id of the single open category section, null = all collapsed
     val selectedTestIds: Set<String> = emptySet(),
     val eventName: String = "",
     val isSavePresetDialogOpen: Boolean = false,
@@ -45,7 +44,7 @@ data class CreateEventUiState(
 sealed interface CreateEventAction {
     data class SetEventName(val name: String) : CreateEventAction
     data class SelectGroup(val groupId: String) : CreateEventAction
-    data class SelectTab(val index: Int) : CreateEventAction
+    data class ToggleCategoryExpanded(val categoryId: String) : CreateEventAction
     data class ToggleTest(val testId: String) : CreateEventAction
     data class ApplyPreset(val presetId: String) : CreateEventAction
     data class DeletePreset(val presetId: String) : CreateEventAction
@@ -88,17 +87,11 @@ class CreateEventViewModel @Inject constructor(
                 categories to tests
             }.collect { (categories, tests) ->
                 _uiState.update { state ->
-                    val visibleTests = if (categories.isNotEmpty()) {
-                        val activeIndex = state.selectedTabIndex.coerceAtMost(categories.lastIndex)
-                        val activeCategory = categories[activeIndex]
-                        tests.filter { it.categoryId == activeCategory.id }
-                    } else {
-                        emptyList()
-                    }
                     state.copy(
                         categories = categories,
                         allTests = tests,
-                        availableTests = visibleTests,
+                        // seed only on first arrival; don't collapse a category the coach already opened
+                        expandedCategoryId = state.expandedCategoryId ?: categories.firstOrNull()?.id,
                         presets = buildPresets(categories, tests)
                     )
                 }
@@ -124,10 +117,10 @@ class CreateEventViewModel @Inject constructor(
         when (action) {
             is CreateEventAction.SetEventName -> _uiState.update { it.copy(eventName = action.name) }
             is CreateEventAction.SelectGroup -> _uiState.update { it.copy(selectedGroupId = action.groupId) }
-            is CreateEventAction.SelectTab -> {
-                val category = _uiState.value.categories.getOrNull(action.index) ?: return
-                val tests = _uiState.value.allTests.filter { it.categoryId == category.id }
-                _uiState.update { it.copy(selectedTabIndex = action.index, availableTests = tests) }
+            is CreateEventAction.ToggleCategoryExpanded -> {
+                _uiState.update {
+                    it.copy(expandedCategoryId = if (it.expandedCategoryId == action.categoryId) null else action.categoryId)
+                }
             }
             is CreateEventAction.ToggleTest -> {
                 val current = _uiState.value.selectedTestIds
@@ -168,7 +161,7 @@ class CreateEventViewModel @Inject constructor(
 
     private fun openSaveDialog() {
         if (_uiState.value.selectedTestIds.isEmpty()) {
-            _uiState.update { it.copy(errorMessage = "Select at least one test before saving a preset") }
+            _uiState.update { it.copy(errorMessage = "Select at least one test before saving a custom list") }
             return
         }
         _uiState.update { it.copy(isSavePresetDialogOpen = true, pendingPresetName = "") }
@@ -178,7 +171,7 @@ class CreateEventViewModel @Inject constructor(
         val state = _uiState.value
         val name = state.pendingPresetName.trim()
         if (name.isBlank()) {
-            _uiState.update { it.copy(errorMessage = "Preset name cannot be empty") }
+            _uiState.update { it.copy(errorMessage = "List name cannot be empty") }
             return
         }
         val preset = TestPreset(

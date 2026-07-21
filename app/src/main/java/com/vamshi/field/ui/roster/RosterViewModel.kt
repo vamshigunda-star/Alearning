@@ -23,10 +23,28 @@ enum class RosterTab {
     ATHLETES, GROUPS
 }
 
+enum class AthleteAgeRange(val label: String, val minAge: Int, val maxAge: Int?) {
+    UNDER_10("Under 10", 0, 9),
+    TEN_TO_TWELVE("10–12", 10, 12),
+    THIRTEEN_TO_FIFTEEN("13–15", 13, 15),
+    SIXTEEN_TO_EIGHTEEN("16–18", 16, 18),
+    EIGHTEEN_PLUS("18+", 18, null)
+}
+
+private fun ageOf(individual: Individual): Int =
+    ((System.currentTimeMillis() - individual.dateOfBirth) / 31_557_600_000L).toInt()
+
+private fun matchesAgeRange(individual: Individual, range: AthleteAgeRange): Boolean {
+    val age = ageOf(individual)
+    return age >= range.minAge && (range.maxAge == null || age <= range.maxAge)
+}
+
 data class RosterUiState(
     val currentTab: RosterTab = RosterTab.ATHLETES,
     val athleteSearchQuery: String = "",
     val groupSearchQuery: String = "",
+    val selectedSexFilters: Set<BiologicalSex> = emptySet(),
+    val selectedAgeRange: AthleteAgeRange? = null,
     val selectedAthleteIds: Set<String> = emptySet(),
     val expandedGroupIds: Set<String> = emptySet(),
     val groups: List<Group> = emptyList(),
@@ -43,14 +61,14 @@ data class RosterUiState(
     val isLoading: Boolean = true,
     val errorMessage: String? = null
 ) {
-    val filteredAthletes: List<Individual> = if (athleteSearchQuery.isBlank()) {
-        allAthletes
-    } else {
-        allAthletes.filter { 
-            it.firstName.contains(athleteSearchQuery, ignoreCase = true) || 
-            it.lastName.contains(athleteSearchQuery, ignoreCase = true) 
+    val filteredAthletes: List<Individual> = allAthletes
+        .filter {
+            athleteSearchQuery.isBlank() ||
+                it.firstName.contains(athleteSearchQuery, ignoreCase = true) ||
+                it.lastName.contains(athleteSearchQuery, ignoreCase = true)
         }
-    }
+        .filter { selectedSexFilters.isEmpty() || it.sex in selectedSexFilters }
+        .filter { selectedAgeRange == null || matchesAgeRange(it, selectedAgeRange) }
 
     val filteredGroups: List<Group> = if (groupSearchQuery.isBlank()) {
         groups
@@ -63,6 +81,8 @@ sealed interface RosterAction {
     data class OnTabSelected(val tab: RosterTab) : RosterAction
     data class OnAthleteSearchQueryChanged(val query: String) : RosterAction
     data class OnGroupSearchQueryChanged(val query: String) : RosterAction
+    data class OnSexFilterToggled(val sex: BiologicalSex) : RosterAction
+    data class OnAgeRangeFilterSelected(val range: AthleteAgeRange?) : RosterAction
     data class OnToggleAthleteSelection(val id: String) : RosterAction
     data class OnToggleGroupExpansion(val id: String) : RosterAction
     data class OnDeleteAthlete(val id: String) : RosterAction
@@ -172,6 +192,15 @@ class RosterViewModel @Inject constructor(
             is RosterAction.OnTabSelected -> _uiState.update { it.copy(currentTab = action.tab) }
             is RosterAction.OnAthleteSearchQueryChanged -> _uiState.update { it.copy(athleteSearchQuery = action.query) }
             is RosterAction.OnGroupSearchQueryChanged -> _uiState.update { it.copy(groupSearchQuery = action.query) }
+            is RosterAction.OnSexFilterToggled -> _uiState.update { current ->
+                val newFilters = if (action.sex in current.selectedSexFilters) {
+                    current.selectedSexFilters - action.sex
+                } else {
+                    current.selectedSexFilters + action.sex
+                }
+                current.copy(selectedSexFilters = newFilters)
+            }
+            is RosterAction.OnAgeRangeFilterSelected -> _uiState.update { it.copy(selectedAgeRange = action.range) }
             is RosterAction.OnToggleAthleteSelection -> toggleAthleteSelection(action.id)
             is RosterAction.OnToggleGroupExpansion -> toggleGroupExpansion(action.id)
             is RosterAction.OnDeleteAthlete -> _uiState.update { it.copy(showDeleteAthleteConfirmation = action.id) }

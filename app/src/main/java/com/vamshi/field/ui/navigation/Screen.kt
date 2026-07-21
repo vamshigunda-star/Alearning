@@ -18,12 +18,13 @@ sealed class Screen(val route: String) {
         fun createRoute(recommendationId: String? = null): String =
             "create_event" + if (recommendationId != null) "?recommendationId=$recommendationId" else ""
     }
-    data object QuickTest : Screen("quick_test?athleteId={athleteId}&testIds={testIds}&eventId={eventId}") {
-        fun createRoute(athleteId: String? = null, testIds: List<String> = emptyList(), eventId: String? = null): String {
+    data object QuickTest : Screen("quick_test?athleteId={athleteId}&testIds={testIds}&eventId={eventId}&mode={mode}") {
+        fun createRoute(athleteId: String? = null, testIds: List<String> = emptyList(), eventId: String? = null, mode: String? = null): String {
             val params = buildList {
                 if (athleteId != null) add("athleteId=$athleteId")
                 if (testIds.isNotEmpty()) add("testIds=${testIds.joinToString(",")}")
                 if (eventId != null) add("eventId=$eventId")
+                if (mode != null) add("mode=$mode")
             }
             return "quick_test" + if (params.isEmpty()) "" else "?" + params.joinToString("&")
         }

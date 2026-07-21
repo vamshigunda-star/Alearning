@@ -1,5 +1,6 @@
 package com.vamshi.field.ui.report.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -25,6 +26,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vamshi.field.domain.model.reports.LeaderboardRow
+import com.vamshi.field.ui.theme.SportOrange
+import com.vamshi.field.ui.theme.SportOrangeContainer
+
+/**
+ * Visual ranking hierarchy: Top 5 get the strongest emphasis, ranks 6-10 get
+ * moderate emphasis, everything below is the standard row styling.
+ */
+private enum class LeaderRankTier { TOP_5, TOP_10, STANDARD }
+
+private fun leaderTierFor(rank: Int): LeaderRankTier = when {
+    rank <= 5 -> LeaderRankTier.TOP_5
+    rank <= 10 -> LeaderRankTier.TOP_10
+    else -> LeaderRankTier.STANDARD
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,26 +48,60 @@ fun AthleteLeaderRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val tier = leaderTierFor(row.rank)
+    val cardElevation = when (tier) {
+        LeaderRankTier.TOP_5 -> 6.dp
+        LeaderRankTier.TOP_10 -> 2.dp
+        LeaderRankTier.STANDARD -> 1.dp
+    }
+    val cardBorder = when (tier) {
+        LeaderRankTier.TOP_5 -> BorderStroke(2.dp, SportOrange)
+        LeaderRankTier.TOP_10 -> BorderStroke(1.dp, SportOrange.copy(alpha = 0.4f))
+        LeaderRankTier.STANDARD -> null
+    }
+    val cardContainerColor = if (tier == LeaderRankTier.TOP_5) SportOrangeContainer else Color.White
+    val rowPadding = if (tier == LeaderRankTier.TOP_5) 14.dp else 8.dp
+
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(containerColor = cardContainerColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = cardElevation),
+        border = cardBorder,
         shape = RoundedCornerShape(12.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 12.dp, vertical = 8.dp),
+            modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 12.dp, vertical = rowPadding),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                "${row.rank}",
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Black,
-                color = Color(0xFF90A4AE),
-                modifier = Modifier.width(24.dp)
-            )
+            if (tier == LeaderRankTier.TOP_5) {
+                Box(
+                    modifier = Modifier.size(24.dp).background(SportOrange, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        "${row.rank}",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Black,
+                        color = Color.White
+                    )
+                }
+            } else {
+                Text(
+                    "${row.rank}",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Black,
+                    color = if (tier == LeaderRankTier.TOP_10) SportOrange else Color(0xFF90A4AE),
+                    modifier = Modifier.width(24.dp)
+                )
+            }
+            Spacer(Modifier.width(if (tier == LeaderRankTier.TOP_5) 8.dp else 0.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(row.athleteName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        row.athleteName,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = if (tier == LeaderRankTier.TOP_5) FontWeight.Bold else FontWeight.SemiBold
+                    )
                     if (row.flagged) {
                         Box(modifier = Modifier.size(6.dp).background(Color(0xFFF57F17), CircleShape))
                     }

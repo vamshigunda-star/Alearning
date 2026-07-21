@@ -1,5 +1,6 @@
 package com.vamshi.field.ui.leaderboard
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -21,6 +23,7 @@ import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,6 +38,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -51,6 +55,7 @@ import com.vamshi.field.ui.theme.PerformanceRedText
 import com.vamshi.field.ui.theme.PerformanceYellow
 import com.vamshi.field.ui.theme.PerformanceYellowText
 import com.vamshi.field.ui.theme.SportOrange
+import com.vamshi.field.ui.theme.SportOrangeContainer
 
 @Composable
 fun LeaderboardScreen(
@@ -211,6 +216,18 @@ private fun LeaderboardBody(
     }
 }
 
+/**
+ * Visual ranking hierarchy: Top 5 get the strongest emphasis, ranks 6-10 get
+ * moderate emphasis, everything below is the standard leaderboard row.
+ */
+private enum class RankTier { TOP_5, TOP_10, STANDARD }
+
+private fun tierFor(rank: Int): RankTier = when {
+    rank <= 5 -> RankTier.TOP_5
+    rank <= 10 -> RankTier.TOP_10
+    else -> RankTier.STANDARD
+}
+
 @Composable
 private fun LeaderboardEntryRow(entry: LeaderboardEntry) {
     val (bgColor, textColor) = when {
@@ -220,26 +237,70 @@ private fun LeaderboardEntryRow(entry: LeaderboardEntry) {
         else -> PerformanceRed to PerformanceRedText
     }
 
-    Card(modifier = Modifier.fillMaxWidth()) {
+    val tier = tierFor(entry.rank)
+
+    val cardElevation = when (tier) {
+        RankTier.TOP_5 -> 8.dp
+        RankTier.TOP_10 -> 3.dp
+        RankTier.STANDARD -> 1.dp
+    }
+    val cardBorder = when (tier) {
+        RankTier.TOP_5 -> BorderStroke(2.dp, SportOrange)
+        RankTier.TOP_10 -> BorderStroke(1.dp, SportOrange.copy(alpha = 0.4f))
+        RankTier.STANDARD -> null
+    }
+    val cardContainerColor = when (tier) {
+        RankTier.TOP_5 -> SportOrangeContainer
+        RankTier.TOP_10 -> MaterialTheme.colorScheme.surface
+        RankTier.STANDARD -> MaterialTheme.colorScheme.surface
+    }
+    val rowPadding = if (tier == RankTier.TOP_5) 20.dp else 16.dp
+    val rankBoxSize = when (tier) {
+        RankTier.TOP_5 -> 48.dp
+        RankTier.TOP_10 -> 40.dp
+        RankTier.STANDARD -> 40.dp
+    }
+    val nameStyle = when (tier) {
+        RankTier.TOP_5 -> MaterialTheme.typography.titleMedium
+        RankTier.TOP_10 -> MaterialTheme.typography.bodyLarge
+        RankTier.STANDARD -> MaterialTheme.typography.bodyLarge
+    }
+    val nameWeight = when (tier) {
+        RankTier.TOP_5 -> FontWeight.Bold
+        RankTier.TOP_10 -> FontWeight.SemiBold
+        RankTier.STANDARD -> FontWeight.Medium
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = cardContainerColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = cardElevation),
+        border = cardBorder
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(rowPadding),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Rank
             Box(
-                modifier = Modifier.width(40.dp),
+                modifier = if (tier == RankTier.TOP_5) {
+                    Modifier.size(rankBoxSize).background(SportOrange, CircleShape)
+                } else {
+                    Modifier.width(rankBoxSize)
+                },
                 contentAlignment = Alignment.Center
             ) {
                 if (entry.rank <= 3) {
                     Icon(
                         Icons.Default.EmojiEvents,
                         contentDescription = "Rank ${entry.rank}",
-                        tint = when (entry.rank) {
-                            1 -> SportOrange
-                            2 -> OutlineGrey
+                        tint = when {
+                            tier == RankTier.TOP_5 -> Color.White
+                            entry.rank == 1 -> SportOrange
+                            entry.rank == 2 -> OutlineGrey
                             else -> SportOrange.copy(alpha = 0.6f)
                         },
                         modifier = Modifier.size(28.dp)
@@ -247,9 +308,9 @@ private fun LeaderboardEntryRow(entry: LeaderboardEntry) {
                 } else {
                     Text(
                         "#${entry.rank}",
-                        style = MaterialTheme.typography.titleMedium,
+                        style = if (tier == RankTier.TOP_5) MaterialTheme.typography.titleLarge else MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = if (tier == RankTier.TOP_5) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -257,8 +318,8 @@ private fun LeaderboardEntryRow(entry: LeaderboardEntry) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     entry.athleteName,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium
+                    style = nameStyle,
+                    fontWeight = nameWeight
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(

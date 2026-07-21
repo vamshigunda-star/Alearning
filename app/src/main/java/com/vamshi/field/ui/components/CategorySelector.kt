@@ -4,6 +4,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -18,7 +19,10 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -49,8 +53,11 @@ fun <T> CategorySelector(
     modifier: Modifier = Modifier,
     backgroundColor: Color = MaterialTheme.colorScheme.surface,
 ) {
-    val listState = rememberLazyListState()
+    val selectedKey = selected?.let(key)
+    val initialIndex = remember { categories.indexOfFirst { key(it) == selectedKey }.coerceAtLeast(0) }
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialIndex)
     val hintOffset = remember { Animatable(0f) }
+    var hasSettledInitialPosition by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         if (!CategorySelectorHintState.hasShown) {
@@ -60,18 +67,31 @@ fun <T> CategorySelector(
         }
     }
 
-    val selectedKey = selected?.let(key)
     LaunchedEffect(selectedKey, categories) {
         val index = categories.indexOfFirst { key(it) == selectedKey }
         if (index < 0) return@LaunchedEffect
 
-        listState.animateScrollToItem(index)
-
-        val info = listState.layoutInfo
-        val itemInfo = info.visibleItemsInfo.find { it.index == index } ?: return@LaunchedEffect
-        val viewportCenter = info.viewportSize.width / 2
-        val itemCenter = itemInfo.offset + itemInfo.size / 2
-        listState.animateScrollBy((itemCenter - viewportCenter).toFloat())
+        // First settle happens instantly (no animation) so cards land in their final
+        // position on appearance instead of visibly sliding in and then correcting.
+        // Later selection changes (user tapping a different category) animate normally.
+        if (!hasSettledInitialPosition) {
+            listState.scrollToItem(index)
+            val info = listState.layoutInfo
+            val itemInfo = info.visibleItemsInfo.find { it.index == index }
+            if (itemInfo != null) {
+                val viewportCenter = info.viewportSize.width / 2
+                val itemCenter = itemInfo.offset + itemInfo.size / 2
+                listState.scrollBy((itemCenter - viewportCenter).toFloat())
+            }
+            hasSettledInitialPosition = true
+        } else {
+            listState.animateScrollToItem(index)
+            val info = listState.layoutInfo
+            val itemInfo = info.visibleItemsInfo.find { it.index == index } ?: return@LaunchedEffect
+            val viewportCenter = info.viewportSize.width / 2
+            val itemCenter = itemInfo.offset + itemInfo.size / 2
+            listState.animateScrollBy((itemCenter - viewportCenter).toFloat())
+        }
     }
 
     val canScrollForward = listState.canScrollForward

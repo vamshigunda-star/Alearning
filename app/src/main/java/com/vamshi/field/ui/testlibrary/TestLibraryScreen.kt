@@ -64,7 +64,7 @@ fun TestLibraryContent(
     Scaffold(
         topBar = {
             AppTopBar(
-                title = "Test Library",
+                title = "Tests Library",
                 navigationIcon = {
                     IconButton(onClick = { onAction(TestLibraryAction.OnNavigateBack) }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")

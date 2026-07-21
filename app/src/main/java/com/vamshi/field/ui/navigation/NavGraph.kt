@@ -124,6 +124,7 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
                 onNavigateToCreateEvent = { navController.navigate(Screen.CreateEvent.createRoute()) },
                 onNavigateToRecommendations = { navController.navigate(Screen.Recommendations.route) },
                 onNavigateToQuickTest = { navController.navigate(Screen.QuickTest.createRoute()) },
+                onNavigateToIndividualTest = { navController.navigate(Screen.QuickTest.createRoute(mode = "individual")) },
                 onNavigateToTestingGrid = { eventId, groupId ->
                     navController.navigate(Screen.TestingGrid.createRoute(eventId, groupId))
                 },
@@ -200,7 +201,8 @@ fun ALearningNavGraph(navController: NavHostController, modifier: Modifier = Mod
             arguments = listOf(
                 navArgument("athleteId") { type = NavType.StringType; nullable = true; defaultValue = null },
                 navArgument("testIds") { type = NavType.StringType; nullable = true; defaultValue = null },
-                navArgument("eventId") { type = NavType.StringType; nullable = true; defaultValue = null }
+                navArgument("eventId") { type = NavType.StringType; nullable = true; defaultValue = null },
+                navArgument("mode") { type = NavType.StringType; nullable = true; defaultValue = null }
             )
         ) {
             QuickTestScreen(

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.vamshi.field.domain.model.people.Individual
 import com.vamshi.field.domain.model.standards.TimingMode
 import com.vamshi.field.domain.model.testing.CaptureMethod
+import com.vamshi.field.domain.model.testing.TestResult
 import com.vamshi.field.domain.repository.PeopleRepository
 import com.vamshi.field.domain.repository.TestingRepository
 import com.vamshi.field.domain.usecase.testing.RecordTestResultUseCase
@@ -53,11 +54,12 @@ class StopwatchViewModel @Inject constructor(
     // Tracks completed trial counts per athlete for this specific session
     private var completionState = mutableMapOf<String, Int>()
 
-    // Raw scores (seconds) written to Room this session but not yet reflected in historicalResults.
-    // Room's Flow re-emits asynchronously after a write commits (InvalidationTracker), so without this,
-    // a just-saved trial briefly shows no time on the athlete card even though status flips to COMPLETED
-    // synchronously via completionState. Cleared per-athlete once historicalResults catches up (loadSession).
-    private val optimisticTrials = mutableMapOf<String, MutableList<Double>>()
+    // TestResults recorded via this ViewModel this session, captured directly from
+    // RecordTestResultUseCase's return value (not from re-querying Room). This is the source of truth
+    // for "what did I just save" — historicalResults (sourced from Room's Flow, see loadSession) can lag
+    // or even miss an invalidation notification entirely, so display must never depend on it alone.
+    // Never cleared; buildDisplayTrials dedupes against historicalResults by id once the Flow catches up.
+    private val sessionResults = mutableMapOf<String, MutableList<TestResult>>()
 
     private val absentAthletes = mutableSetOf<String>()
 
@@ -129,18 +131,14 @@ class StopwatchViewModel @Inject constructor(
                         val testResults = results.filter { it.testId == fitnessTestId }.sortedBy { it.createdAt }
                         val historyMap = testResults.groupBy { it.individualId }
 
-                        // The DB has now caught up for any athlete whose real row count meets what we
-                        // already counted synchronously in submitPending() — drop the optimistic fallback
-                        // for those athletes so displayTrials doesn't double up once historicalTrials lands.
-                        optimisticTrials.keys.toList().forEach { athleteId ->
-                            val dbCount = historyMap[athleteId]?.size ?: 0
-                            if (dbCount >= (completionState[athleteId] ?: 0)) {
-                                optimisticTrials.remove(athleteId)
-                            }
-                        }
-
+                        // completionState per athlete is the max of what the DB Flow currently shows and
+                        // what we know we've recorded this session (sessionResults) — the Flow can lag or
+                        // even miss a notification, so it must never be allowed to regress a count we
+                        // already confirmed synchronously via a successful recordResult() call.
                         val newCompletionState = mutableMapOf<String, Int>()
-                        historyMap.forEach { (id, res) -> newCompletionState[id] = res.size }
+                        (historyMap.keys + sessionResults.keys).forEach { id ->
+                            newCompletionState[id] = maxOf(historyMap[id]?.size ?: 0, sessionResults[id]?.size ?: 0)
+                        }
 
                         completionState = newCompletionState
                         _uiState.update {
@@ -189,7 +187,6 @@ class StopwatchViewModel @Inject constructor(
                 totalTrials = totalTrials,
                 status = status,
                 capturedTimeMs = if (isPending) (pendingScore * 1000).toLong() else null,
-                historicalTrials = _uiState.value.historicalResults[athlete.id] ?: emptyList(),
                 displayTrials = buildDisplayTrials(athlete.id)
             )
         }
@@ -197,10 +194,11 @@ class StopwatchViewModel @Inject constructor(
 
     private fun buildDisplayTrials(athleteId: String): List<TrialDisplay> {
         val historical = _uiState.value.historicalResults[athleteId].orEmpty()
+        val session = sessionResults[athleteId].orEmpty()
+        return (historical + session)
+            .distinctBy { it.id }
+            .sortedBy { it.createdAt }
             .map { TrialDisplay(timeMs = (it.rawScore * 1000).toLong(), resultId = it.id) }
-        val optimistic = optimisticTrials[athleteId].orEmpty()
-            .map { TrialDisplay(timeMs = (it * 1000).toLong(), resultId = null) }
-        return historical + optimistic
     }
 
     fun onAction(action: StopwatchAction) {
@@ -237,7 +235,6 @@ class StopwatchViewModel @Inject constructor(
             is StopwatchAction.OnDismissMissingEntriesDialog -> _uiState.update { it.copy(showMissingEntriesDialog = false) }
             
             is StopwatchAction.OnSubmitPending -> submitPending()
-            is StopwatchAction.OnDismissTrialMessage -> _uiState.update { it.copy(showTrialCompletedMessage = false) }
             is StopwatchAction.OnDismissError -> _uiState.update { it.copy(errorMessage = null) }
             is StopwatchAction.OnRequestBack -> {
                 if (_uiState.value.hasPendingChanges) {
@@ -312,14 +309,11 @@ class StopwatchViewModel @Inject constructor(
 
         val elapsedMs = (System.nanoTime() - startNanos) / 1_000_000
         val selectedId = _uiState.value.selectedAthleteId ?: return
-        val selectedName = athletes.find { it.id == selectedId }?.fullName
 
         _uiState.update {
             it.copy(
                 elapsedMs = elapsedMs,
-                pendingResults = it.pendingResults + (selectedId to elapsedMs / 1000.0),
-                lastSavedAthleteName = selectedName,
-                lastSavedTimeMs = elapsedMs
+                pendingResults = it.pendingResults + (selectedId to elapsedMs / 1000.0)
             )
         }
         refreshAllAthletesIfIndividual()
@@ -561,12 +555,10 @@ class StopwatchViewModel @Inject constructor(
                 for ((athleteId, rawScore) in state.pendingResults) {
                     val athlete = athletes.find { it.id == athleteId } ?: continue
                     val age = ((System.currentTimeMillis() - athlete.dateOfBirth) / 31_557_600_000L).toFloat()
-                    recordResult(eventId, athleteId, fitnessTestId, rawScore, age, athlete.sex, CaptureMethod.STOPWATCH)
+                    val saved = recordResult(eventId, athleteId, fitnessTestId, rawScore, age, athlete.sex, CaptureMethod.STOPWATCH)
+                    sessionResults.getOrPut(athleteId) { mutableListOf() }.add(saved)
                     completionState[athleteId] = (completionState[athleteId] ?: 0) + 1
-                    optimisticTrials.getOrPut(athleteId) { mutableListOf() }.add(rawScore)
                 }
-
-                val shouldShowMessage = state.mode == TimingMode.INDIVIDUAL
 
                 if (state.mode == TimingMode.GROUP_START) {
                     tickerJob?.cancel()
@@ -580,18 +572,24 @@ class StopwatchViewModel @Inject constructor(
                     recomputeSummaryCounts()
                     advanceToNextHeat()
                 } else {
+                    val savedName = state.pendingResults.keys.firstOrNull()
+                        ?.let { id -> athletes.find { it.id == id }?.fullName }
                     _uiState.update {
                         it.copy(
                             pendingResults = emptyMap(),
                             isSubmitting = false,
                             showMissingEntriesDialog = false,
                             elapsedMs = 0L,
-                            stopwatchPhase = StopwatchPhase.READY,
-                            showTrialCompletedMessage = shouldShowMessage
+                            stopwatchPhase = StopwatchPhase.READY
                         ).withRefreshedAllAthletes()
                     }
                     recomputeSummaryCounts()
                     refreshHeatAthletes()
+                    if (savedName != null) {
+                        _uiEvents.send(StopwatchUiEvent.ShowSnackbar("$savedName's time saved"))
+                    }
+                    // No artificial delay — advance to the next waiting athlete immediately.
+                    handleNext()
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isSubmitting = false) }
@@ -625,7 +623,6 @@ class StopwatchViewModel @Inject constructor(
                 totalTrials = totalTrialsPerAthlete,
                 status = status,
                 capturedTimeMs = if (isPending) (pendingScore * 1000).toLong() else null,
-                historicalTrials = _uiState.value.historicalResults[athlete.id] ?: emptyList(),
                 displayTrials = buildDisplayTrials(athlete.id)
             )
         }
