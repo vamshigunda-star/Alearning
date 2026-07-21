@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vamshi.field.domain.model.auth.AuthResult
 import com.vamshi.field.domain.usecase.auth.CompleteRestoreUseCase
+import com.vamshi.field.domain.usecase.backup.ListAvailableBackupsUseCase
 import com.vamshi.field.domain.usecase.backup.RestoreDataUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,6 +16,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class RestoreBackupViewModel @Inject constructor(
+    private val listAvailableBackupsUseCase: ListAvailableBackupsUseCase,
     private val restoreDataUseCase: RestoreDataUseCase,
     private val completeRestoreUseCase: CompleteRestoreUseCase
 ) : ViewModel() {
@@ -24,9 +26,10 @@ class RestoreBackupViewModel @Inject constructor(
 
     fun onAction(action: RestoreBackupAction) {
         when (action) {
-            RestoreBackupAction.GoogleSignInSucceeded -> restore()
+            RestoreBackupAction.GoogleSignInSucceeded -> loadBackups()
             is RestoreBackupAction.GoogleSignInFailed ->
                 _uiState.update { it.copy(errorMessage = action.message) }
+            is RestoreBackupAction.RestoreSelectedBackup -> restore(action.backupId)
             RestoreBackupAction.DismissError ->
                 _uiState.update { it.copy(errorMessage = null) }
             RestoreBackupAction.NavigationConsumed ->
@@ -34,25 +37,47 @@ class RestoreBackupViewModel @Inject constructor(
         }
     }
 
-    private fun restore() {
+    private fun loadBackups() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            _uiState.update { it.copy(isLoadingBackups = true, errorMessage = null) }
             try {
-                restoreDataUseCase()
+                val backups = listAvailableBackupsUseCase()
+                _uiState.update {
+                    it.copy(
+                        isLoadingBackups = false,
+                        availableBackups = backups,
+                        errorMessage = if (backups.isEmpty()) {
+                            "No backups were found for this Google account."
+                        } else null
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(isLoadingBackups = false, errorMessage = e.message ?: "Couldn't load backups. Please try again.")
+                }
+            }
+        }
+    }
+
+    private fun restore(backupId: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isRestoring = true, errorMessage = null) }
+            try {
+                restoreDataUseCase(backupId)
                 when (val result = completeRestoreUseCase()) {
                     is AuthResult.Success ->
-                        _uiState.update { it.copy(isLoading = false, restoreSuccess = true) }
+                        _uiState.update { it.copy(isRestoring = false, restoreSuccess = true) }
                     is AuthResult.Failure ->
                         _uiState.update {
                             it.copy(
-                                isLoading = false,
+                                isRestoring = false,
                                 errorMessage = "The backup didn't contain a valid account. Please try again."
                             )
                         }
                 }
             } catch (e: Exception) {
                 _uiState.update {
-                    it.copy(isLoading = false, errorMessage = e.message ?: "Restore failed. Please try again.")
+                    it.copy(isRestoring = false, errorMessage = e.message ?: "Restore failed. Please try again.")
                 }
             }
         }

@@ -7,6 +7,7 @@ enum class RadarAxis {
 data class TestCategory(
     val id: String,
     val name: String,
+    val description: String? = null,
     val sortOrder: Int = 0,
     val radarAxis: RadarAxis? = null
 )

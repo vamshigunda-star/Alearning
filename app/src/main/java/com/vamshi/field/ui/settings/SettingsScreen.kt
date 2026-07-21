@@ -2,6 +2,7 @@ package com.vamshi.field.ui.settings
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -180,9 +181,57 @@ fun SettingsContent(
             AlertDialog(
                 onDismissRequest = { onAction(SettingsAction.DismissRestoreConfirmation) },
                 title = { Text("Restore from backup?") },
-                text = { Text("This replaces every athlete, group, and result on this device with the selected backup. It can't be undone.") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text("This replaces every athlete, group, and result on this device with the selected backup. It can't be undone.")
+                        when {
+                            uiState.isLoadingBackups -> Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                            }
+                            uiState.availableBackups.isEmpty() -> Text(
+                                "No backups were found for this Google account.",
+                                color = MaterialTheme.colorScheme.error
+                            )
+                            else -> Column {
+                                uiState.availableBackups.forEach { backup ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable { onAction(SettingsAction.SelectBackup(backup.id)) },
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        RadioButton(
+                                            selected = uiState.selectedBackupId == backup.id,
+                                            onClick = { onAction(SettingsAction.SelectBackup(backup.id)) }
+                                        )
+                                        Column {
+                                            Text(backup.deviceLabel, style = MaterialTheme.typography.bodyLarge)
+                                            val dateText = if (backup.lastModified == 0L) {
+                                                "Backed up date unknown"
+                                            } else {
+                                                "Backed up " + SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
+                                                    .format(Date(backup.lastModified))
+                                            }
+                                            Text(
+                                                dateText,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
                 confirmButton = {
-                    TextButton(onClick = { onAction(SettingsAction.RestoreData) }) {
+                    TextButton(
+                        onClick = { onAction(SettingsAction.RestoreData) },
+                        enabled = uiState.selectedBackupId != null,
+                    ) {
                         Text("Restore", color = MaterialTheme.colorScheme.error)
                     }
                 },

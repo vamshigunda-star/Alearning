@@ -1,10 +1,10 @@
 package com.vamshi.field.data.local.daos.standards
 
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
-import androidx.room.Upsert
+import androidx.room3.Dao
+import androidx.room3.Insert
+import androidx.room3.OnConflictStrategy
+import androidx.room3.Query
+import androidx.room3.Upsert
 import com.vamshi.field.data.local.entities.standards.FitnessTestEntity
 import com.vamshi.field.data.local.entities.standards.RecommendationCategoryEntity
 import com.vamshi.field.data.local.entities.standards.RecommendationTestCrossRef

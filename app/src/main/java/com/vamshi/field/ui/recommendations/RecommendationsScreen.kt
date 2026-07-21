@@ -1,11 +1,9 @@
 package com.vamshi.field.ui.recommendations
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -24,8 +22,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.vamshi.field.domain.model.standards.FitnessTest
-import com.vamshi.field.ui.components.AppFilterChip
 import com.vamshi.field.ui.components.AppTopBar
+import com.vamshi.field.ui.components.CategoryDescription
+import com.vamshi.field.ui.components.CategorySelector
+import com.vamshi.field.ui.components.video.TestVideoPreview
 
 @Composable
 fun RecommendationsScreen(
@@ -189,30 +189,15 @@ private fun RecommendationsBody(
             .fillMaxSize()
             .padding(padding)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            uiState.categories.forEach { category ->
-                AppFilterChip(
-                    label = category.name,
-                    isSelected = category.id == uiState.selectedCategory?.id,
-                    onClick = { onAction(RecommendationsAction.OnSelectCategory(category)) }
-                )
-            }
-        }
+        CategorySelector(
+            categories = uiState.categories,
+            selected = uiState.selectedCategory,
+            onSelect = { category -> onAction(RecommendationsAction.OnSelectCategory(category)) },
+            label = { it.name },
+            key = { it.id }
+        )
 
-        uiState.selectedCategory?.description?.let { description ->
-            Text(
-                description,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-            )
-        }
+        CategoryDescription(description = uiState.selectedCategory?.description)
 
         if (uiState.recommendedTests.isEmpty()) {
             EmptyRecommendationsState(uiState.selectedCategory?.name)
@@ -239,38 +224,45 @@ private fun RecommendedTestPreviewCard(test: FitnessTest) {
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                test.name,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.ExtraBold,
-                color = MaterialTheme.colorScheme.onSurface
+        Column {
+            TestVideoPreview(
+                youtubeId = test.youtubeId,
+                testName = test.name
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text(
-                text = test.unit,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    if (test.isHigherBetter) Icons.AutoMirrored.Filled.TrendingUp
-                    else Icons.AutoMirrored.Filled.TrendingDown,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
+            Column(modifier = Modifier.padding(12.dp)) {
                 Text(
-                    if (test.isHigherBetter) "Higher is better" else "Lower is better",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    test.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = test.unit,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        if (test.isHigherBetter) Icons.AutoMirrored.Filled.TrendingUp
+                        else Icons.AutoMirrored.Filled.TrendingDown,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        if (test.isHigherBetter) "Higher is better" else "Lower is better",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    )
+                }
             }
         }
     }

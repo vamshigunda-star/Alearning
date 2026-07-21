@@ -1,4 +1,4 @@
-﻿package com.vamshi.field.ui.quicktest
+package com.vamshi.field.ui.quicktest
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel

@@ -1,14 +1,14 @@
 package com.vamshi.field.data.local
 
-import androidx.room.TypeConverter
+import androidx.room3.ColumnTypeConverter
 import com.vamshi.field.domain.model.people.BiologicalSex
 
 object Converters {
-    @TypeConverter
+    @ColumnTypeConverter
     @JvmStatic
     fun fromBiologicalSex(value: BiologicalSex): String = value.name
 
-    @TypeConverter
+    @ColumnTypeConverter
     @JvmStatic
     fun toBiologicalSex(value: String): BiologicalSex {
         return try {

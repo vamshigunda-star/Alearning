@@ -1,7 +1,7 @@
-id,name,sortOrder,radarAxis
-cat_cardio,Cardiorespiratory Endurance,1,ENDURANCE
-cat_muscular_strength,Muscular Strength,2,STRENGTH
-cat_muscular_endurance,Muscular Endurance,3,ENDURANCE
-cat_flexibility,Flexibility,4,FLEXIBILITY
-cat_body_comp,Body Composition,5,STRENGTH
-cat_agility,Speed & Agility,6,AGILITY
+id,name,description,sortOrder,radarAxis
+cat_cardio,Cardiorespiratory Endurance,"Measures the efficiency of the heart, lungs, and circulatory system during sustained physical activity.",1,ENDURANCE
+cat_muscular_strength,Muscular Strength,"Measures the maximum force a muscle or muscle group can produce in a single effort.",2,STRENGTH
+cat_muscular_endurance,Muscular Endurance,"Measures a muscle or muscle group's ability to sustain repeated contractions over time.",3,ENDURANCE
+cat_flexibility,Flexibility,"Measures the range of motion available at a joint or group of joints.",4,FLEXIBILITY
+cat_body_comp,Body Composition,"Measures the relative proportions of fat, muscle, and other tissue that make up body weight.",5,STRENGTH
+cat_agility,Speed & Agility,"Measures the ability to accelerate, decelerate, and change direction quickly under control.",6,AGILITY

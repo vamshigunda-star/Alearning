@@ -37,7 +37,7 @@ class SeedDataManager @Inject constructor(
         // norm_references and the two recommendation tables are replaced wholesale, and
         // coach-created events/results/athletes/groups are never touched. Catalog rows
         // removed from the CSVs are left in the DB (existing results may reference them).
-        private const val KEY_DATA_SEEDED = "data_seeded_csv_v12" // Bumped for recommendations feature
+        private const val KEY_DATA_SEEDED = "data_seeded_csv_v14" // Bumped for corrected tests.csv youtube_ids
     }
 
     suspend fun seedIfNeeded() {
@@ -60,6 +60,10 @@ class SeedDataManager @Inject constructor(
                 TestCategoryEntity(
                     id = row["id"]!!,
                     name = row["name"]!!,
+                    // Absent on older CSVs without the column (row["description"] is simply
+                    // null); blank values are also normalized to null so the UI's fallback
+                    // text applies consistently.
+                    description = row["description"]?.trim()?.ifEmpty { null },
                     sortOrder = row["sortOrder"]?.toIntOrNull() ?: 0,
                     radarAxis = row["radarAxis"]
                 )
@@ -153,12 +157,7 @@ class SeedDataManager @Inject constructor(
             }
 
             // --- Seed Dummy Athletes & Results ---
-            val cursor = database.query("SELECT COUNT(*) FROM individuals", null)
-            var count = 0
-            if (cursor.moveToFirst()) {
-                count = cursor.getInt(0)
-            }
-            cursor.close()
+            val count = database.peopleDao().getIndividualCount()
             if (count == 0) {
                 android.util.Log.d("SeedDataManager", "Seeding dummy athletes, groups, events, and results...")
                 val peopleDao = database.peopleDao()

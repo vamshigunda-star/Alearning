@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vamshi.field.domain.repository.BackupRepository
 import com.vamshi.field.domain.usecase.backup.BackupDataUseCase
+import com.vamshi.field.domain.usecase.backup.ListAvailableBackupsUseCase
 import com.vamshi.field.domain.usecase.backup.RestoreDataUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -21,6 +22,7 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val backupDataUseCase: BackupDataUseCase,
+    private val listAvailableBackupsUseCase: ListAvailableBackupsUseCase,
     private val restoreDataUseCase: RestoreDataUseCase,
     private val backupRepository: BackupRepository,
     private val driveBackupHelper: DriveBackupHelper,
@@ -54,8 +56,9 @@ class SettingsViewModel @Inject constructor(
             is SettingsAction.ConnectDriveError -> _uiState.update { it.copy(errorMessage = action.error) }
             is SettingsAction.DisconnectDrive -> handleDisconnectDrive()
             is SettingsAction.BackupNow -> handleBackupNow()
-            is SettingsAction.RequestRestoreData -> _uiState.update { it.copy(showRestoreConfirmation = true) }
-            is SettingsAction.DismissRestoreConfirmation -> _uiState.update { it.copy(showRestoreConfirmation = false) }
+            is SettingsAction.RequestRestoreData -> handleRequestRestoreData()
+            is SettingsAction.DismissRestoreConfirmation -> dismissRestoreConfirmation()
+            is SettingsAction.SelectBackup -> _uiState.update { it.copy(selectedBackupId = action.backupId) }
             is SettingsAction.RestoreData -> handleRestoreData()
             is SettingsAction.NavigateBack -> Unit
         }
@@ -89,22 +92,62 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 backupDataUseCase()
+                val timestamp = backupRepository.getLastBackupTimestamp()
+                _uiState.update { it.copy(lastBackupTimestamp = timestamp, errorMessage = "Backup successful") }
             } catch (e: Exception) {
                 _uiState.update { it.copy(errorMessage = e.message ?: "Failed to backup") }
             }
         }
     }
 
-    private fun handleRestoreData() {
-        _uiState.update { it.copy(showRestoreConfirmation = false) }
+    private fun handleRequestRestoreData() {
         if (!_uiState.value.isDriveConnected) {
             _uiState.update { it.copy(errorMessage = "Please connect to Google Drive first.") }
             return
         }
 
+        _uiState.update { it.copy(showRestoreConfirmation = true, isLoadingBackups = true) }
         viewModelScope.launch {
             try {
-                restoreDataUseCase()
+                val backups = listAvailableBackupsUseCase()
+                _uiState.update {
+                    it.copy(
+                        isLoadingBackups = false,
+                        availableBackups = backups,
+                        selectedBackupId = backups.firstOrNull()?.id
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        showRestoreConfirmation = false,
+                        isLoadingBackups = false,
+                        errorMessage = e.message ?: "Couldn't load backups. Please try again."
+                    )
+                }
+            }
+        }
+    }
+
+    private fun dismissRestoreConfirmation() {
+        _uiState.update {
+            it.copy(
+                showRestoreConfirmation = false,
+                isLoadingBackups = false,
+                availableBackups = emptyList(),
+                selectedBackupId = null
+            )
+        }
+    }
+
+    private fun handleRestoreData() {
+        val backupId = _uiState.value.selectedBackupId
+        dismissRestoreConfirmation()
+        if (backupId == null) return
+
+        viewModelScope.launch {
+            try {
+                restoreDataUseCase(backupId)
                 val timestamp = backupRepository.getLastBackupTimestamp()
                 _uiState.update { it.copy(lastBackupTimestamp = timestamp, errorMessage = "Restore successful") }
             } catch (e: Exception) {

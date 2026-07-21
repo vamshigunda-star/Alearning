@@ -1,4 +1,4 @@
-﻿package com.vamshi.field.ui.testing
+package com.vamshi.field.ui.testing
 
 import android.util.Log
 import androidx.compose.foundation.background
@@ -79,7 +79,7 @@ fun TimingChoiceDialog(
         text = {
             Column {
                 Text(
-                    "$athleteName · $testName ($unit)",
+                    "$athleteName � $testName ($unit)",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.SemiBold
@@ -163,7 +163,7 @@ fun LiveEntryPhase(
 
         // Helper Text
         Text(
-            "💡 Press and hold any saved score to edit it",
+            "?? Press and hold any saved score to edit it",
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
             style = MaterialTheme.typography.labelSmall,
             color = Color.Gray,
@@ -446,20 +446,20 @@ fun ScoreEntryDialog(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(athleteName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("$testName · $unit", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("$testName � $unit", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                     Surface(modifier = Modifier.fillMaxWidth().height(72.dp), shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
                         Box(contentAlignment = Alignment.Center) {
-                            Text(scoreText.ifEmpty { "—" }, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
+                            Text(scoreText.ifEmpty { "�" }, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
                         }
                     }
                     if (!isInRange && scoreText.isNotEmpty()) {
                         Text(
                             text = buildString {
                                 append("Valid range: ")
-                                if (validMin != null) append("≥ $validMin")
+                                if (validMin != null) append("= $validMin")
                                 if (validMin != null && validMax != null) append(" and ")
-                                if (validMax != null) append("≤ $validMax")
+                                if (validMax != null) append("= $validMax")
                             },
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.error
@@ -507,7 +507,7 @@ fun TestingProgressBanner(totalAthletes: Int, testedAthletes: Int, totalTestsCom
             ) {
                 Text("Test Progress", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                 Text(
-                    "$testedAthletes / $totalAthletes Athletes • $totalTestsCompleted Tests Saved", 
+                    "$testedAthletes / $totalAthletes Athletes � $totalTestsCompleted Tests Saved", 
                     style = MaterialTheme.typography.labelMedium, 
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

@@ -12,6 +12,8 @@ data class StopwatchUiState(
     val elapsedMs: Long = 0L,
     val currentAthlete: AthleteQueueItem? = null,
     val allAthletes: List<AthleteQueueItem> = emptyList(), // INDIVIDUAL mode roster; single source of truth, kept in sync by the ViewModel on every mutation
+    val completedAthletes: List<AthleteQueueItem> = emptyList(), // allAthletes partitioned by status; hoisted here so the list Composable never re-filters during recomposition
+    val upcomingAthletes: List<AthleteQueueItem> = emptyList(),
     val heatAthletes: List<AthleteQueueItem> = emptyList(),
     val currentHeatNumber: Int = 1,
     val totalHeats: Int = 1,
@@ -34,7 +36,9 @@ data class StopwatchUiState(
     val editingAthleteId: String? = null,
     val editingResultId: String? = null,
     val showTrialCompletedMessage: Boolean = false,
-    val historicalResults: Map<String, List<com.vamshi.field.domain.model.testing.TestResult>> = emptyMap()
+    val historicalResults: Map<String, List<com.vamshi.field.domain.model.testing.TestResult>> = emptyMap(),
+    val lastSavedAthleteName: String? = null,
+    val lastSavedTimeMs: Long? = null
 ) {
     val hasPendingChanges: Boolean get() = pendingResults.isNotEmpty()
 }
@@ -50,8 +54,14 @@ data class AthleteQueueItem(
     val totalTrials: Int,
     val status: AthleteStatus = AthleteStatus.WAITING,
     val capturedTimeMs: Long? = null,
-    val historicalTrials: List<com.vamshi.field.domain.model.testing.TestResult> = emptyList()
+    val historicalTrials: List<com.vamshi.field.domain.model.testing.TestResult> = emptyList(),
+    // Display-only merge of historicalTrials + any just-saved scores not yet reflected in historicalTrials
+    // (Room's Flow re-emits asynchronously after a write commits). resultId is null for the latter —
+    // callers must not treat a null resultId as editable/deletable via the historical-result path.
+    val displayTrials: List<TrialDisplay> = emptyList()
 )
+
+data class TrialDisplay(val timeMs: Long, val resultId: String?)
 
 data class ConfirmationData(
     val athleteName: String,

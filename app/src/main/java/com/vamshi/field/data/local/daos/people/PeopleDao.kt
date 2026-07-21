@@ -1,6 +1,6 @@
 package com.vamshi.field.data.local.daos.people
 
-import androidx.room.*
+import androidx.room3.*
 import com.vamshi.field.data.local.entities.people.GroupEntity
 import com.vamshi.field.data.local.entities.people.GroupMemberCrossRef
 import com.vamshi.field.data.local.entities.people.IndividualEntity
@@ -86,7 +86,6 @@ interface PeopleDao {
     """)
     fun getGroupsForIndividual(studentId: String): Flow<List<GroupEntity>>
 
-    @MapInfo(keyColumn = "groupId", valueColumn = "count")
     @Query("""
         SELECT gm.groupId, COUNT(gm.individualId) as count 
         FROM group_members gm 
@@ -94,5 +93,8 @@ interface PeopleDao {
         WHERE i.isDeleted = 0 
         GROUP BY gm.groupId
     """)
-    fun getGroupAthleteCounts(): Flow<Map<String, Int>>
+    fun getGroupAthleteCounts(): Flow<Map<@MapColumn(columnName = "groupId") String, @MapColumn(columnName = "count") Int>>
+
+    @Query("SELECT COUNT(*) FROM individuals")
+    suspend fun getIndividualCount(): Int
 }

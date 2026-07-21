@@ -6,7 +6,7 @@ import javax.inject.Inject
 class RestoreDataUseCase @Inject constructor(
     private val backupRepository: BackupRepository
 ) {
-    suspend operator fun invoke() {
-        backupRepository.restoreFromDrive()
+    suspend operator fun invoke(backupId: String) {
+        backupRepository.restoreFromDrive(backupId)
     }
 }

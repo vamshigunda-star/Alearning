@@ -1,4 +1,4 @@
-﻿package com.vamshi.field.ui.roster
+package com.vamshi.field.ui.roster
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*

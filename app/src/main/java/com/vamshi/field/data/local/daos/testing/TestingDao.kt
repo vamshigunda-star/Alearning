@@ -1,9 +1,9 @@
 package com.vamshi.field.data.local.daos.testing
 
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
+import androidx.room3.Dao
+import androidx.room3.Insert
+import androidx.room3.OnConflictStrategy
+import androidx.room3.Query
 import com.vamshi.field.data.local.entities.people.IndividualEntity
 import com.vamshi.field.data.local.entities.standards.FitnessTestEntity
 import com.vamshi.field.data.local.entities.testing.EventTestCrossRef

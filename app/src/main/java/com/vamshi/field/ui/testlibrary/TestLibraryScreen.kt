@@ -1,16 +1,12 @@
 package com.vamshi.field.ui.testlibrary
 
-import android.content.Intent
-import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -18,7 +14,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.ErrorOutline
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
@@ -29,20 +24,18 @@ import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaf
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
 import com.vamshi.field.domain.model.standards.FitnessTest
-import com.vamshi.field.ui.components.AppFilterChip
 import com.vamshi.field.ui.components.AppTopBar
+import com.vamshi.field.ui.components.CategoryDescription
+import com.vamshi.field.ui.components.CategorySelector
+import com.vamshi.field.ui.components.video.TestVideoPreview
 
 @Composable
 fun TestLibraryScreen(
@@ -163,6 +156,8 @@ private fun TestLibraryBody(
     onAction: (TestLibraryAction) -> Unit,
     padding: PaddingValues
 ) {
+    // NavigableListDetailPaneScaffold requires a ThreePaneScaffoldNavigator<Any>; the
+    // destination content is always a test id (String) — see the detail pane read below.
     val navigator = rememberListDetailPaneScaffoldNavigator<Any>()
 
     BackHandler(navigator.canNavigateBack()) {
@@ -175,26 +170,22 @@ private fun TestLibraryBody(
         listPane = {
             AnimatedPane {
                 Column(modifier = Modifier.fillMaxSize()) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState())
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        uiState.categories.forEach { category ->
-                            AppFilterChip(
-                                label = category.name,
-                                isSelected = category == uiState.selectedCategory,
-                                onClick = {
-                                    onAction(TestLibraryAction.OnSelectCategory(category))
-                                    if (navigator.canNavigateBack()) {
-                                        navigator.navigateBack()
-                                    }
-                                }
-                            )
-                        }
-                    }
+                    CategorySelector(
+                        categories = uiState.categories,
+                        selected = uiState.selectedCategory,
+                        onSelect = { category ->
+                            onAction(TestLibraryAction.OnSelectCategory(category))
+                            if (navigator.canNavigateBack()) {
+                                navigator.navigateBack()
+                            }
+                        },
+                        label = { it.name },
+                        key = { it.id }
+                    )
+
+                    CategoryDescription(
+                        description = uiState.selectedCategory?.description
+                    )
 
                     OutlinedTextField(
                         value = uiState.searchQuery,
@@ -212,16 +203,19 @@ private fun TestLibraryBody(
                         singleLine = true
                     )
 
+                    val filteredTests = remember(uiState.testsForCategory, uiState.searchQuery) {
+                        uiState.filteredTests
+                    }
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        items(uiState.filteredTests, key = { it.id }) { test ->
+                        items(filteredTests, key = { it.id }) { test ->
                             TestListCard(
                                 test = test,
                                 categoryName = uiState.selectedCategory?.name ?: "",
-                                onClick = { navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, test.id as Any) }
+                                onClick = { navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, test.id) }
                             )
                         }
                     }
@@ -231,7 +225,9 @@ private fun TestLibraryBody(
         detailPane = {
             AnimatedPane {
                 val testId = navigator.currentDestination?.content as? String
-                val selectedTest = uiState.testsForCategory.find { it.id == testId }
+                val selectedTest = remember(testId, uiState.testsForCategory) {
+                    uiState.testsForCategory.find { it.id == testId }
+                }
                 if (selectedTest != null) {
                     TestDetailPane(test = selectedTest)
                 } else {
@@ -252,70 +248,29 @@ private fun TestListCard(test: FitnessTest, categoryName: String, onClick: () ->
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column {
-            test.youtubeId?.let { youtubeId ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(180.dp)
-                        .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
-                ) {
-                    AsyncImage(
-                        model = "https://img.youtube.com/vi/$youtubeId/hqdefault.jpg",
-                        contentDescription = "Watch ${test.name} demonstration",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                    
-                    // Video Affordance (Play Button Overlay)
-                    Surface(
-                        modifier = Modifier.size(48.dp).align(Alignment.Center),
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                Icons.Default.PlayArrow,
-                                contentDescription = "Play",
-                                tint = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                    }
-                    
-                    // Optional: Video Guide Badge
-                    Surface(
-                        modifier = Modifier.padding(12.dp).align(Alignment.BottomStart),
-                        shape = RoundedCornerShape(8.dp),
-                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
-                    ) {
-                        Text(
-                            "Video Guide",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
-                    }
-                }
-            }
-            
-            Column(modifier = Modifier.padding(16.dp)) {
+            TestVideoPreview(
+                youtubeId = test.youtubeId,
+                testName = test.name
+            )
+
+            Column(modifier = Modifier.padding(12.dp)) {
                 Text(
                     test.name,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                
+
                 Spacer(modifier = Modifier.height(4.dp))
-                
+
                 Text(
                     text = "$categoryName • ${test.unit}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -337,7 +292,7 @@ private fun TestListCard(test: FitnessTest, categoryName: String, onClick: () ->
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
                     }
-                    
+
                     TextButton(
                         onClick = onClick,
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
@@ -375,50 +330,12 @@ private fun TestDetailPane(test: FitnessTest) {
         }
 
         test.youtubeId?.let { youtubeId ->
-            val context = LocalContext.current
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .clickable {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:$youtubeId"))
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        try {
-                            context.startActivity(intent)
-                        } catch (e: Exception) {
-                            try {
-                                val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=$youtubeId"))
-                                webIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                context.startActivity(webIntent)
-                            } catch (e2: Exception) {
-                                android.widget.Toast.makeText(context, "No app available to play video", android.widget.Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                    }
-            ) {
-                AsyncImage(
-                    model = "https://img.youtube.com/vi/$youtubeId/hqdefault.jpg",
-                    contentDescription = "Watch ${test.name} demonstration",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-                
-                Surface(
-                    modifier = Modifier.size(56.dp).align(Alignment.Center),
-                    shape = CircleShape,
-                    color = Color.Black.copy(alpha = 0.5f)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            Icons.Default.PlayArrow,
-                            contentDescription = "Play",
-                            tint = Color.White,
-                            modifier = Modifier.size(32.dp)
-                        )
-                    }
-                }
-            }
+            TestVideoPreview(
+                youtubeId = youtubeId,
+                testName = test.name,
+                height = 200.dp,
+                cornerShape = RoundedCornerShape(16.dp)
+            )
         }
     }
 }

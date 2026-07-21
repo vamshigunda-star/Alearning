@@ -347,6 +347,7 @@ private fun IndividualModeContent(
     padding: PaddingValues
 ) {
     val currentAthlete = allAthletes.find { it.athleteId == uiState.selectedAthleteId }
+    val haptic = LocalHapticFeedback.current
 
     Column(modifier = Modifier.fillMaxSize().padding(padding)) {
         // Sticky control panel: timer, active athlete, start/stop — compressed and centered.
@@ -390,7 +391,12 @@ private fun IndividualModeContent(
                         .height(56.dp)
                         .alpha(if (isEnabled) 1f else 0.5f)
                         .acceleratorClick(
-                            onClick = { if (isEnabled) onAction(StopwatchAction.OnStartStop) }
+                            onClick = {
+                                if (isEnabled) {
+                                    if (isRunning) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    onAction(StopwatchAction.OnStartStop)
+                                }
+                            }
                         ),
                     shape = RoundedCornerShape(16.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -424,13 +430,33 @@ private fun IndividualModeContent(
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.padding(vertical = 4.dp, horizontal = 24.dp).fillMaxWidth()
             ) {
-                Text(
-                    if (uiState.isSessionComplete) "Result saved. Session complete. Finishing..." else "Result saved. Moving to next athlete...",
-                    modifier = Modifier.padding(10.dp),
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Bold,
-                    color = PerformanceGreenText
-                )
+                Column(
+                    modifier = Modifier.padding(10.dp).fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Icon(Icons.Default.Check, contentDescription = null, tint = PerformanceGreenText, modifier = Modifier.size(18.dp))
+                        Text(
+                            if (uiState.lastSavedAthleteName != null) "${uiState.lastSavedAthleteName}'s time saved" else "Time saved",
+                            fontWeight = FontWeight.Bold,
+                            color = PerformanceGreenText
+                        )
+                    }
+                    if (uiState.lastSavedTimeMs != null) {
+                        Text(
+                            formatTimeDisplay(uiState.lastSavedTimeMs),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Bold,
+                            color = PerformanceGreenText
+                        )
+                    }
+                    Text(
+                        if (uiState.isSessionComplete) "Session complete. Finishing..." else "Moving to next athlete...",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = PerformanceGreenText
+                    )
+                }
             }
         }
 
@@ -449,13 +475,22 @@ private fun IndividualModeContent(
             modifier = Modifier.fillMaxWidth().weight(1f),
             contentPadding = PaddingValues(bottom = 80.dp, top = 4.dp)
         ) {
-            items(allAthletes, key = { it.athleteId }) { athlete ->
-                if (athlete.status == AthleteStatus.COMPLETED) {
+            if (uiState.completedAthletes.isNotEmpty()) {
+                item(key = "section_completed") {
+                    AthleteSectionHeader(icon = "✅", label = "Completed", count = uiState.completedAthletes.size, tint = PerformanceGreenText)
+                }
+                items(uiState.completedAthletes, key = { it.athleteId }) { athlete ->
                     CompletedAthleteRow(
                         athlete = athlete,
                         onEditTrial = { resultId -> onAction(StopwatchAction.OnOpenEditDialog(athlete.athleteId, resultId)) }
                     )
-                } else {
+                }
+            }
+            if (uiState.upcomingAthletes.isNotEmpty()) {
+                item(key = "section_upcoming") {
+                    AthleteSectionHeader(icon = "⏳", label = "Upcoming", count = uiState.upcomingAthletes.size, tint = SportBlue)
+                }
+                items(uiState.upcomingAthletes, key = { it.athleteId }) { athlete ->
                     AthleteGridCard(
                         athlete = athlete,
                         isSelected = athlete.athleteId == uiState.selectedAthleteId,
@@ -466,6 +501,23 @@ private fun IndividualModeContent(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun AthleteSectionHeader(icon: String, label: String, count: Int, tint: Color) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Text(icon, style = MaterialTheme.typography.labelLarge)
+        Text(
+            "$label ($count)",
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+            color = tint
+        )
     }
 }
 
@@ -643,6 +695,18 @@ private fun AthleteGridCard(
                     color = if (isAbsent) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f) else MaterialTheme.colorScheme.onSurface
                 )
 
+                if (isSelected) {
+                    Surface(color = MaterialTheme.colorScheme.primary, shape = RoundedCornerShape(4.dp)) {
+                        Text(
+                            "CURRENT",
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp),
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                }
+
                 if (isAbsent) {
                     Text("Absent", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
                 }
@@ -667,21 +731,20 @@ private fun AthleteGridCard(
             ) {
                 repeat(athlete.totalTrials) { index ->
                     val trialNumber = index + 1
-                    val historicalResult = athlete.historicalTrials.getOrNull(index)
+                    val trialDisplay = athlete.displayTrials.getOrNull(index)
 
                     val chipStatus = when {
-                        historicalResult != null -> TrialChipStatus.COMPLETED
+                        trialDisplay != null -> TrialChipStatus.COMPLETED
                         trialNumber == athlete.currentTrial && athlete.status == AthleteStatus.CAPTURED -> TrialChipStatus.IN_PROGRESS
                         else -> TrialChipStatus.NOT_STARTED
                     }
 
                     val displayTimeMs = when (chipStatus) {
-                        TrialChipStatus.COMPLETED -> (historicalResult!!.rawScore * 1000).toLong()
+                        TrialChipStatus.COMPLETED -> trialDisplay!!.timeMs
                         TrialChipStatus.IN_PROGRESS -> athlete.capturedTimeMs
                         else -> null
                     }
 
-                    val resultId = historicalResult?.id
                     val chipAlpha = if (isAbsent) 0.3f else 1f
 
                     TrialChip(
@@ -692,8 +755,14 @@ private fun AthleteGridCard(
                             .combinedClickable(
                                 onClick = { if (!isAbsent) onClick() },
                                 onLongClick = {
-                                    if (!isAbsent && (chipStatus == TrialChipStatus.COMPLETED || chipStatus == TrialChipStatus.IN_PROGRESS)) {
-                                        onEditTrial(resultId)
+                                    if (isAbsent) return@combinedClickable
+                                    when (chipStatus) {
+                                        // A COMPLETED chip is only editable once it has a real DB resultId —
+                                        // a null resultId here means the write succeeded but Room's Flow hasn't
+                                        // re-emitted yet, so there's nothing to edit/delete against.
+                                        TrialChipStatus.COMPLETED -> trialDisplay?.resultId?.let { onEditTrial(it) }
+                                        TrialChipStatus.IN_PROGRESS -> onEditTrial(null)
+                                        TrialChipStatus.NOT_STARTED -> Unit
                                     }
                                 }
                             )
@@ -725,20 +794,26 @@ private fun CompletedAthleteRow(
                 athlete.name,
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
+                maxLines = 2,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f)
             )
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                athlete.historicalTrials.take(athlete.totalTrials).forEach { result ->
+                athlete.displayTrials.take(athlete.totalTrials).forEach { trial ->
+                    // A null resultId means the row hasn't been mirrored back from Room's Flow yet
+                    // (see StopwatchViewModel.optimisticTrials) — not editable/deletable until then.
+                    val timeModifier = if (trial.resultId != null) {
+                        Modifier.combinedClickable(onClick = {}, onLongClick = { onEditTrial(trial.resultId) })
+                    } else {
+                        Modifier
+                    }
                     Text(
-                        formatTimeDisplay((result.rawScore * 1000).toLong()),
+                        formatTimeDisplay(trial.timeMs),
                         style = MaterialTheme.typography.labelMedium,
                         fontFamily = FontFamily.Monospace,
                         fontWeight = FontWeight.Bold,
                         color = PerformanceGreenText,
-                        modifier = Modifier.combinedClickable(
-                            onClick = {},
-                            onLongClick = { onEditTrial(result.id) }
-                        )
+                        modifier = timeModifier
                     )
                 }
             }

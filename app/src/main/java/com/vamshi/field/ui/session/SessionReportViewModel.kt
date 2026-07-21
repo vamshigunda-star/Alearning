@@ -1,4 +1,4 @@
-﻿package com.vamshi.field.ui.session
+package com.vamshi.field.ui.session
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel

@@ -2,16 +2,21 @@ package com.vamshi.field.ui.auth.restore
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -35,8 +40,12 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.Scope
 import com.google.api.services.drive.DriveScopes
+import com.vamshi.field.domain.model.backup.DriveBackupSummary
 import com.vamshi.field.ui.auth.components.AuthErrorBanner
 import com.vamshi.field.ui.components.AppTopBar
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
  * Pre-auth "restore from Google Drive" screen, reachable from both Onboarding and
@@ -137,28 +146,25 @@ fun RestoreBackupContent(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "If you've backed up your data to Google Drive before, sign in " +
-                    "with the same Google account to restore your athletes, groups, and results.",
+                text = if (uiState.availableBackups.isEmpty()) {
+                    "If you've backed up your data to Google Drive before, sign in " +
+                        "with the same Google account to restore your athletes, groups, and results."
+                } else {
+                    "Pick the backup to restore. Each one is a device that's backed up to this account."
+                },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(24.dp))
 
-            if (uiState.isLoading) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    CircularProgressIndicator()
-                    Text(
-                        text = "Downloading and restoring your data...",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            } else {
-                Button(
+            when {
+                uiState.isRestoring -> LoadingIndicator("Downloading and restoring your data...")
+                uiState.isLoadingBackups -> LoadingIndicator("Looking for backups on this account...")
+                uiState.availableBackups.isNotEmpty() -> BackupPicker(
+                    backups = uiState.availableBackups,
+                    onSelect = { onAction(RestoreBackupAction.RestoreSelectedBackup(it.id)) }
+                )
+                else -> Button(
                     onClick = { launcher.launch(googleSignInClient.signInIntent) },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -171,3 +177,55 @@ fun RestoreBackupContent(
         }
     }
 }
+
+@Composable
+private fun LoadingIndicator(message: String) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        CircularProgressIndicator()
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun BackupPicker(
+    backups: List<DriveBackupSummary>,
+    onSelect: (DriveBackupSummary) -> Unit
+) {
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        items(backups, key = { it.id }) { backup ->
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onSelect(backup) }
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(backup.deviceLabel, style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            text = formatBackupDate(backup.lastModified),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun formatBackupDate(timestamp: Long): String =
+    if (timestamp == 0L) "Backed up date unknown"
+    else "Backed up ${SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault()).format(Date(timestamp))}"

@@ -1,4 +1,4 @@
-ï»¿package com.vamshi.field.ui.components.charts
+package com.vamshi.field.ui.components.charts
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
@@ -30,7 +30,7 @@ import kotlin.math.sin
 /**
  * Spider/radar chart driven by `data.axisScores`.
  *
- * The list itself is the source of truth for the spoke set and labels â€” we no
+ * The list itself is the source of truth for the spoke set and labels — we no
  * longer iterate `RadarAxis.values()`, because the seeded categories don't
  * cover every enum value (which used to leave permanent zero spokes for
  * SPEED / BALANCE on the Athlete dashboard).
@@ -134,7 +134,7 @@ fun RadarChart(
                 drawCircle(color, radius = 4.dp.toPx(), center = pt, style = Stroke(width = 1.5.dp.toPx()))
             }
 
-            // Labels â€” drawn on the same canvas so positioning is exact.
+            // Labels — drawn on the same canvas so positioning is exact.
             // We fit each label inside a max width and centre it on the spoke tip,
             // then nudge inward/outward by half the text size so it doesn't overlap
             // the polygon vertex.

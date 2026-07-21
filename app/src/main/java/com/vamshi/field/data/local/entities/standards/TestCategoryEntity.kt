@@ -1,7 +1,7 @@
 package com.vamshi.field.data.local.entities.standards
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
+import androidx.room3.Entity
+import androidx.room3.PrimaryKey
 import java.util.UUID
 
 @Entity(tableName = "test_categories")
@@ -10,6 +10,7 @@ data class TestCategoryEntity(
     val id: String = UUID.randomUUID().toString(),
 
     val name: String,          // e.g., "Cardiorespiratory Endurance"
+    val description: String? = null, // Short explanatory text shown under the category selector
     val sortOrder: Int = 0,    // To control display order in the UI
     val radarAxis: String? = null, // SPEED, AGILITY, STRENGTH, ENDURANCE, FLEXIBILITY, BALANCE; null = not on radar
 

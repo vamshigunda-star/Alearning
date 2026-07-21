@@ -1,10 +1,10 @@
 package com.vamshi.field.data.local.daos.backup
 
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
-import androidx.room.Transaction
+import androidx.room3.Dao
+import androidx.room3.Insert
+import androidx.room3.OnConflictStrategy
+import androidx.room3.Query
+import androidx.room3.Transaction
 import com.vamshi.field.data.local.entities.auth.UserEntity
 import com.vamshi.field.data.local.entities.people.GroupEntity
 import com.vamshi.field.data.local.entities.people.GroupMemberCrossRef
@@ -88,5 +88,25 @@ interface BackupDao {
         clearGroups()
         clearTestingEvents()
         clearUsers()
+    }
+
+    @Transaction
+    suspend fun restoreAllData(
+        users: List<UserEntity>,
+        individuals: List<IndividualEntity>,
+        groups: List<GroupEntity>,
+        groupMembers: List<GroupMemberCrossRef>,
+        events: List<TestingEventEntity>,
+        eventTests: List<EventTestCrossRef>,
+        results: List<TestResultEntity>
+    ) {
+        clearAllUserGeneratedData()
+        insertUsers(users)
+        insertIndividuals(individuals)
+        insertGroups(groups)
+        insertGroupMembers(groupMembers)
+        insertTestingEvents(events)
+        insertEventTests(eventTests)
+        insertTestResults(results)
     }
 }

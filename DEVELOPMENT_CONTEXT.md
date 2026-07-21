@@ -90,7 +90,7 @@ Use cases are divided into namespaces corresponding to core areas:
 
 Handles data persistence, mappings, and external data parsing.
 
-### Local Room Database (`AppDatabase` - Version 11)
+### Local Room Database (`AppDatabase` - Version 12)
 An offline-first Room SQLite implementation containing the following tables:
 - `individuals`: Athlete profile records.
 - `groups`: Group records.
@@ -106,7 +106,7 @@ An offline-first Room SQLite implementation containing the following tables:
 
 ### Seeding Mechanism
 On first launch, [SeedDataManager](file:///c:/Users/APF/AndroidStudioProjects/Alearning/app/src/main/java/com/vamshi/field/data/seed/SeedDataManager.kt) parses CSV data from assets (`test_categories.csv`, `tests.csv`, `norms.csv`, `recommendation_categories.csv`, `recommendation_tests.csv`) and seeds the SQLite tables using `ImportStandardsUseCase` and `ImportRecommendationsUseCase`.
-- Guarded by a versioned SharedPreferences key (`KEY_DATA_SEEDED` in `SeedDataManager`, currently `data_seeded_csv_v12`). Bump the version suffix to ship catalog updates to existing installs.
+- Guarded by a versioned SharedPreferences key (`KEY_DATA_SEEDED` in `SeedDataManager`, currently `data_seeded_csv_v14`). Bump the version suffix to ship catalog updates to existing installs.
 - Reseeding is non-destructive for user data: catalog tests/categories are **upserted** in place (user results hold foreign keys to them), while `norm_references` and the recommendation tables are replaced wholesale (nothing references them). Coach-created events, results, athletes, and groups are never touched. Catalog rows removed from newer CSVs remain in the DB, since existing results may reference them.
 - Demo athletes/groups/events are only seeded when the `individuals` table is empty (i.e., a truly fresh install).
 

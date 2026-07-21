@@ -8,6 +8,7 @@ fun TestCategoryEntity.toDomain(): TestCategory {
     return TestCategory(
         id = this.id,
         name = this.name,
+        description = this.description,
         sortOrder = this.sortOrder,
         radarAxis = this.radarAxis?.let {
             try { RadarAxis.valueOf(it) } catch (_: Exception) { null }
@@ -21,6 +22,7 @@ fun TestCategory.toEntity(
     return TestCategoryEntity(
         id = this.id,
         name = this.name,
+        description = this.description,
         sortOrder = this.sortOrder,
         radarAxis = this.radarAxis?.name,
         createdAt = createdAt,

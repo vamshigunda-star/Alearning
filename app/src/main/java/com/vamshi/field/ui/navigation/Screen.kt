@@ -1,4 +1,4 @@
-﻿package com.vamshi.field.ui.navigation
+package com.vamshi.field.ui.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Assignment
@@ -64,7 +64,7 @@ sealed class Screen(val route: String) {
             "athlete/$athleteId/test/$testId" + if (contextSessionId != null) "?contextSessionId=$contextSessionId" else ""
     }
 
-    // ───── Auth screens ─────
+    // ----- Auth screens -----
     /** First-launch account creation: Coach Name + Password (+ optional Email). Replaces SignUp. */
     data object Onboarding : Screen("onboarding")
     /** Returning-coach "Welcome back" password unlock. Replaces SignIn. */

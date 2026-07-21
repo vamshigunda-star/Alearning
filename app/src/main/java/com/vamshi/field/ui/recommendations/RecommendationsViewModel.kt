@@ -45,12 +45,14 @@ class RecommendationsViewModel @Inject constructor(
             getRecommendations.getCategories()
                 .catch { e -> _uiState.update { it.copy(errorMessage = e.message, isLoading = false) } }
                 .collect { categories ->
-                    _uiState.update { current ->
-                        val selected = current.selectedCategory ?: categories.firstOrNull()
-                        current.copy(categories = categories, selectedCategory = selected, isLoading = false)
+                    // Re-resolve by id so a reseed that renames/removes a category can't
+                    // leave a stale selection (or stale description text) on screen.
+                    val previousId = _uiState.value.selectedCategory?.id
+                    val selected = categories.firstOrNull { it.id == previousId } ?: categories.firstOrNull()
+                    _uiState.update {
+                        it.copy(categories = categories, selectedCategory = selected, isLoading = false)
                     }
-                    val selected = _uiState.value.selectedCategory
-                    if (selected != null && testsJob == null) {
+                    if (selected != null && (selected.id != previousId || testsJob == null)) {
                         loadRecommendedTests(selected.id)
                     }
                 }

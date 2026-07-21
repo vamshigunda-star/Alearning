@@ -1,10 +1,10 @@
 package com.vamshi.field.data
 
-import androidx.room.Database
-import androidx.room.RoomDatabase
-import androidx.room.TypeConverters
-import androidx.room.migration.Migration
-import androidx.sqlite.db.SupportSQLiteDatabase
+import androidx.room3.ColumnTypeConverters
+import androidx.room3.Database
+import androidx.room3.RoomDatabase
+import androidx.sqlite.SQLiteConnection
+import androidx.sqlite.execSQL
 import com.vamshi.field.data.local.Converters
 import com.vamshi.field.data.local.daos.auth.UserDao
 import com.vamshi.field.data.local.daos.backup.BackupDao
@@ -43,10 +43,10 @@ import com.vamshi.field.data.local.entities.testing.TestingEventEntity
         RecommendationCategoryEntity::class,
         RecommendationTestCrossRef::class
     ],
-    version = 11,
+    version = 12,
     exportSchema = false
 )
-@TypeConverters(Converters::class)
+@ColumnTypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun peopleDao(): PeopleDao
     abstract fun standardsDao(): StandardsDao
@@ -57,6 +57,21 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun recommendationDao(): RecommendationDao
 
     companion object {
+        /**
+         * Migration 11 → 12: Adds the nullable `description` column to `test_categories`.
+         *
+         * Backs category descriptions shown under the Test Library category selector.
+         * Sourced from `test_categories.csv` via [com.vamshi.field.data.seed.SeedDataManager]
+         * — this migration only adds the column; [MIGRATION_10_11] et al. show the seeder
+         * upserts categories in place, so existing rows get their description populated on
+         * the next reseed rather than requiring a data migration here.
+         */
+        val MIGRATION_11_12 = object : androidx.room3.migration.Migration(11, 12) {
+            override suspend fun migrate(connection: SQLiteConnection) {
+                connection.execSQL("ALTER TABLE test_categories ADD COLUMN description TEXT DEFAULT NULL")
+            }
+        }
+
         /**
          * Migration 10 → 11: Adds the nullable `email` column to `users`.
          *
@@ -70,9 +85,9 @@ abstract class AppDatabase : RoomDatabase() {
          * — those columns are already nullable and simply stop being written to by the new
          * onboarding path. Physically dropping them is out of scope here (planned separately).
          */
-        val MIGRATION_10_11 = object : Migration(10, 11) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("ALTER TABLE users ADD COLUMN email TEXT DEFAULT NULL")
+        val MIGRATION_10_11 = object : androidx.room3.migration.Migration(10, 11) {
+            override suspend fun migrate(connection: SQLiteConnection) {
+                connection.execSQL("ALTER TABLE users ADD COLUMN email TEXT DEFAULT NULL")
             }
         }
 
@@ -84,11 +99,11 @@ abstract class AppDatabase : RoomDatabase() {
          * mirrors event_test_cross_ref's shape (composite PK, CASCADE FKs, index on the
          * non-leading FK column).
          */
-        val MIGRATION_9_10 = object : Migration(9, 10) {
-            override fun migrate(db: SupportSQLiteDatabase) {
+        val MIGRATION_9_10 = object : androidx.room3.migration.Migration(9, 10) {
+            override suspend fun migrate(connection: SQLiteConnection) {
                 // No DEFAULT clauses: the entities declare no @ColumnInfo defaultValue, so the
                 // migration-created schema must match what Room generates on a fresh install.
-                db.execSQL(
+                connection.execSQL(
                     """
                     CREATE TABLE IF NOT EXISTS `recommendation_categories` (
                         `id` TEXT NOT NULL,
@@ -101,7 +116,7 @@ abstract class AppDatabase : RoomDatabase() {
                     )
                     """.trimIndent()
                 )
-                db.execSQL(
+                connection.execSQL(
                     """
                     CREATE TABLE IF NOT EXISTS `recommendation_test_cross_ref` (
                         `recommendationCategoryId` TEXT NOT NULL,
@@ -114,15 +129,15 @@ abstract class AppDatabase : RoomDatabase() {
                     )
                     """.trimIndent()
                 )
-                db.execSQL(
+                connection.execSQL(
                     "CREATE INDEX IF NOT EXISTS `index_recommendation_test_cross_ref_testId` ON `recommendation_test_cross_ref` (`testId`)"
                 )
             }
         }
 
-        val MIGRATION_8_9 = object : Migration(8, 9) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("ALTER TABLE fitness_tests ADD COLUMN youtubeId TEXT DEFAULT NULL")
+        val MIGRATION_8_9 = object : androidx.room3.migration.Migration(8, 9) {
+            override suspend fun migrate(connection: SQLiteConnection) {
+                connection.execSQL("ALTER TABLE fitness_tests ADD COLUMN youtubeId TEXT DEFAULT NULL")
             }
         }
 
@@ -137,9 +152,9 @@ abstract class AppDatabase : RoomDatabase() {
          * score per athlete-test-per-event. FK to testing_events with CASCADE so deleting
          * an event cleans up any orphaned pending state.
          */
-        val MIGRATION_7_8 = object : Migration(7, 8) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL(
+        val MIGRATION_7_8 = object : androidx.room3.migration.Migration(7, 8) {
+            override suspend fun migrate(connection: SQLiteConnection) {
+                connection.execSQL(
                     """
                     CREATE TABLE IF NOT EXISTS `pending_test_entries` (
                         `eventId` TEXT NOT NULL,
@@ -152,7 +167,7 @@ abstract class AppDatabase : RoomDatabase() {
                     )
                     """.trimIndent()
                 )
-                db.execSQL(
+                connection.execSQL(
                     "CREATE INDEX IF NOT EXISTS `index_pending_test_entries_eventId` ON `pending_test_entries` (`eventId`)"
                 )
             }
@@ -173,9 +188,9 @@ abstract class AppDatabase : RoomDatabase() {
          *  - securityAnswerSalt BLOB (nullable)
          *  - createdAt     INTEGER NOT NULL (epoch millis)
          */
-        val MIGRATION_6_7 = object : Migration(6, 7) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL(
+        val MIGRATION_6_7 = object : androidx.room3.migration.Migration(6, 7) {
+            override suspend fun migrate(connection: SQLiteConnection) {
+                connection.execSQL(
                     """
                     CREATE TABLE IF NOT EXISTS `users` (
                         `id` TEXT NOT NULL,
@@ -192,37 +207,37 @@ abstract class AppDatabase : RoomDatabase() {
                     )
                     """.trimIndent()
                 )
-                db.execSQL(
+                connection.execSQL(
                     "CREATE UNIQUE INDEX IF NOT EXISTS `index_users_username` ON `users` (`username`)"
                 )
             }
         }
 
-        val MIGRATION_5_6 = object : Migration(5, 6) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("ALTER TABLE fitness_tests ADD COLUMN validMin REAL DEFAULT NULL")
-                db.execSQL("ALTER TABLE fitness_tests ADD COLUMN validMax REAL DEFAULT NULL")
-                db.execSQL("ALTER TABLE fitness_tests ADD COLUMN interpretationStrategy TEXT NOT NULL DEFAULT 'NORM_LOOKUP'")
-                db.execSQL("ALTER TABLE fitness_tests ADD COLUMN calculationConfig TEXT DEFAULT NULL")
-                db.execSQL("ALTER TABLE test_categories ADD COLUMN radarAxis TEXT DEFAULT NULL")
+        val MIGRATION_5_6 = object : androidx.room3.migration.Migration(5, 6) {
+            override suspend fun migrate(connection: SQLiteConnection) {
+                connection.execSQL("ALTER TABLE fitness_tests ADD COLUMN validMin REAL DEFAULT NULL")
+                connection.execSQL("ALTER TABLE fitness_tests ADD COLUMN validMax REAL DEFAULT NULL")
+                connection.execSQL("ALTER TABLE fitness_tests ADD COLUMN interpretationStrategy TEXT NOT NULL DEFAULT 'NORM_LOOKUP'")
+                connection.execSQL("ALTER TABLE fitness_tests ADD COLUMN calculationConfig TEXT DEFAULT NULL")
+                connection.execSQL("ALTER TABLE test_categories ADD COLUMN radarAxis TEXT DEFAULT NULL")
             }
         }
 
-        val MIGRATION_4_5 = object : Migration(4, 5) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("ALTER TABLE fitness_tests ADD COLUMN inputParadigm TEXT NOT NULL DEFAULT 'NUMERIC'")
+        val MIGRATION_4_5 = object : androidx.room3.migration.Migration(4, 5) {
+            override suspend fun migrate(connection: SQLiteConnection) {
+                connection.execSQL("ALTER TABLE fitness_tests ADD COLUMN inputParadigm TEXT NOT NULL DEFAULT 'NUMERIC'")
             }
         }
 
-        val MIGRATION_3_4 = object : Migration(3, 4) {
-            override fun migrate(db: SupportSQLiteDatabase) {
+        val MIGRATION_3_4 = object : androidx.room3.migration.Migration(3, 4) {
+            override suspend fun migrate(connection: SQLiteConnection) {
                 // Add stopwatch columns to fitness_tests
-                db.execSQL("ALTER TABLE fitness_tests ADD COLUMN timingMode TEXT NOT NULL DEFAULT 'MANUAL_ENTRY'")
-                db.execSQL("ALTER TABLE fitness_tests ADD COLUMN athletesPerHeat INTEGER DEFAULT NULL")
-                db.execSQL("ALTER TABLE fitness_tests ADD COLUMN trialsPerAthlete INTEGER NOT NULL DEFAULT 1")
+                connection.execSQL("ALTER TABLE fitness_tests ADD COLUMN timingMode TEXT NOT NULL DEFAULT 'MANUAL_ENTRY'")
+                connection.execSQL("ALTER TABLE fitness_tests ADD COLUMN athletesPerHeat INTEGER DEFAULT NULL")
+                connection.execSQL("ALTER TABLE fitness_tests ADD COLUMN trialsPerAthlete INTEGER NOT NULL DEFAULT 1")
 
                 // Add capture method to test_results
-                db.execSQL("ALTER TABLE test_results ADD COLUMN captureMethod TEXT NOT NULL DEFAULT 'MANUAL_ENTRY'")
+                connection.execSQL("ALTER TABLE test_results ADD COLUMN captureMethod TEXT NOT NULL DEFAULT 'MANUAL_ENTRY'")
             }
         }
     }

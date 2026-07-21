@@ -1,4 +1,4 @@
-ï»¿package com.vamshi.field.ui.athlete
+package com.vamshi.field.ui.athlete
 
 import android.app.Activity
 import androidx.compose.foundation.BorderStroke
@@ -152,7 +152,7 @@ fun AthleteDashboardContent(
                         Text(data?.athlete?.fullName ?: "Athlete", style = MaterialTheme.typography.titleLarge)
                         if (data != null) {
                             val ind = data.athlete
-                            val grp = data.groups.firstOrNull()?.name?.let { " Â· $it" } ?: ""
+                            val grp = data.groups.firstOrNull()?.name?.let { " · $it" } ?: ""
                             
                             val avg = data.athleteSessionAvgPctile
                             val cls = when {
@@ -165,7 +165,7 @@ fun AthleteDashboardContent(
                             val testCountText = "${data.sessionTestCount} Test${if (data.sessionTestCount == 1) "" else "s"}"
 
                             Text(
-                                "${ind.currentAge}y Â· ${ind.sex.name.lowercase().replaceFirstChar { it.uppercase() }}$grp Â· $healthText Â· $testCountText",
+                                "${ind.currentAge}y · ${ind.sex.name.lowercase().replaceFirstChar { it.uppercase() }}$grp · $healthText · $testCountText",
                                 style = MaterialTheme.typography.labelSmall, color = AppTopBarSubtitleColor
                             )
                         }
@@ -392,7 +392,7 @@ fun TestBreakdownRow(tile: AthleteTestTile, onClick: () -> Unit) {
                     text = tile.latestResult?.let {
                         val s = if (it.rawScore % 1.0 == 0.0) it.rawScore.toInt().toString() else String.format("%.1f", it.rawScore)
                         "$s ${tile.test.unit}"
-                    } ?: "â€”",
+                    } ?: "—",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Black,
                     color = MaterialTheme.colorScheme.primary
@@ -425,7 +425,7 @@ fun FlagListRow(flag: AthleteFlag, onClick: () -> Unit) {
                 if (flag.type == FlagType.MISSING_DATA && flag.testNames.isNotEmpty()) {
                     Spacer(Modifier.height(4.dp))
                     flag.testNames.forEach { name ->
-                        Text("â€¢ $name", style = MaterialTheme.typography.labelSmall, color = SportOrangeVariant)
+                        Text("• $name", style = MaterialTheme.typography.labelSmall, color = SportOrangeVariant)
                     }
                     Spacer(Modifier.height(4.dp))
                     Text(
@@ -621,7 +621,7 @@ fun PerTestHeader(testCount: Int, collapsedCount: Int, expanded: Boolean, onTogg
                 val subtitle = if (expanded) {
                     "Showing all $testCount tests recorded"
                 } else {
-                    "Showing $collapsedCount test${if (collapsedCount == 1) "" else "s"} preview â€¢ $testCount tests recorded"
+                    "Showing $collapsedCount test${if (collapsedCount == 1) "" else "s"} preview • $testCount tests recorded"
                 }
                 Text(
                     text = subtitle,

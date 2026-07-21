@@ -1,4 +1,4 @@
-﻿package com.vamshi.field.ui.theme
+package com.vamshi.field.ui.theme
 
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState

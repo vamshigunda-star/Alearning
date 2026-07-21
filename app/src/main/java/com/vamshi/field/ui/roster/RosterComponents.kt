@@ -1,4 +1,4 @@
-﻿package com.vamshi.field.ui.roster
+package com.vamshi.field.ui.roster
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
@@ -116,7 +116,7 @@ fun AthleteTabContent(
             }
             item {
                 Text(
-                    "← Swipe left to delete",
+                    "? Swipe left to delete",
                     modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.bodySmall,
@@ -337,7 +337,11 @@ fun ModernGroupCard(
                     color = SportOrangeContainer
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Text("🏃", fontSize = 20.sp)
+                        Icon(
+                            Icons.Default.Groups,
+                            contentDescription = null,
+                            tint = SportOrange
+                        )
                     }
                 }
 
